@@ -11,8 +11,8 @@ const ProductScreen = () => {
 
   // Số Hotline & Zalo của công ty (Bạn thay số thật vào đây)
   const CONTACT_INFO = {
-    phone: "0909123456",
-    zaloLink: "https://zalo.me/0909123456" 
+    phone: "0935110639",
+    zaloLink: "https://zalo.me/0935110639" 
   };
 
   useEffect(() => {

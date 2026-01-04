@@ -2,8 +2,11 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+
 // --- THÊM DÒNG NÀY (1) ---
 const productRoutes = require('./routes/productRoutes'); 
+const quoteRoutes = require('./routes/quoteRoutes');
+const userRoutes = require('./routes/userRoutes');
 // -------------------------
 
 // 1. Cấu hình
@@ -20,8 +23,12 @@ app.use(express.json());
 // --- THÊM DÒNG NÀY (2) ---
 // Dòng này có nghĩa là: Bất cứ ai vào đường dẫn /api/products thì sẽ chuyển cho productRoutes xử lý
 app.use('/api/products', productRoutes);
+// Quote 
+app.use('/api/quotes', quoteRoutes);
+//User 
+app.use('/api/users', userRoutes);
 // -------------------------
-
+//
 // 4. Route kiểm tra
 app.get('/', (req, res) => {
   res.send('API In Quang Phát đang chạy...');
