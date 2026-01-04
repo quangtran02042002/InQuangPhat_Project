@@ -1,0 +1,13 @@
+# Bỏ qua thư viện nặng
+node_modules/
+
+# Bỏ qua file biến môi trường (chứa mật khẩu)
+.env
+
+# Bỏ qua file hệ thống
+.DS_Store
+Thumbs.db
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
