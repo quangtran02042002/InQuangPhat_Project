@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import { validateEmail } from '../utils/validation';
+import { toast } from 'react-toastify'; // Nếu chưa import
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +23,12 @@ const LoginScreen = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+    if (!validateEmail(email)) {
+        return toast.warning("Địa chỉ Email không hợp lệ!");
+    }
+    if (password.length < 6) {
+        return toast.warning("Mật khẩu phải có ít nhất 6 ký tự!");
+    }
     try {
       // 1. Gửi Email/Pass lên Backend
       const config = {

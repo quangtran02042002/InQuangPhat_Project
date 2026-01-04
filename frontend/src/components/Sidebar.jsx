@@ -1,29 +1,61 @@
-<div className="w-64 bg-blue-900 text-white flex flex-col">
-        <div className="p-6 text-2xl font-bold border-b border-blue-800">
-          ADMIN PANEL
-        </div>
-        
-        <nav className="flex-1 p-4 space-y-2">
-          <Link to="/admin/dashboard" className="flex items-center px-4 py-3 bg-blue-800 rounded-lg transition">
-            <FaChartLine className="mr-3" /> Tổng quan
-          </Link>
-          
-          <Link to="/admin/quotes" className="flex items-center px-4 py-3 hover:bg-blue-800 rounded-lg transition text-gray-300 hover:text-white">
-            <FaClipboardList className="mr-3" /> Quản lý Báo giá
-          </Link>
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaChartLine } from 'react-icons/fa';
 
-          <Link to="/admin/productlist" className="flex items-center px-4 py-3 hover:bg-blue-800 rounded-lg transition text-gray-300 hover:text-white">
-            <FaBoxOpen className="mr-3" /> Quản lý Sản phẩm
-          </Link>
+const Sidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation(); // Dùng để biết đang ở trang nào để bôi đậm menu
 
-          <Link to="/admin/users" className="flex items-center px-4 py-3 hover:bg-blue-800 rounded-lg transition text-gray-300 hover:text-white">
-            <FaUsers className="mr-3" /> Quản lý User
-          </Link>
-        </nav>
+  const logoutHandler = () => {
+    localStorage.removeItem('userInfo');
+    navigate('/login');
+  };
 
-        <div className="p-4 border-t border-blue-800">
-          <button onClick={logoutHandler} className="flex items-center text-red-300 hover:text-white transition w-full">
-            <FaSignOutAlt className="mr-3" /> Đăng xuất
-          </button>
-        </div>
+  // Hàm kiểm tra xem menu nào đang active
+  const isActive = (path) => {
+    return location.pathname.includes(path) 
+      ? 'bg-blue-800 text-white shadow-md' 
+      : 'text-gray-300 hover:bg-blue-800 hover:text-white';
+  };
+
+  return (
+    <div className="w-64 bg-blue-900 text-white flex flex-col flex-shrink-0 h-screen sticky top-0 left-0">
+      {/* HEADER SIDEBAR */}
+      <div className="p-6 text-2xl font-bold border-b border-blue-800 flex items-center justify-center">
+        ADMIN PANEL
       </div>
+      
+      {/* MENU LIST */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <Link to="/admin/dashboard" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/dashboard')}`}>
+          <FaChartLine className="mr-3 text-lg" /> 
+          <span className="font-medium">Tổng quan</span>
+        </Link>
+        
+        <Link to="/admin/quotes" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/quotes')}`}>
+          <FaClipboardList className="mr-3 text-lg" /> 
+          <span className="font-medium">Quản lý Báo giá</span>
+        </Link>
+
+        <Link to="/admin/productlist" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/productlist')}`}>
+          <FaBoxOpen className="mr-3 text-lg" /> 
+          <span className="font-medium">Quản lý Sản phẩm</span>
+        </Link>
+
+        <Link to="/admin/users" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/users')}`}>
+          <FaUsers className="mr-3 text-lg" /> 
+          <span className="font-medium">Quản lý User</span>
+        </Link>
+      </nav>
+
+      {/* FOOTER SIDEBAR */}
+      <div className="p-4 border-t border-blue-800">
+        <button onClick={logoutHandler} className="flex items-center justify-center w-full px-4 py-2 text-red-300 hover:text-white hover:bg-red-600 rounded-lg transition">
+          <FaSignOutAlt className="mr-2" /> Đăng xuất
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;

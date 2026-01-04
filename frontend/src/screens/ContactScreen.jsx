@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { FaPhoneAlt, FaMapMarkerAlt, FaEnvelope, FaPaperPlane } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { validateEmail, validatePhone, validateName } from '../utils/validation'; // Import bộ lọc
 
 const ContactScreen = () => {
-  // State lưu trữ dữ liệu form
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -13,7 +14,7 @@ const ContactScreen = () => {
     message: ''
   });
   
-  const [status, setStatus] = useState(null); // null, 'success', 'error'
+  const [status, setStatus] = useState(null); 
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,12 +22,48 @@ const ContactScreen = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // --- BẮT ĐẦU VALIDATE NGHIÊM NGẶT ---
+    const nameInput = formData.name.trim();
+    const phoneInput = formData.phone.trim();
+
+    // 1. Kiểm tra Tên
+    if (!nameInput) {
+        return toast.warning("Vui lòng nhập họ và tên!");
+    }
+    if (!validateName(nameInput)) {
+        return toast.error("Họ tên không hợp lệ! (Không được chứa số hoặc ký tự đặc biệt)");
+    }
+
+    // 2. Kiểm tra Số điện thoại
+    if (!phoneInput) {
+        return toast.warning("Vui lòng nhập số điện thoại!");
+    }
+    if (!validatePhone(phoneInput)) {
+        // Báo lỗi chi tiết để người dùng biết sai ở đâu
+        if (/[^0-9]/.test(phoneInput)) {
+             return toast.error("Số điện thoại chỉ được chứa số!");
+        } else if (phoneInput.length < 10 || phoneInput.length > 11) {
+             return toast.error("Số điện thoại phải có 10 hoặc 11 số!");
+        } else {
+             return toast.error("Đầu số không đúng định dạng VN (09, 03, 07, 02...)");
+        }
+    }
+
+    // 3. Kiểm tra Email (nếu có nhập)
+    if (formData.email && !validateEmail(formData.email)) {
+        return toast.warning("Email không đúng định dạng (VD: abc@gmail.com)");
+    }
+    // --- KẾT THÚC VALIDATE ---
+
     try {
       await axios.post('/api/quotes', formData);
       setStatus('success');
-      setFormData({ name: '', phone: '', email: '', productName: '', quantity: '', message: '' }); // Reset form
+      toast.success("Gửi yêu cầu thành công! Chúng tôi sẽ gọi lại sớm.");
+      setFormData({ name: '', phone: '', email: '', productName: '', quantity: '', message: '' });
     } catch (error) {
       setStatus('error');
+      toast.error("Lỗi server, vui lòng thử lại sau.");
     }
   };
 
@@ -37,7 +74,7 @@ const ContactScreen = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl shadow-lg overflow-hidden">
           
-          {/* CỘT TRÁI: THÔNG TIN LIÊN HỆ */}
+          {/* CỘT TRÁI: THÔNG TIN */}
           <div className="bg-blue-800 text-white p-10 flex flex-col justify-center">
             <h3 className="text-2xl font-bold mb-6">Thông tin liên hệ</h3>
             <p className="mb-6 text-blue-100">Hãy để lại thông tin, nhân viên kinh doanh của In Quang Phát sẽ gọi lại tư vấn chi tiết và báo giá tốt nhất cho bạn trong vòng 30 phút.</p>
@@ -69,30 +106,19 @@ const ContactScreen = () => {
             </div>
           </div>
 
-          {/* CỘT PHẢI: FORM ĐIỀN */}
+          {/* CỘT PHẢI: FORM */}
           <div className="p-10">
             <h3 className="text-xl font-bold text-gray-800 mb-6">Gửi yêu cầu báo giá</h3>
             
-            {status === 'success' && (
-              <div className="bg-green-100 text-green-700 p-4 rounded mb-4 border border-green-200">
-                ✅ Đã gửi thành công! Chúng tôi sẽ liên hệ lại sớm nhất.
-              </div>
-            )}
-            {status === 'error' && (
-              <div className="bg-red-100 text-red-700 p-4 rounded mb-4">
-                ❌ Có lỗi xảy ra. Vui lòng thử lại hoặc gọi hotline.
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-                  <input required name="name" value={formData.name} onChange={handleChange} type="text" className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Nguyễn Văn A" />
+                  <input name="name" value={formData.name} onChange={handleChange} type="text" className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Nguyễn Văn A" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
-                  <input required name="phone" value={formData.phone} onChange={handleChange} type="text" className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="09xxxxxxx" />
+                  <input name="phone" value={formData.phone} onChange={handleChange} type="text" className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="09xxxxxxx" />
                 </div>
               </div>
 

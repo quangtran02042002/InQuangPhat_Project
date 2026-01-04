@@ -1,9 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { getProducts, getProductById } = require('../controllers/productController');
+const { 
+  getProducts, 
+  getProductById, 
+  deleteProduct,
+  createProduct,
+  updateProduct 
+} = require('../controllers/productController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-// Đường dẫn gốc là /api/products (sẽ khai báo ở server.js)
-router.route('/').get(getProducts);
-router.route('/:id').get(getProductById);
+router.route('/')
+  .get(getProducts)
+  .post(protect, admin, createProduct); // <--- POST: Tạo mới (Chỉ Admin)
+
+router.route('/:id')
+  .get(getProductById)
+  .delete(protect, admin, deleteProduct)
+  .put(protect, admin, updateProduct); // <--- PUT: Cập nhật (Chỉ Admin)
 
 module.exports = router;
