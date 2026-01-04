@@ -35,8 +35,28 @@ const getQuotes = async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách' });
   }
 };
+// @desc    Cập nhật trạng thái báo giá
+// @route   PUT /api/quotes/:id/status
+// @access  Private/Admin
+const updateQuoteStatus = async (req, res) => {
+  const { status } = req.body; // Lấy trạng thái mới từ Frontend gửi lên
 
+  try {
+    const quote = await Quote.findById(req.params.id);
+
+    if (quote) {
+      quote.status = status; // Cập nhật trạng thái
+      const updatedQuote = await quote.save(); // Lưu vào DB
+      res.json(updatedQuote);
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy yêu cầu báo giá này' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái' });
+  }
+};
 module.exports = { 
     createQuote, 
-    getQuotes  // <--- Bạn kiểm tra xem dòng này đã có chưa?
+    getQuotes,
+    updateQuoteStatus, 
 };
