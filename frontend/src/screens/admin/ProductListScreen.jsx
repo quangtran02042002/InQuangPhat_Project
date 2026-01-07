@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom'; // Thêm useParams nếu muốn làm phân trang sau này
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
-import Paginate from '../../components/Paginate'; // Import thêm phân trang cho Admin
+import Paginate from '../../components/Paginate';
+import Loader from '../../components/Loader';
 
 const ProductListScreen = () => {
   const navigate = useNavigate();
-  const { pageNumber } = useParams(); // Lấy số trang từ URL (nếu có)
+  const { pageNumber } = useParams();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,7 @@ const ProductListScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteProductId, setDeleteProductId] = useState(null);
 
+  // Lấy userInfo nhưng KHÔNG cho vào dependency array
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   useEffect(() => {
@@ -31,25 +33,24 @@ const ProductListScreen = () => {
 
     const fetchProducts = async () => {
       try {
-        // --- SỬA LỖI TẠI ĐÂY ---
-        // Gọi API kèm pageNumber (mặc định là 1)
+        setLoading(true);
         const { data } = await axios.get(`/api/products?pageNumber=${pageNumber || 1}`);
 
-        // Vì API trả về { products, page, pages } nên ta phải lấy data.products
         setProducts(data.products);
         setPage(data.page);
         setPages(data.pages);
-
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message);
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [navigate, userInfo, pageNumber]); // Thêm pageNumber vào dependency
+    // SỬA LỖI TẠI ĐÂY: Đã xóa 'userInfo' khỏi danh sách bên dưới
+  }, [navigate, pageNumber]); 
 
+  // --- CÁC HÀM XỬ LÝ KHÁC GIỮ NGUYÊN ---
   const openDeleteModal = (id) => {
     setDeleteProductId(id);
     setIsModalOpen(true);
@@ -57,22 +58,16 @@ const ProductListScreen = () => {
 
   const confirmDeleteHandler = async () => {
     if (!deleteProductId) return;
-
     try {
       const config = {
-        headers: {
-          Authorization: `Bearer ${userInfo.token}`,
-        },
+        headers: { Authorization: `Bearer ${userInfo.token}` },
       };
-
       await axios.delete(`/api/products/${deleteProductId}`, config);
-
+      
       setProducts(products.filter((product) => product._id !== deleteProductId));
-      toast.success('Đã xóa sản phẩm thành công!', { icon: "🗑️" });
-
+      toast.success('Đã xóa sản phẩm thành công!');
       setIsModalOpen(false);
       setDeleteProductId(null);
-
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
       setIsModalOpen(false);
@@ -82,6 +77,15 @@ const ProductListScreen = () => {
   const createProductHandler = () => {
     navigate('/admin/product/create');
   }
+
+  const getProductImage = (product) => {
+    if (product.image) return product.image;
+    if (product.images && product.images.length > 0) {
+        const firstImg = product.images[0];
+        return typeof firstImg === 'string' ? firstImg : firstImg.url;
+    }
+    return '';
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -99,7 +103,7 @@ const ProductListScreen = () => {
         </div>
 
         {loading ? (
-          <div className="text-blue-600 font-medium">Đang tải dữ liệu...</div>
+           <div className="flex justify-center mt-20"><Loader /></div>
         ) : error ? (
           <div className="text-red-500 bg-red-100 p-3 rounded">{error}</div>
         ) : (
@@ -107,7 +111,7 @@ const ProductListScreen = () => {
             <table className="min-w-full leading-normal">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 uppercase text-xs font-bold">
-                  <th className="py-3 px-6 text-left">ID</th>
+                  <th className="py-3 px-6 text-left">Hình ảnh</th>
                   <th className="py-3 px-6 text-left">Tên sản phẩm</th>
                   <th className="py-3 px-6 text-left">Giá hiển thị</th>
                   <th className="py-3 px-6 text-left">Danh mục</th>
@@ -115,56 +119,60 @@ const ProductListScreen = () => {
                 </tr>
               </thead>
               <tbody className="text-gray-700 text-sm">
-                {/* Kiểm tra an toàn: products có phải là mảng không? */}
-                {Array.isArray(products) && products.map((product) => (
+                {products.length === 0 && (
+                   <tr><td colSpan="5" className="text-center py-8 text-gray-500">Chưa có sản phẩm nào.</td></tr>
+                )}
+                
+                {products.map((product) => (
                   <tr key={product._id} className="border-b border-gray-100 hover:bg-gray-50 transition">
                     <td className="py-3 px-6">
-                      <div className="flex items-center">
-                        <div className="mr-2">
-                          <img
-                            // Logic lấy ảnh đầu tiên
-                            src={product.images && product.images.length > 0 ? product.images[0].url : ''}
-                            alt={product.name}
-                            className="w-10 h-10 rounded shadow border"
-                          />
+                        <div className="w-12 h-12 rounded border overflow-hidden bg-gray-100">
+                             {getProductImage(product) ? (
+                                <img 
+                                    src={getProductImage(product)} 
+                                    alt={product.name} 
+                                    className="w-full h-full object-cover"
+                                />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Img</div>
+                             )}
                         </div>
-                      </div>
                     </td>
-                    <td className="py-3 px-6 font-mono text-xs text-gray-500">{product._id}</td>
-                    <td className="py-3 px-6 font-bold text-gray-800">{product.name}</td>
+                    <td className="py-3 px-6 font-bold text-gray-800">
+                        {product.name}
+                        <div className="text-xs text-gray-400 font-normal font-mono mt-1">{product._id}</div>
+                    </td>
                     <td className="py-3 px-6 text-blue-600 font-bold">
-                      {product.priceTable && product.priceTable.length > 0
-                        ? product.priceTable[0].price.toLocaleString()
-                        : 0}đ
+                      {product.price ? product.price.toLocaleString() : 0}đ
                     </td>
                     <td className="py-3 px-6">
-                      <span className="bg-gray-100 text-gray-600 py-1 px-3 rounded-full text-xs font-medium">
+                      <span className="bg-gray-100 text-gray-600 py-1 px-3 rounded-full text-xs font-medium border border-gray-200">
                         {product.category}
                       </span>
                     </td>
-                    <td className="py-3 px-6 text-center flex justify-center space-x-4">
-                      <Link to={`/admin/product/${product._id}/edit`} className="text-yellow-500 hover:text-yellow-700 transition">
-                        <FaEdit className="text-xl" title="Sửa" />
-                      </Link>
-                      <button
-                        onClick={() => openDeleteModal(product._id)}
-                        className="text-red-500 hover:text-red-700 transition"
-                      >
-                        <FaTrash className="text-xl" title="Xóa" />
-                      </button>
+                    <td className="py-3 px-6 text-center">
+                      <div className="flex justify-center space-x-4">
+                        <Link to={`/admin/product/${product._id}/edit`} className="text-yellow-500 hover:text-yellow-700 transition p-2 hover:bg-yellow-50 rounded">
+                          <FaEdit className="text-lg" title="Sửa" />
+                        </Link>
+                        <button
+                          onClick={() => openDeleteModal(product._id)}
+                          className="text-red-500 hover:text-red-700 transition p-2 hover:bg-red-50 rounded"
+                        >
+                          <FaTrash className="text-lg" title="Xóa" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {products.length === 0 && (
-              <div className="p-8 text-center text-gray-500">Chưa có sản phẩm nào.</div>
-            )}
 
-            {/* Thêm thanh phân trang cho Admin */}
-            <div className="p-4">
-              <Paginate pages={pages} page={page} isAdmin={true} />
-            </div>
+            {pages > 1 && (
+                <div className="p-4 border-t border-gray-100">
+                <Paginate pages={pages} page={data.page} isAdmin={true} />
+                </div>
+            )}
           </div>
         )}
       </div>
@@ -173,8 +181,8 @@ const ProductListScreen = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={confirmDeleteHandler}
-        title="Xác nhận xóa sản phẩm"
-        message="Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa sản phẩm này khỏi hệ thống không?"
+        title="Xác nhận xóa"
+        message="Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa không?"
       />
     </div>
   );

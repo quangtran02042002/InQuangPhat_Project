@@ -1,30 +1,79 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-// Schema con cho bảng giá
-const priceSchema = mongoose.Schema({
-  minQuantity: { type: Number, required: true },
-  price: { type: Number, required: true },
-});
-
-// THÊM SCHEMA CHO HÌNH ẢNH
-const imageSchema = mongoose.Schema({
-  url: { type: String, required: true },
-});
-const productSchema = mongoose.Schema(
+const reviewSchema = mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
     name: { type: String, required: true },
-    
-    // QUAN TRỌNG: Phải là mảng chứa imageSchema
-    images: [imageSchema], 
-    
-    category: { type: String, required: true },
-    description: { type: String, required: true },
-    priceTable: [priceSchema],
-    countInStock: { type: Number, required: true, default: 0 },
+    rating: { type: Number, required: true },
+    comment: { type: String, required: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-const Product = mongoose.model('Product', productSchema);
-module.exports = Product;
+const productSchema = mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String,
+      required: true,
+    },
+    // --- CẬP NHẬT PHẦN NÀY ---
+    category: {
+      type: String,
+      required: true,
+    },
+    group: {
+      type: String,
+      required: true, 
+      enum: ['offset', 'garment'], // Chỉ chấp nhận 2 giá trị này
+      default: 'offset'
+    },
+    // -------------------------
+    description: {
+      type: String,
+      required: true,
+    },
+    reviews: [reviewSchema],
+    rating: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    numReviews: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    price: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    countInStock: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Product = mongoose.model("Product", productSchema);
+
+export default Product;

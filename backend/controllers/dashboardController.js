@@ -1,6 +1,7 @@
-const Product = require('../models/Product');
-const Quote = require('../models/Quote');
-const User = require('../models/User');
+// 1. Dùng import thay vì require (Nhớ thêm đuôi .js)
+import Product from '../models/Product.js';
+import Quote from '../models/Quote.js'; // Hoặc Order.js nếu bạn dùng Order
+import User from '../models/User.js';
 
 // @desc    Lấy số liệu thống kê cho Dashboard
 // @route   GET /api/dashboard/stats
@@ -15,23 +16,25 @@ const getDashboardStats = async (req, res) => {
     ]);
 
     // 2. Thống kê trạng thái báo giá để vẽ biểu đồ
-    // Đếm xem có bao nhiêu cái Mới, bao nhiêu cái Đang xử lý...
     const statusStats = await Quote.aggregate([
       {
         $group: {
-          _id: '$status', // Nhóm theo trạng thái
-          count: { $sum: 1 }, // Đếm số lượng
+          _id: '$status', 
+          count: { $sum: 1 }, 
         },
       },
     ]);
 
-    // Chuẩn hóa dữ liệu cho Frontend dễ dùng (Recharts cần format này)
-    // Kết quả mong muốn: [{ name: 'Mới', value: 5 }, { name: 'Hoàn thành', value: 10 }]
+    // Chuẩn hóa dữ liệu cho Frontend
     const chartData = statusStats.map((item) => {
         let name = item._id;
-        if(name === 'New') name = 'Mới';
-        if(name === 'Contacted') name = 'Đang xử lý';
-        if(name === 'Done') name = 'Hoàn thành';
+        // Đảm bảo tên khớp với dữ liệu trong DB của bạn
+        if(name === 'New' || name === 'Mới') name = 'Mới';
+        if(name === 'Contacted' || name === 'Đang xử lý') name = 'Đang xử lý';
+        if(name === 'Done' || name === 'Hoàn thành') name = 'Hoàn thành';
+        // Fallback nếu không khớp case nào
+        if (!name) name = 'Khác'; 
+        
         return { name, value: item.count };
     });
 
@@ -44,8 +47,9 @@ const getDashboardStats = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server khi lấy thống kê' });
+    res.status(500).json({ message: 'Lỗi server khi lấy thống kê: ' + error.message });
   }
 };
 
-module.exports = { getDashboardStats };
+// 2. Dùng export thay vì module.exports
+export { getDashboardStats };

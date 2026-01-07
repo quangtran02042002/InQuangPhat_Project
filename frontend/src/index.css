@@ -40,3 +40,11 @@
 .ql-editor-display em {
   font-style: italic;
 }
+a {
+  text-decoration: none !important;
+}
+
+/* (Tuỳ chọn) Khi di chuột vào mới hiện gạch chân cho dễ nhận biết */
+a:hover {
+  text-decoration: none !important; /* Hoặc để 'underline' nếu muốn hiện khi hover */
+}

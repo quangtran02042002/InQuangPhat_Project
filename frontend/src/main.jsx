@@ -1,15 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// 1. Import HelmetProvider
-import { HelmetProvider } from 'react-helmet-async'; 
+import { HelmetProvider } from 'react-helmet-async';
+// 1. IMPORT HAI MÓN NÀY
+import { Provider } from 'react-redux';
+import store from './store';
+
 import App from './App.jsx';
 import './index.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* 2. Bọc App bằng HelmetProvider */}
     <HelmetProvider>
-      <App />
+      {/* 2. BỌC PROVIDER Ở ĐÂY */}
+      <Provider store={store}>
+        <App />
+      </Provider>
     </HelmetProvider>
   </React.StrictMode>,
 );
