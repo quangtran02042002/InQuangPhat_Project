@@ -7,7 +7,9 @@ const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes'); 
 const quoteRoutes = require('./routes/quoteRoutes');
 const userRoutes = require('./routes/userRoutes');
-const uploadRoutes = require('./routes/uploadRoutes')
+const uploadRoutes = require('./routes/uploadRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const newsRoutes = require('./routes/newsRoutes');
 // -------------------------
 
 // 1. Cấu hình
@@ -30,7 +32,12 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/users', userRoutes);
 // upload anh
 app.use('/api/upload', uploadRoutes);
+// dashboard
+app.use('/api/dashboard', dashboardRoutes);
+// news
+app.use('/api/news', newsRoutes);
 // -------------------------
+
 //
 // 4. Route kiểm tra
 app.get('/', (req, res) => {

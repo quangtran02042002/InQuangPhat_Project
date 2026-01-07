@@ -3,39 +3,49 @@ const Product = require('../models/Product');
 // @desc    Lấy tất cả sản phẩm (Có Tìm kiếm & Phân trang)
 // @route   GET /api/products?keyword=abc&pageNumber=1
 // @access  Public
+// @desc    Lấy tất cả sản phẩm (Có tìm kiếm & Phân trang & Lọc Category)
+// @route   GET /api/products
+// @access  Public
+// @desc    Lấy tất cả sản phẩm (Hỗ trợ tìm kiếm Tên + Lọc Danh mục + Phân trang)
+// @route   GET /api/products
+// @access  Public
 const getProducts = async (req, res) => {
+  const pageSize = 8; // Số lượng sản phẩm trên 1 trang
+  const page = Number(req.query.pageNumber) || 1;
+
+  // 1. Xử lý điều kiện lọc
+  let query = {}; // Mặc định là lấy hết
+
+  if (req.query.category) {
+    // Nếu trên URL có ?category=Hộp giấy -> Lọc chính xác theo trường category
+    query = { category: req.query.category };
+  } else if (req.query.keyword) {
+    // Nếu trên URL có ?keyword=abc -> Tìm kiếm tương đối theo tên (name)
+    query = {
+      name: {
+        $regex: req.query.keyword,
+        $options: 'i', // 'i' nghĩa là không phân biệt hoa thường
+      },
+    };
+  }
+
   try {
-    // 1. Cấu hình phân trang
-    const pageSize = 8; // Số sản phẩm trên 1 trang (Bạn có thể sửa số này tùy thích)
-    const page = Number(req.query.pageNumber) || 1; // Trang hiện tại (mặc định là 1)
+    // 2. Đếm tổng số sản phẩm thỏa mãn điều kiện (để tính số trang)
+    const count = await Product.countDocuments(query);
 
-    // 2. Cấu hình tìm kiếm (Keyword)
-    const keyword = req.query.keyword
-      ? {
-          name: {
-            $regex: req.query.keyword, // Tìm gần đúng
-            $options: 'i', // Không phân biệt hoa thường
-          },
-        }
-      : {};
-
-    // 3. Đếm tổng số sản phẩm khớp với từ khóa
-    const count = await Product.countDocuments({ ...keyword });
-
-    // 4. Lấy dữ liệu theo trang
-    const products = await Product.find({ ...keyword })
+    // 3. Lấy danh sách sản phẩm (có phân trang)
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 }) // Sắp xếp mới nhất lên đầu
       .limit(pageSize)
-      .skip(pageSize * (page - 1))
-      .sort({ createdAt: -1 }); // Mới nhất lên đầu
+      .skip(pageSize * (page - 1));
 
-    // 5. Trả về: Danh sách, trang hiện tại, tổng số trang
+    // 4. Trả kết quả về cho Frontend
     res.json({ products, page, pages: Math.ceil(count / pageSize) });
     
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server khi tải sản phẩm' });
+    res.status(500).json({ message: 'Lỗi server khi tải danh sách sản phẩm' });
   }
 };
-
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -63,47 +73,86 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// @desc    Tạo sản phẩm
+// @desc    Tạo sản phẩm mới
+// @route   POST /api/products
+// @access  Private/Admin
 const createProduct = async (req, res) => {
-  const { name, price, description, image, category, countInStock } = req.body;
+  try {
+    // 1. Lấy dữ liệu từ Frontend
+    const { name, price, images, category, countInStock, description } = req.body;
 
-  if (!name || !price || !category) {
-    res.status(400);
-    throw new Error('Vui lòng điền đầy đủ các trường bắt buộc');
+    // 2. Log ra terminal để kiểm tra (Bước này giúp bạn xem dữ liệu gửi lên là gì)
+    console.log("Dữ liệu nhận được:", req.body);
+
+    // 3. Xử lý chuẩn hóa mảng hình ảnh
+    // Frontend gửi: ['link1', 'link2'] -> Backend chuyển thành: [{ url: 'link1' }, { url: 'link2' }]
+    let imagesFormatted = [];
+    if (images && Array.isArray(images)) {
+        imagesFormatted = images.map(img => ({ url: img }));
+    }
+
+    // 4. Xử lý bảng giá (Đảm bảo price là số)
+    const numericPrice = Number(price);
+    const priceTable = [
+      { minQuantity: 100, price: numericPrice * 1.5 }, // Logic giá của bạn
+      { minQuantity: 500, price: numericPrice * 1.2 },
+      { minQuantity: 1000, price: numericPrice },
+    ];
+
+    // 5. Tạo đối tượng sản phẩm
+    const product = new Product({
+      user: req.user._id,
+      name,
+      images: imagesFormatted, // Lưu mảng object đã chuẩn hóa
+      category,
+      description,
+      countInStock: Number(countInStock), // Ép kiểu về số cho chắc chắn
+      priceTable,
+    });
+
+    // 6. Lưu vào Database
+    const createdProduct = await product.save();
+    res.status(201).json(createdProduct);
+
+  } catch (error) {
+    // Nếu có lỗi, in chi tiết ra Terminal của Backend để biết đường sửa
+    console.error("LỖI TẠO SẢN PHẨM:", error);
+    res.status(500).json({ message: "Lỗi Server: " + error.message });
   }
-
-  const product = new Product({
-    name,
-    price,
-    user: req.user._id,
-    image,
-    category,
-    countInStock,
-    numReviews: 0,
-    description,
-  });
-
-  const createdProduct = await product.save();
-  res.status(201).json(createdProduct);
 };
 
+// @desc    Cập nhật sản phẩm
 const updateProduct = async (req, res) => {
-  const { name, price, description, image, category, countInStock } = req.body;
+  const { name, price, images, category, countInStock, description } = req.body;
 
   const product = await Product.findById(req.params.id);
 
   if (product) {
-    product.name = name || product.name;
-    product.price = price || product.price;
-    product.description = description || product.description;
-    product.image = image || product.image;
-    product.category = category || product.category;
-    product.countInStock = countInStock || product.countInStock;
+    product.name = name;
+    product.description = description;
+    product.category = category;
+    product.countInStock = countInStock;
+    
+    // Nếu có gửi ảnh mới lên thì cập nhật, không thì giữ nguyên
+    if(images && images.length > 0) {
+        product.images = images.map(img => ({ url: img }));
+    }
+
+    // Cập nhật giá (Logic cũ)
+    if (price) {
+        product.priceTable = [
+            { minQuantity: 100, price: Number(price) * 1.5 },
+            { minQuantity: 500, price: Number(price) * 1.2 },
+            { minQuantity: 1000, price: Number(price) },
+        ];
+    }
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } else {
     res.status(404);
-    throw new Error('Không tìm thấy sản phẩm');
+    throw new Error('Product not found');
   }
 };
 

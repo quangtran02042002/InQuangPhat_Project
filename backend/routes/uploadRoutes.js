@@ -1,32 +1,34 @@
 const express = require('express');
-const router = express.Router();
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const dotenv = require('dotenv');
 
-// Cấu hình tài khoản Cloudinary (Đây là key demo, dùng tạm ok)
-// Sau này bạn nên đăng ký tài khoản riêng tại cloudinary.com để lấy key riêng
+dotenv.config();
+const router = express.Router();
+
+// 1. Cấu hình Cloudinary (Lấy từ file .env)
 cloudinary.config({
-  cloud_name: 'dchd7k8hi', 
-  api_key: '646439247784334', 
-  api_secret: 'R_9oJ2-2-H6g4jX8a5V2n3W-jxs' 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Cấu hình nơi lưu trữ
+// 2. Cấu hình nơi lưu trữ (Storage)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'InQuangPhat_Products', // Tên thư mục trên mây
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'], // Chỉ cho phép ảnh
+    folder: 'upload_anh_sp', // Tên thư mục trên Cloudinary
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'], // Định dạng cho phép
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Route upload: Chỉ cần gọi vào đây, nó sẽ trả về đường link ảnh
-router.post('/', upload.single('image'), (req, res) => {
-  // Trả về đường dẫn ảnh online (path)
-  res.send(`/${req.file.path}`);
+// SỬA: Đổi từ single('image') sang array('images', 10)
+router.post('/', upload.array('images', 10), (req, res) => {
+  const urls = req.files.map(file => file.path);
+  res.send(urls); // Trả về dạng mảng ['link1', 'link2']
 });
 
 module.exports = router;

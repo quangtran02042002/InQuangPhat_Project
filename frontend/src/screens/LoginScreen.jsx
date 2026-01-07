@@ -114,6 +114,12 @@ const LoginScreen = () => {
               ĐĂNG NHẬP
             </button>
           </div>
+          <div className="mt-4 text-center">
+    <span className="text-gray-600 text-sm">Chưa có tài khoản? </span>
+    <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+        Đăng ký tài khoản mới
+    </Link>
+</div>
         </form>
       </div>
     </div>

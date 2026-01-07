@@ -16,13 +16,20 @@ import DashboardScreen from './screens/admin/DashboardScreen';
 import QuoteListScreen from './screens/admin/QuoteListScreen';
 import ProductListScreen from './screens/admin/ProductListScreen';
 import ProductEditScreen from './screens/admin/ProductEditScreen';
-
+import UserListScreen from './screens/admin/UserListScreen';
+import ProfileScreen from './screens/admin/ProfileScreen';
+import NewsListScreen from './screens/admin/NewsListScreen';
+import NewsEditScreen from './screens/admin/NewsEditScreen';
+import NewsDetailScreen from './screens/NewsDetailScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import ScrollToTop from './components/ScrollToTop';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Header />
-        
+
         <main className="flex-grow">
           <Routes>
             {/* PUBLIC ROUTES */}
@@ -30,10 +37,13 @@ function App() {
             <Route path="/search/:keyword" element={<HomeScreen />} /> {/* Tìm kiếm */}
             <Route path="/page/:pageNumber" element={<HomeScreen />} /> {/* Phân trang */}
             <Route path="/search/:keyword/page/:pageNumber" element={<HomeScreen />} /> {/* Tìm + Phân trang */}
-            
+            <Route path="/category/:category" element={<HomeScreen />} />
+            <Route path="/category/:category/page/:pageNumber" element={<HomeScreen />} />
             <Route path="/product/:id" element={<ProductScreen />} />
             <Route path="/contact" element={<ContactScreen />} />
             <Route path="/login" element={<LoginScreen />} />
+            <Route path="/news/:id" element={<NewsDetailScreen />} />
+            <Route path="/register" element={<RegisterScreen />} />
 
             {/* ADMIN ROUTES */}
             <Route element={<AdminRoute />}>
@@ -43,10 +53,16 @@ function App() {
               <Route path="/admin/productlist/:pageNumber" element={<ProductListScreen />} />
               <Route path="/admin/product/create" element={<ProductEditScreen />} />
               <Route path="/admin/product/:id/edit" element={<ProductEditScreen />} />
+              <Route path="/admin/users" element={<UserListScreen />} />
+              <Route path="/admin/profile" element={<ProfileScreen />} />
+              <Route path="/admin/newslist" element={<NewsListScreen />} />
+              <Route path="/admin/news/create" element={<NewsEditScreen />} />
+              <Route path="/admin/news/:id/edit" element={<NewsEditScreen />} />
+
             </Route>
           </Routes>
         </main>
-        
+
         <Footer />
         <ToastContainer position="top-right" autoClose={3000} />
       </div>
