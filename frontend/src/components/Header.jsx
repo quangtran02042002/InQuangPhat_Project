@@ -1,126 +1,208 @@
-import React from 'react';
-import { FaShoppingCart, FaUser, FaBars, FaSignOutAlt, FaPhoneAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { FaPhoneAlt, FaUser, FaSignOutAlt, FaCog, FaUserCircle, FaCaretDown, FaChevronDown, FaBoxOpen, FaCogs } from 'react-icons/fa';
 import SearchBox from './SearchBox';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // State cho dropdown "Năng lực sản xuất"
+  const [dropdownOpen, setDropdownOpen] = useState(false); 
+  
+  // State cho dropdown "User" (MỚI THÊM ĐỂ FIX LỖI)
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     navigate('/login');
+    setUserMenuOpen(false); // Đóng menu sau khi logout
   };
 
-  // --- HÀM TÙY CHỈNH CUỘN MƯỢT (SLOW SCROLL) ---
   const scrollToTopSlowly = (duration) => {
-    const startPosition = window.scrollY; // Vị trí hiện tại
+    const startPosition = window.scrollY;
     const startTime = performance.now();
-
     const animation = (currentTime) => {
       const timeElapsed = currentTime - startTime;
-
-      // Hàm Easing (làm mượt chuyển động): easeInOutQuad
-      // Giúp lúc bắt đầu chậm -> giữa nhanh -> kết thúc chậm lại
       const ease = (t, b, c, d) => {
         t /= d / 2;
         if (t < 1) return c / 2 * t * t + b;
         t--;
         return -c / 2 * (t * (t - 2) - 1) + b;
       };
-
       const nextScrollY = ease(timeElapsed, startPosition, -startPosition, duration);
-
       window.scrollTo(0, nextScrollY);
-
       if (timeElapsed < duration) {
         requestAnimationFrame(animation);
       } else {
-        window.scrollTo(0, 0); // Đảm bảo về đích chính xác
+        window.scrollTo(0, 0);
       }
     };
-
     requestAnimationFrame(animation);
   };
 
-  // --- XỬ LÝ SỰ KIỆN CLICK ---
   const handleHomeClick = (e) => {
     e.preventDefault();
-
     if (location.pathname === '/') {
-      // Nếu đang ở trang chủ -> Lướt từ từ trong 1500ms (1.5 giây)
-      // Bạn có thể sửa số 1500 thành 2000 nếu muốn chậm hơn nữa
-      scrollToTopSlowly(1000
-      );
+      scrollToTopSlowly(1000);
     } else {
-      // Nếu ở trang khác -> Về trang chủ ngay lập tức
       navigate('/');
       window.scrollTo(0, 0);
     }
   };
 
+  const isParentActive = () => {
+    return location.pathname.includes('/products') || location.pathname.includes('/infrastructure') 
+      ? 'text-blue-600 font-bold' 
+      : 'text-gray-700 hover:text-blue-600';
+  };
+
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+    <header className="bg-white shadow-md sticky top-0 z-50 font-sans">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex flex-wrap justify-between items-center gap-4">
 
-        {/* LOGO: Đã áp dụng sự kiện click */}
-        <a
-          href="/"
-          onClick={handleHomeClick}
-          className="flex items-center gap-2 flex-shrink-0 cursor-pointer"
-        >
-          <span className="text-2xl font-bold text-blue-800 tracking-tighter uppercase">In Quang Phát</span>
-        </a>
-
-        {/* --- THANH TÌM KIẾM (Desktop) --- */}
-        <div className="flex-1 max-w-xl mx-auto hidden md:block">
-          <SearchBox />
-        </div>
-
-        {/* Menu & User */}
-        <div className="flex items-center space-x-5 text-gray-600">
-          <nav className="hidden lg:flex space-x-6 items-center font-medium mr-4">
-
-            {/* LINK TRANG CHỦ: Đã áp dụng sự kiện click */}
-            <a
-              href="/"
-              onClick={handleHomeClick}
-              className="hover:text-blue-600 transition cursor-pointer"
-            >
-              Trang chủ
-            </a>
-            <Link to="/contact" className="hover:text-blue-600 transition">Liên hệ</Link>
-            {userInfo && userInfo.isAdmin && (
-              <Link to="/admin/dashboard" className="text-red-600 font-bold hover:text-red-800">Quản trị</Link>
-            )}
-
-
-          </nav>
-
-          <a href="tel:0935110639" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-bold flex items-center transition shadow-md ml-4 animate-pulse">
-            <FaPhoneAlt className="mr-2 text-sm" />
-            <span className="hidden md:inline">0935110639</span>
+          {/* 1. LOGO */}
+          <a
+            href="/"
+            onClick={handleHomeClick}
+            className="flex items-center gap-2 flex-shrink-0 cursor-pointer"
+          >
+            <span className="text-2xl font-bold text-blue-800 tracking-tighter uppercase">In Quang Phát</span>
           </a>
 
-          {userInfo ? (
-            <div className="flex items-center gap-3">
-              <span className="font-medium text-blue-800 hidden sm:block">Hi, {userInfo.name}</span>
-              <button onClick={logoutHandler} className="text-gray-500 hover:text-red-600" title="Đăng xuất">
-                <FaSignOutAlt className="text-xl" />
-              </button>
+          {/* 2. THANH TÌM KIẾM (Desktop) */}
+          <div className="flex-1 max-w-xl mx-auto hidden md:block px-4">
+            <SearchBox />
+          </div>
+
+          {/* 3. KHU VỰC MENU BÊN PHẢI */}
+          <div className="flex items-center space-x-4 md:space-x-6">
+            
+            {/* A. MENU NGANG */}
+            <nav className="hidden lg:flex space-x-6 items-center font-medium text-gray-600 whitespace-nowrap">
+              <a href="/" onClick={handleHomeClick} className="hover:text-blue-600 transition cursor-pointer">
+                Trang chủ
+              </a>
+              
+              {/* DROPDOWN: NĂNG LỰC SẢN XUẤT */}
+              <div 
+                  className="relative group h-10 flex items-center cursor-pointer"
+                  onMouseEnter={() => setDropdownOpen(true)}
+                  onMouseLeave={() => setDropdownOpen(false)}
+              >
+                  <div className={`flex items-center py-2 ${isParentActive()}`}>
+                      Năng lực sản xuất <FaChevronDown className="ml-1 text-[10px] opacity-70" />
+                  </div>
+                  <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-white shadow-xl border-t-4 border-blue-600 transition-all duration-200 ${dropdownOpen ? 'opacity-100 visible mt-0' : 'opacity-0 invisible mt-2'}`}>
+                      <Link to="/products" className="flex items-start px-6 py-4 hover:bg-gray-50 border-b group/item transition">
+                          <div className="bg-blue-100 p-3 rounded-full mr-4 text-blue-600 group-hover/item:bg-blue-600 group-hover/item:text-white transition mt-1 flex-shrink-0">
+                              <FaBoxOpen size={18} />
+                          </div>
+                          <div>
+                              <span className="block font-bold text-gray-800 text-base mb-1">Sản phẩm mẫu</span>
+                              <span className="text-sm text-gray-500 font-normal leading-snug whitespace-normal block">
+                                  Hộp cứng, Túi giấy, Tem nhãn & Bao bì
+                              </span>
+                          </div>
+                      </Link>
+                      <Link to="/infrastructure" className="flex items-start px-6 py-4 hover:bg-gray-50 group/item transition">
+                           <div className="bg-orange-100 p-3 rounded-full mr-4 text-orange-600 group-hover/item:bg-orange-600 group-hover/item:text-white transition mt-1 flex-shrink-0">
+                              <FaCogs size={18} />
+                          </div>
+                          <div>
+                              <span className="block font-bold text-gray-800 text-base mb-1">Hệ thống máy móc</span>
+                              <span className="text-sm text-gray-500 font-normal leading-snug whitespace-normal block">
+                                  Video quy trình in ấn & Gia công tại xưởng
+                              </span>
+                          </div>
+                      </Link>
+                  </div>
+              </div>
+
+              <Link to="/contact" className="hover:text-blue-600 transition">
+                Liên hệ
+              </Link>
+            </nav>
+
+            {/* B. HOTLINE BUTTON */}
+            <a href="tel:0935110639" className="hidden xl:flex bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-bold items-center transition shadow-md animate-pulse whitespace-nowrap">
+              <FaPhoneAlt className="mr-2 text-sm" />
+              <span>0935.110.639</span>
+            </a>
+
+            {/* C. USER DROPDOWN (ĐÃ SỬA LỖI) */}
+            <div className="relative z-50">
+              {userInfo ? (
+                // --- KHI ĐÃ ĐĂNG NHẬP ---
+                // Sửa: Dùng onMouseEnter/Leave thay vì CSS hover thuần túy để ổn định hơn
+                <div 
+                    className="relative cursor-pointer py-2"
+                    onMouseEnter={() => setUserMenuOpen(true)}
+                    onMouseLeave={() => setUserMenuOpen(false)}
+                > 
+                  <div className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition">
+                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200">
+                        <FaUser className="text-sm" />
+                    </div>
+                    <span className="font-medium hidden sm:block max-w-[100px] truncate">
+                        {userInfo.name}
+                    </span>
+                    {/* Icon xoay khi mở menu */}
+                    <FaCaretDown className={`text-xs text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180 text-blue-600' : ''}`} />
+                  </div>
+
+                  {/* Menu Dropdown - Kiểm soát bằng biến userMenuOpen */}
+                  <div className={`absolute right-0 top-full pt-2 w-56 transition-all duration-200 transform ${userMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'}`}>
+                    <div className="bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+                        
+                        <div className="px-4 py-3 border-b bg-gray-50 sm:hidden">
+                            <p className="text-sm font-bold text-gray-800">{userInfo.name}</p>
+                        </div>
+
+                        <Link to="/profile" className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                            <FaUserCircle className="mr-3 text-lg" /> Hồ sơ cá nhân
+                        </Link>
+
+                        {/* Nút Admin */}
+                        {userInfo.isAdmin && (
+                            <Link to="/admin/dashboard" className="flex items-center px-4 py-3 text-red-600 font-bold hover:bg-red-50 transition border-t border-b border-gray-100">
+                                <FaCog className="mr-3 text-lg" /> Trang Quản Trị
+                            </Link>
+                        )}
+
+                        <button 
+                            onClick={logoutHandler} 
+                            className="w-full text-left flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-red-600 transition"
+                        >
+                            <FaSignOutAlt className="mr-3 text-lg" /> Đăng xuất
+                        </button>
+                    </div>
+                  </div>
+                </div>
+
+              ) : (
+                // --- KHI CHƯA ĐĂNG NHẬP ---
+                <Link 
+                    to="/login" 
+                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium transition py-2"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-100 hover:text-blue-600 transition">
+                    <FaUser />
+                  </div>
+                  <span className="hidden sm:inline">Đăng nhập</span>
+                </Link>
+              )}
             </div>
-          ) : (
-            <Link to="/login" className="flex items-center gap-1 hover:text-blue-600 transition">
-              <FaUser className="text-xl" /> <span>Đăng nhập</span>
-            </Link>
-          )}
+
+          </div>
         </div>
       </div>
 
-      {/* --- THANH TÌM KIẾM (Mobile) --- */}
-      <div className="md:hidden px-4 pb-4">
+      {/* 4. MOBILE SEARCH */}
+      <div className="md:hidden px-4 pb-3 border-t pt-3">
         <SearchBox />
       </div>
     </header>

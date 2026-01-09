@@ -1,18 +1,17 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaChartLine } from 'react-icons/fa';
-import { FaUserCog } from 'react-icons/fa';
-import { FaNewspaper } from 'react-icons/fa';
+// Thêm FaCogs vào danh sách import icon
+import { FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaChartLine, FaUserCog, FaNewspaper, FaCogs } from 'react-icons/fa';
+
 const Sidebar = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Dùng để biết đang ở trang nào để bôi đậm menu
+  const location = useLocation();
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     navigate('/login');
   };
 
-  // Hàm kiểm tra xem menu nào đang active
   const isActive = (path) => {
     return location.pathname.includes(path)
       ? 'bg-blue-800 text-white shadow-md'
@@ -43,18 +42,27 @@ const Sidebar = () => {
           <span className="font-medium">Quản lý Sản phẩm</span>
         </Link>
 
-        <Link to="/admin/users" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/users')}`}>
-          <FaUsers className="mr-3 text-lg" />
-          <span className="font-medium">Quản lý User</span>
+        {/* --- MENU QUẢN LÝ MÁY MÓC (MỚI THÊM) --- */}
+        <Link to="/admin/machinelist" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/machinelist')}`}>
+          <FaCogs className="mr-3 text-lg" />
+          <span className="font-medium">Quản lý Máy móc</span>
         </Link>
+        {/* -------------------------------------- */}
+
         <Link to="/admin/newslist" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/news')}`}>
           <FaNewspaper className="mr-3 text-lg" />
           <span className="font-medium">Quản lý Tin tức</span>
         </Link>
+
+        <Link to="/admin/users" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/users')}`}>
+          <FaUsers className="mr-3 text-lg" />
+          <span className="font-medium">Quản lý User</span>
+        </Link>
+
         <Link to="/admin/profile" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/profile')}`}>
-        <FaUserCog className="mr-3 text-lg" />
-        <span className="font-medium">Hồ sơ cá nhân</span>
-      </Link>
+          <FaUserCog className="mr-3 text-lg" />
+          <span className="font-medium">Hồ sơ cá nhân</span>
+        </Link>
       </nav>
       
       {/* FOOTER SIDEBAR */}
@@ -62,7 +70,6 @@ const Sidebar = () => {
         <button onClick={logoutHandler} className="flex items-center justify-center w-full px-4 py-2 text-red-300 hover:text-white hover:bg-red-600 rounded-lg transition">
           <FaSignOutAlt className="mr-2" /> Đăng xuất
         </button>
-
       </div>
 
     </div>

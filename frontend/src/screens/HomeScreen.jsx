@@ -97,14 +97,25 @@ const HomeScreen = () => {
 
   const handleCategoryClick = (cat) => {
     if (activeCategory === cat) {
+      // TRƯỜNG HỢP 1: Đang chọn -> Bấm lại để Bỏ chọn (Tắt bộ lọc)
       setActiveCategory('');
-      navigate('/');
+      
+      // --- SỬA Ở ĐÂY ---
+      // Thay vì navigate('/') để về trang chủ
+      // Ta chuyển hướng về trang Danh sách tất cả sản phẩm
+      navigate('/products'); 
+      
     } else {
+      // TRƯỜNG HỢP 2: Chọn danh mục mới
       setActiveCategory(cat);
+      
+      // Giữ lại tham số Group (Offset/Garment) nếu có để URL đẹp và đúng ngữ cảnh
       const groupParam = activeGroup ? `?group=${activeGroup}` : '';
+      
+      // Chuyển hướng sang trang chi tiết danh mục đó
       navigate(`/category/${cat}${groupParam}`);
     }
-  };
+};
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
@@ -176,7 +187,7 @@ const HomeScreen = () => {
                             ))}
                              
                             <button 
-                                onClick={() => navigate('/')}
+                                onClick={() => navigate('/products')}
                                 className="px-5 py-2 rounded-full border border-red-200 text-red-500 font-medium hover:bg-red-50 transition"
                             >
                                  ✕ Thoát

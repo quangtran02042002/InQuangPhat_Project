@@ -23,6 +23,11 @@ import NewsEditScreen from './screens/admin/NewsEditScreen';
 import NewsDetailScreen from './screens/NewsDetailScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ScrollToTop from './components/ScrollToTop';
+import MachineListScreen from './screens/admin/MachineListScreen';
+import MachineEditScreen from './screens/admin/MachineEditScreen';
+import InfrastructureScreen from './screens/InfrastructureScreen';
+import MachineDetailPublicScreen from './screens/MachineDetailPublicScreen';
+import AllProductsScreen from './screens/AllProductsScreen';
 function App() {
   return (
     <Router>
@@ -44,7 +49,9 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/news/:id" element={<NewsDetailScreen />} />
             <Route path="/register" element={<RegisterScreen />} />
-
+            <Route path="/infrastructure" element={<InfrastructureScreen />} />
+            <Route path="/infrastructure/:id" element={<MachineDetailPublicScreen />} />
+            <Route path="/products" element={<AllProductsScreen />} />
             {/* ADMIN ROUTES */}
             <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<DashboardScreen />} />
@@ -58,7 +65,9 @@ function App() {
               <Route path="/admin/newslist" element={<NewsListScreen />} />
               <Route path="/admin/news/create" element={<NewsEditScreen />} />
               <Route path="/admin/news/:id/edit" element={<NewsEditScreen />} />
-
+              <Route path="/admin/machinelist" element={<MachineListScreen />} />
+              <Route path="/admin/machine/new" element={<MachineEditScreen />} />
+              <Route path="/admin/machine/:id/edit" element={<MachineEditScreen />} />
             </Route>
           </Routes>
         </main>
