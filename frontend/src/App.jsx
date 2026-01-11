@@ -28,6 +28,9 @@ import MachineEditScreen from './screens/admin/MachineEditScreen';
 import InfrastructureScreen from './screens/InfrastructureScreen';
 import MachineDetailPublicScreen from './screens/MachineDetailPublicScreen';
 import AllProductsScreen from './screens/AllProductsScreen';
+import SupplierListScreen from './screens/admin/SupplierListScreen';
+import SupplierEditScreen from './screens/admin/SupplierEditScreen';
+import AboutScreen from './screens/AboutScreen';
 function App() {
   return (
     <Router>
@@ -52,6 +55,7 @@ function App() {
             <Route path="/infrastructure" element={<InfrastructureScreen />} />
             <Route path="/infrastructure/:id" element={<MachineDetailPublicScreen />} />
             <Route path="/products" element={<AllProductsScreen />} />
+            <Route path="/about" element={<AboutScreen />} />
             {/* ADMIN ROUTES */}
             <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<DashboardScreen />} />
@@ -68,6 +72,9 @@ function App() {
               <Route path="/admin/machinelist" element={<MachineListScreen />} />
               <Route path="/admin/machine/new" element={<MachineEditScreen />} />
               <Route path="/admin/machine/:id/edit" element={<MachineEditScreen />} />
+              <Route path="/admin/supplierlist" element={<SupplierListScreen />} />
+              <Route path="/admin/supplier/new" element={<SupplierEditScreen />} />
+              <Route path="/admin/supplier/:id/edit" element={<SupplierEditScreen />} />
             </Route>
           </Routes>
         </main>

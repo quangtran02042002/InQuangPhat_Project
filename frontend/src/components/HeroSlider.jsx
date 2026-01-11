@@ -21,10 +21,10 @@ const HeroSlider = () => {
     {
       id: 1,
       image: '/images/slide1.jpg', 
-      title: 'XƯỞNG IN OFFSET CÔNG NGHIỆP',
+      title: 'XƯỞNG IN OFFSET + IN LỤA HIỆN ĐẠI',
       subtitle: 'Chuyên in hộp giấy, túi giấy giá rẻ tận xưởng - Uy tín 10 năm kinh nghiệm',
-      link: '/category/Hộp giấy?group=offset',
-      btnText: 'XEM MẪU HỘP'
+      link: '/products',
+      btnText: 'XEM MẪU'
     },
     {
       id: 2,

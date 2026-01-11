@@ -11,6 +11,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const machineRoutes = require('./routes/machineRoutes');
+const supplierRoutes = require('./routes/supplierRoutes');
 // -------------------------
 
 // 1. Cấu hình
@@ -39,6 +40,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/news', newsRoutes);
 // -------------------------
 app.use('/api/v1', machineRoutes);
+// supplier
+app.use('/api/v1/suppliers', supplierRoutes);
 //
 // 4. Route kiểm tra
 app.get('/', (req, res) => {

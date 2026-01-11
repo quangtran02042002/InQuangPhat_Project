@@ -7,25 +7,26 @@ import 'react-quill-new/dist/quill.snow.css';
 import { FaArrowLeft, FaSave, FaCloudUploadAlt, FaTrash, FaVideo, FaTimes } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 
+// 1. IMPORT VALIDATE
+import { validateTextMixed } from '../../utils/validation';
+
 const MachineEditScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
   const quillRef = useRef(null);
 
-  // --- STATE QUẢN LÝ DỮ LIỆU ---
+  // --- STATE ---
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   
-  // State cho ẢNH
-  const [images, setImages] = useState([]); // File mới (để upload)
-  const [imagesPreview, setImagesPreview] = useState([]); // Preview ảnh mới
-  const [oldImages, setOldImages] = useState([]); // Ảnh cũ từ DB (để giữ lại)
+  const [images, setImages] = useState([]); 
+  const [imagesPreview, setImagesPreview] = useState([]); 
+  const [oldImages, setOldImages] = useState([]); 
 
-  // State cho VIDEO
-  const [videoFiles, setVideoFiles] = useState([]); // File video mới
-  const [oldVideos, setOldVideos] = useState([]); // Video cũ từ DB
+  const [videoFiles, setVideoFiles] = useState([]); 
+  const [oldVideos, setOldVideos] = useState([]); 
 
   const [uploading, setUploading] = useState(false);
 
@@ -35,67 +36,54 @@ const MachineEditScreen = () => {
     "Máy in vải",
     "Máy in kỹ thuật số",
     "Máy cắt bế",
-    "Máy ép nhiệt",
-    "Máy ép kim",
-    "Máy sấy băng tải",
-    "Máy chụp bản in",
-    "Máy Dán hộp",
-    "Máy cán màn tự động",
-    "Máy in Oval tự động",
-    "Khác",
+    "Khác"
   ];
 
-  // --- 1. XỬ LÝ ẢNH (MỚI & CŨ) ---
+  // --- XỬ LÝ ẢNH & VIDEO (Giữ nguyên như cũ) ---
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
     setImages((prev) => [...prev, ...files]);
-
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
-        if (reader.readyState === 2) {
-          setImagesPreview((old) => [...old, reader.result]);
-        }
+        if (reader.readyState === 2) setImagesPreview((old) => [...old, reader.result]);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removeImage = (index) => { // Xóa ảnh MỚI đang chọn
+  const removeImage = (index) => {
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
-
     const newPreviews = [...imagesPreview];
     newPreviews.splice(index, 1);
     setImagesPreview(newPreviews);
   };
 
-  const removeOldImage = (index) => { // Xóa ảnh CŨ (đã có trên server)
+  const removeOldImage = (index) => {
     const newOldImages = [...oldImages];
     newOldImages.splice(index, 1);
     setOldImages(newOldImages);
   };
 
-  // --- 2. XỬ LÝ VIDEO (MỚI & CŨ) ---
   const handleVideosChange = (e) => {
     const files = Array.from(e.target.files);
     setVideoFiles((prev) => [...prev, ...files]);
   };
 
-  const removeVideo = (index) => { // Xóa video MỚI
+  const removeVideo = (index) => {
     const newVideos = [...videoFiles];
     newVideos.splice(index, 1);
     setVideoFiles(newVideos);
   };
 
-  const removeOldVideo = (index) => { // Xóa video CŨ
+  const removeOldVideo = (index) => {
     const newOldVideos = [...oldVideos];
     newOldVideos.splice(index, 1);
     setOldVideos(newOldVideos);
   };
 
-  // --- CẤU HÌNH EDITOR ---
   const modules = useMemo(() => ({
     toolbar: {
       container: [
@@ -109,21 +97,17 @@ const MachineEditScreen = () => {
     },
   }), []);
 
-  // --- LẤY DỮ LIỆU KHI EDIT ---
   useEffect(() => {
     if (isEditMode) {
       const fetchMachine = async () => {
         try {
           const { data } = await axios.get(`/api/v1/machines/${id}`); 
           const machine = data.machine || data; 
-
           setName(machine.name);
           setCategory(machine.category);
           setDescription(machine.description || '');
-          
           setOldImages(machine.images || []);
-          setOldVideos(machine.videos || []); // Load video cũ nếu có
-
+          setOldVideos(machine.videos || []); 
         } catch (err) { 
             toast.error('Lỗi tải dữ liệu máy'); 
         }
@@ -132,39 +116,52 @@ const MachineEditScreen = () => {
     }
   }, [id, isEditMode]);
 
-  // --- SUBMIT FORM ---
+  // --- HÀM SUBMIT ĐÃ BỔ SUNG VALIDATE ---
   const submitHandler = async (e) => {
     e.preventDefault();
-    setUploading(true);
 
+    // 1. Validate Tên máy (Dùng validateTextMixed vì tên máy có số và ký tự)
+    if (!validateTextMixed(name)) {
+        toast.error('Tên máy không hợp lệ (cần ít nhất 2 ký tự)');
+        return;
+    }
+
+    // 2. Validate Danh mục
+    if (!category || category === "") {
+        toast.error('Vui lòng chọn danh mục cho máy');
+        return;
+    }
+
+    // 3. Validate Ảnh (Bắt buộc phải có ít nhất 1 ảnh để hiển thị trang chủ)
+    // Logic: Tổng ảnh cũ + ảnh mới phải > 0
+    if (oldImages.length === 0 && images.length === 0) {
+        toast.error('Vui lòng tải lên ít nhất 1 hình ảnh minh họa');
+        return;
+    }
+
+    // Nếu qua hết các bước kiểm tra thì mới xử lý gửi đi
+    setUploading(true);
     const formData = new FormData();
     formData.append('name', name);
     formData.append('category', category);
     formData.append('description', description);
-
-    // QUAN TRỌNG: Gửi danh sách ảnh/video cũ cần GIỮ LẠI
     formData.append('oldImages', JSON.stringify(oldImages));
     formData.append('oldVideos', JSON.stringify(oldVideos));
 
-    // Append ảnh MỚI
     images.forEach((image) => {
       formData.append('images', image);
     });
 
-    // Append video MỚI
     videoFiles.forEach((video) => {
         formData.append('videos', video);
     });
 
     try {
         const config = { headers: { "Content-Type": "multipart/form-data" } };
-
         if (isEditMode) {
-            // Update (PUT)
             await axios.put(`/api/v1/admin/machine/${id}`, formData, config);
             toast.success('Cập nhật máy thành công!');
         } else {
-            // Create (POST)
             await axios.post('/api/v1/admin/machine/new', formData, config);
             toast.success('Thêm máy mới thành công!');
         }
@@ -194,23 +191,23 @@ const MachineEditScreen = () => {
                 {/* Tên Máy & Danh Mục */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy <span className="text-red-500">*</span></label>
                         <input 
                             type="text" 
                             value={name} 
                             onChange={(e) => setName(e.target.value)} 
                             className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" 
                             placeholder="VD: Máy in Offset Komori..." 
-                            required
+                            
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
                         <select 
                             value={category} 
                             onChange={(e) => setCategory(e.target.value)} 
                             className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            required
+                            
                         >
                             <option value="">-- Chọn danh mục --</option>
                             {categories.map(cat => (
@@ -222,58 +219,38 @@ const MachineEditScreen = () => {
 
                 {/* --- KHU VỰC ẢNH --- */}
                 <div className="border-t pt-4">
-                    <label className="block text-lg font-semibold text-gray-800 mb-2">Hình ảnh sản phẩm</label>
-                    
-                    {/* Nút chọn ảnh mới */}
+                    <label className="block text-lg font-semibold text-gray-800 mb-2">Hình ảnh sản phẩm <span className="text-red-500">*</span></label>
                     <div className="mb-4">
                         <label className="cursor-pointer inline-flex items-center bg-white border border-dashed border-blue-400 text-blue-600 px-6 py-3 rounded hover:bg-blue-50 transition shadow-sm w-full justify-center">
                             <FaCloudUploadAlt className="mr-2 text-xl" /> 
-                            <span className="font-semibold">Chọn thêm ảnh từ máy tính</span>
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                onChange={handleImagesChange} 
-                                multiple 
-                                accept="image/*"
-                            />
+                            <span className="font-semibold">Chọn ảnh từ máy tính</span>
+                            <input type="file" className="hidden" onChange={handleImagesChange} multiple accept="image/*" />
                         </label>
                     </div>
 
                     {/* Preview Ảnh MỚI */}
                     {imagesPreview.length > 0 && (
-                        <div className="mb-4">
-                            <p className="text-xs text-blue-600 font-bold mb-2">Ảnh mới chọn:</p>
-                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                                {imagesPreview.map((img, index) => (
-                                    <div key={index} className="relative group border rounded-lg overflow-hidden h-24 shadow-sm">
-                                        <img src={img} alt="Preview" className="w-full h-full object-cover" />
-                                        <button 
-                                            type="button"
-                                            onClick={() => removeImage(index)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-80 hover:opacity-100 transition shadow"
-                                        >
-                                            <FaTimes size={12} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="mb-4 grid grid-cols-2 md:grid-cols-6 gap-4">
+                            {imagesPreview.map((img, index) => (
+                                <div key={index} className="relative group border rounded-lg overflow-hidden h-24 shadow-sm">
+                                    <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                                    <button type="button" onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-80 hover:opacity-100 transition shadow">
+                                        <FaTimes size={12} />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     )}
 
-                    {/* Danh sách Ảnh CŨ (Chỉ hiện khi Edit) */}
+                    {/* Danh sách Ảnh CŨ */}
                     {isEditMode && oldImages.length > 0 && (
                         <div className="p-4 bg-gray-50 rounded border border-gray-200">
-                            <p className="text-sm text-gray-700 font-bold mb-2">Ảnh hiện có trên server (Bấm X để xóa):</p>
+                            <p className="text-sm text-gray-700 font-bold mb-2">Ảnh hiện có trên server:</p>
                             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                                 {oldImages.map((img, idx) => (
                                     <div key={idx} className="relative group h-24 w-full border rounded overflow-hidden shadow-sm">
                                         <img src={img.url} alt="Old" className="w-full h-full object-cover" />
-                                        <button 
-                                            type="button"
-                                            onClick={() => removeOldImage(idx)}
-                                            className="absolute top-0 right-0 bg-red-600 text-white w-6 h-6 flex items-center justify-center hover:bg-red-700 transition z-10"
-                                            title="Xóa ảnh này"
-                                        >
+                                        <button type="button" onClick={() => removeOldImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white w-6 h-6 flex items-center justify-center hover:bg-red-700 transition z-10">
                                             <FaTimes size={12} />
                                         </button>
                                     </div>
@@ -286,64 +263,33 @@ const MachineEditScreen = () => {
                 {/* --- KHU VỰC VIDEO --- */}
                 <div className="border-t pt-4">
                     <label className="block text-lg font-semibold text-gray-800 mb-2">Video thực tế</label>
-                    
                     <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center">
-                        <input 
-                            type="file" 
-                            id="video-upload"
-                            className="hidden"
-                            accept="video/*"
-                            multiple 
-                            onChange={handleVideosChange}
-                        />
+                        <input type="file" id="video-upload" className="hidden" accept="video/*" multiple onChange={handleVideosChange} />
                         <label htmlFor="video-upload" className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition inline-flex items-center shadow-lg">
                              <FaVideo className="mr-2" /> Chọn Video (MP4, MOV)
                         </label>
-                        <p className="text-xs text-gray-500 mt-3">Giữ phím Ctrl để chọn nhiều video. Khuyến nghị &lt; 50MB/file.</p>
+                        <p className="text-xs text-gray-500 mt-3">Tối đa 50MB/file.</p>
                     </div>
 
-                    {/* Video MỚI */}
+                    {/* Video MỚI & CŨ (Giữ nguyên logic hiển thị) */}
                     {videoFiles.length > 0 && (
                         <div className="mt-4 space-y-2">
                             <p className="text-xs text-blue-600 font-bold">Video mới chọn:</p>
                             {videoFiles.map((file, index) => (
                                 <div key={index} className="flex justify-between items-center bg-blue-50 p-3 border border-blue-200 rounded-lg">
-                                    <div className="flex items-center overflow-hidden">
-                                        <FaVideo className="text-blue-500 mr-3" />
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-800 truncate max-w-xs">{file.name}</p>
-                                            <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                                        </div>
-                                    </div>
-                                    <button type="button" onClick={() => removeVideo(index)} className="text-red-500 hover:text-red-700 p-2">
-                                        <FaTrash />
-                                    </button>
+                                    <span className="truncate text-sm">{file.name}</span>
+                                    <button type="button" onClick={() => removeVideo(index)} className="text-red-500"><FaTrash /></button>
                                 </div>
                             ))}
                         </div>
                     )}
-
-                    {/* Video CŨ */}
                     {isEditMode && oldVideos.length > 0 && (
                          <div className="mt-4 space-y-2">
-                            <p className="text-xs text-gray-700 font-bold">Video hiện có trên server:</p>
+                            <p className="text-xs text-gray-700 font-bold">Video hiện có:</p>
                             {oldVideos.map((vid, index) => (
                                 <div key={index} className="flex justify-between items-center bg-white p-3 border rounded-lg shadow-sm">
-                                    <div className="flex items-center overflow-hidden">
-                                        <div className="bg-green-100 text-green-600 p-2 rounded-full mr-3">
-                                            <FaVideo />
-                                        </div>
-                                        <a href={vid.url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline truncate max-w-xs">
-                                            Xem video hiện tại (Link)
-                                        </a>
-                                    </div>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => removeOldVideo(index)}
-                                        className="text-gray-400 hover:text-red-500 transition px-3 py-1 border rounded hover:bg-red-50"
-                                    >
-                                        Xóa bỏ
-                                    </button>
+                                    <a href={vid.url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline truncate">Xem video hiện tại</a>
+                                    <button type="button" onClick={() => removeOldVideo(index)} className="text-gray-400 hover:text-red-500 border px-2 py-1 rounded">Xóa bỏ</button>
                                 </div>
                             ))}
                         </div>
@@ -354,14 +300,7 @@ const MachineEditScreen = () => {
                 <div className="border-t pt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
                     <div className="bg-white">
-                        <ReactQuill 
-                            ref={quillRef}
-                            theme="snow" 
-                            modules={modules} 
-                            value={description} 
-                            onChange={setDescription} 
-                            className="h-64 mb-12"
-                        />
+                        <ReactQuill ref={quillRef} theme="snow" modules={modules} value={description} onChange={setDescription} className="h-64 mb-12" />
                     </div>
                 </div>
 
@@ -378,7 +317,7 @@ const MachineEditScreen = () => {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                {isEditMode ? 'Đang cập nhật...' : 'Đang thêm mới...'}
+                                Đang tải lên Cloudinary...
                             </span>
                         ) : (
                             <>

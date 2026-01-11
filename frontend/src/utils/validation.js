@@ -49,4 +49,22 @@ export const validateNumberInfo = (num) => {
 // 5. Validate Số lượng tồn kho (Số không âm - có thể bằng 0)
 export const validateStock = (num) => {
   return !isNaN(num) && Number(num) >= 0;
+};// 6. Validate Mã Số Thuế (VN: thường là 10 số hoặc 13 số có gạch nối)
+// VD: 0101234567 hoặc 0101234567-001
+export const validateTaxCode = (code) => {
+  // Nếu rỗng thì bỏ qua (vì trường này không bắt buộc, tùy logic của bạn)
+  if (!code || code.trim() === '') return true; 
+
+  const cleanCode = code.trim();
+  // Regex: 10 chữ số, tùy chọn thêm (- và 3 chữ số đuôi)
+  const re = /^\d{10}(-\d{3})?$/;
+  return re.test(cleanCode);
+};
+
+// 7. Validate Tên Công Ty / Doanh Nghiệp
+// Khác với tên người, tên công ty được phép chứa số và ký tự đặc biệt như . , - &
+export const validateTextMixed = (text) => {
+  if (!text) return false;
+  // Chỉ cần không rỗng và độ dài >= 2 ký tự
+  return text.trim().length >= 2;
 };

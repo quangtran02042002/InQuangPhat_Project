@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 // Thêm FaCogs vào danh sách import icon
-import { FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaChartLine, FaUserCog, FaNewspaper, FaCogs } from 'react-icons/fa';
+import { FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, FaChartLine, FaUserCog, FaNewspaper, FaCogs,FaTruck } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -48,7 +48,10 @@ const Sidebar = () => {
           <span className="font-medium">Quản lý Máy móc</span>
         </Link>
         {/* -------------------------------------- */}
-
+<Link to="/admin/supplierlist" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/supplierlist')}`}>
+    <FaTruck className="mr-3 text-lg" />
+    <span className="font-medium">Nhà Cung Cấp</span>
+</Link>
         <Link to="/admin/newslist" className={`flex items-center px-4 py-3 rounded-lg transition ${isActive('/admin/news')}`}>
           <FaNewspaper className="mr-3 text-lg" />
           <span className="font-medium">Quản lý Tin tức</span>

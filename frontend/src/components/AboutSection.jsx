@@ -40,7 +40,19 @@ const AboutSection = () => {
               {/* ... nội dung cũ ... */}
               In Quang Phát tự hào là đơn vị sở hữu...
             </p>
-            
+            <p className="text-gray-600 mb-8 leading-relaxed">
+    In Quang Phát tự hào là đơn vị sở hữu hệ thống máy in Offset khổ lớn hiện đại nhất miền Trung, cam kết mang lại giải pháp bao bì toàn diện từ thiết kế đến thành phẩm.
+</p>
+
+{/* KHU VỰC 2 NÚT BẤM */}
+<div className="flex flex-wrap gap-4">
+    {/* Nút 1: Xem sản phẩm (Nút Chính - Màu Đậm) */}
+
+    {/* Nút 2: Về chúng tôi (Nút Phụ - Viền rỗng) */}
+    <Link to="/about" className="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition transform hover:-translate-y-1">
+        Tìm hiểu về Quang Phát
+    </Link>
+</div>
             {/* ... */}
 
             <div className="flex gap-4 mt-8">

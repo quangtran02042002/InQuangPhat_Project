@@ -42,7 +42,7 @@ const ContactScreen = () => {
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-700">Địa chỉ xưởng/Văn phòng:</h3>
-                            <p className="text-gray-600">Số 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội</p>
+                            <p className="text-gray-600">Số 5, Đường Số 4, Cụm công nghiệp An Hoà, P.Hương An, Huế</p>
                             <p className="text-gray-500 text-sm italic">(Có chỗ đỗ ô tô cho khách hàng)</p>
                         </div>
                     </div>
@@ -53,8 +53,9 @@ const ContactScreen = () => {
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-700">Hotline / Zalo:</h3>
-                            <p className="text-red-600 font-bold text-lg">0909.123.456 (Mr. Quang)</p>
-                            <p className="text-gray-600">0988.888.999 (Kinh doanh)</p>
+                            <p className="text-red-600 font-bold text-lg">0903.597.686 (Mr. Tấn)</p>
+                            <p className="text-gray-600">0935.110.639 (Quang)</p>
+                            <p className="text-gray-600">0935.127.686 (Kinh Doanh)</p>
                         </div>
                     </div>
 
@@ -74,7 +75,7 @@ const ContactScreen = () => {
                         </div>
                         <div>
                             <h3 className="font-bold text-gray-700">Giờ làm việc:</h3>
-                            <p className="text-gray-600">Thứ 2 - Thứ 7: 8:00 - 17:30</p>
+                            <p className="text-gray-600">Thứ 2 - Thứ 7: 7:30 - 17:00</p>
                             <p className="text-gray-500 text-sm">Chủ nhật: Nghỉ (Nhận file online)</p>
                         </div>
                     </div>
@@ -83,14 +84,13 @@ const ContactScreen = () => {
 
             {/* BẢN ĐỒ GOOGLE MAPS (EMBED) */}
             <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 h-80 overflow-hidden">
-                <iframe 
-                    title="Ban do"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.863981044734!2d105.78913331476343!3d21.03812778599329!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab354920c233%3A0x5d0313a3bfdc4f37!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBTxrAgcGjhuqFtIEjDoCBO4buZaQ!5e0!3m2!1svi!2s!4v1647850000000!5m2!1svi!2s" 
-                    width="100%" 
-                    height="100%" 
-                    style={{ border: 0 }} 
-                    allowFullScreen="" 
-                    loading="lazy"
+                
+                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15303.044254321285!2d107.548543!3d16.487632!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3141a13dea2f1711%3A0x7b66d30c59e1a314!2sC%C3%B4ng%20ty%20TNHH%20In%20Quang%20Ph%C3%A1t!5e0!3m2!1svi!2sus!4v1768148784337!5m2!1svi!2sus" 
+                width="600" 
+                height="450" 
+                style={{ border: 0 }} 
+                allowFullScreen="" 
+                loading="lazy" 
                 ></iframe>
             </div>
           </div>

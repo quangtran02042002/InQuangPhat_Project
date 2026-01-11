@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      // Các cấu hình màu sắc, font chữ riêng của bạn (nếu có)
+    },
   },
-  plugins: [],
+  // --- QUAN TRỌNG: THÊM DÒNG NÀY VÀO MẢNG PLUGINS ---
+  plugins: [
+    require('@tailwindcss/typography'), 
+  ],
 }
