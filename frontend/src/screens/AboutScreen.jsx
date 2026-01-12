@@ -21,7 +21,7 @@ const AboutScreen = () => {
         <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-4xl md:text-5xl font-extrabold uppercase mb-4 tracking-wide">Câu chuyện của chúng tôi</h1>
             <p className="text-blue-100 text-lg max-w-2xl mx-auto">
-                Hơn 10 năm nỗ lực không ngừng nghỉ để trở thành biểu tượng niềm tin trong ngành in ấn & bao bì tại Việt Nam.
+                Hơn 20 năm nỗ lực không ngừng nghỉ để trở thành biểu tượng niềm tin trong ngành in ấn bao bì & may mặc tại Việt Nam.
             </p>
         </div>
       </div>
@@ -34,16 +34,16 @@ const AboutScreen = () => {
                     Tầm nhìn & Sứ mệnh
                 </h2>
                 <p className="text-gray-600 mb-4 leading-relaxed text-lg">
-                    Được thành lập từ những năm đầu 2010, <strong>In Quang Phát</strong> khởi đầu là một xưởng in nhỏ với khát khao mang lại những sản phẩm bao bì "Made in Vietnam" chất lượng quốc tế.
+                    Được thành lập từ những năm đầu 2000, <strong>In Quang Phát</strong> khởi đầu là một xưởng in nhỏ với khát khao mang lại những sản phẩm bao bì "Made in Vietnam" chất lượng quốc tế.
                 </p>
                 <p className="text-gray-600 mb-6 leading-relaxed text-lg">
-                    Chúng tôi không chỉ in lên giấy, chúng tôi in lên đó <strong>uy tín thương hiệu</strong> của khách hàng. Sứ mệnh của chúng tôi là nâng tầm giá trị sản phẩm Việt thông qua bao bì chuyên nghiệp.
+                    Chúng tôi không chỉ in lên giấy, chúng tôi in lên đó <strong>uy tín thương hiệu</strong> của khách hàng. Sứ mệnh của chúng tôi là nâng tầm giá trị sản phẩm Việt thông qua bao bì chuyên nghiệp, thông qua những chiếc áo được khoác lên người mặc
                 </p>
                 
                 <div className="space-y-3">
                     <div className="flex items-center">
                         <FaCheckCircle className="text-green-500 mr-3 text-xl" />
-                        <span className="font-medium text-gray-700">Công nghệ in Offset 6 màu hiện đại nhất.</span>
+                        <span className="font-medium text-gray-700">Công nghệ in Offset 4 màu hiện đại.</span>
                     </div>
                     <div className="flex items-center">
                         <FaCheckCircle className="text-green-500 mr-3 text-xl" />
@@ -63,7 +63,7 @@ const AboutScreen = () => {
                     className="rounded-lg shadow-2xl transform md:rotate-3 hover:rotate-0 transition duration-500" 
                 />
                 <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-lg shadow-xl border-l-4 border-red-600 hidden md:block">
-                    <p className="text-4xl font-bold text-blue-900">12+</p>
+                    <p className="text-4xl font-bold text-blue-900">20+</p>
                     <p className="text-sm text-gray-500 uppercase">Năm kinh nghiệm</p>
                 </div>
             </div>
