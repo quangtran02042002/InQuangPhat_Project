@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-// --- THÊM DÒNG NÀY (1) ---
 const productRoutes = require('./routes/productRoutes'); 
 const quoteRoutes = require('./routes/quoteRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -12,43 +11,34 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const machineRoutes = require('./routes/machineRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
-// -------------------------
 
-// 1. Cấu hình
+// --- SỬA DÒNG NÀY (Đổi import thành require) ---
+const customerRoutes = require('./routes/customerRoutes'); 
+// -----------------------------------------------
+
 dotenv.config(); 
 const app = express(); 
-
-// 2. Kết nối Database
 connectDB();
 
-// 3. Middleware
 app.use(cors()); 
 app.use(express.json()); 
 
-// --- THÊM DÒNG NÀY (2) ---
-// Dòng này có nghĩa là: Bất cứ ai vào đường dẫn /api/products thì sẽ chuyển cho productRoutes xử lý
 app.use('/api/products', productRoutes);
-// Quote 
 app.use('/api/quotes', quoteRoutes);
-//User 
 app.use('/api/users', userRoutes);
-// upload anh
 app.use('/api/upload', uploadRoutes);
-// dashboard
 app.use('/api/dashboard', dashboardRoutes);
-// news
 app.use('/api/news', newsRoutes);
-// -------------------------
 app.use('/api/v1', machineRoutes);
-// supplier
 app.use('/api/v1/suppliers', supplierRoutes);
-//
-// 4. Route kiểm tra
+
+// Route Customer
+app.use('/api/customers', customerRoutes);
+
 app.get('/', (req, res) => {
   res.send('API In Quang Phát đang chạy...');
 });
 
-// 5. Lắng nghe port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server đang chạy trên cổng ${PORT}`);

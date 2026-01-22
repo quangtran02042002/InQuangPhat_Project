@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaPhoneAlt, FaUser, FaSignOutAlt, FaCog, FaUserCircle, FaCaretDown, FaChevronDown, FaBoxOpen, FaCogs, FaBars, FaTimes, FaInfoCircle } from 'react-icons/fa';
+import { 
+  FaPhoneAlt, FaUser, FaSignOutAlt, FaCog, FaUserCircle, FaCaretDown, 
+  FaChevronDown, FaBoxOpen, FaCogs, FaBars, FaTimes, FaInfoCircle, FaNewspaper 
+} from 'react-icons/fa'; // <-- 1. Import thêm FaNewspaper
 import SearchBox from './SearchBox';
 
 const Header = () => {
@@ -58,13 +61,12 @@ const Header = () => {
       : 'text-gray-700 hover:text-blue-600';
   };
 
-  const isActive = (path) => location.pathname === path ? 'text-blue-600 font-bold' : 'text-gray-700 hover:text-blue-600';
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path) && path !== '/'
+    ? 'text-blue-600 font-bold' 
+    : 'text-gray-700 hover:text-blue-600';
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50 font-sans">
-      {/* THAY ĐỔI 1: Thay 'container' bằng 'w-full max-w-[1600px]' 
-         để header rộng hơn trên màn hình to, nhưng vẫn giữ giới hạn không quá bè
-      */}
       <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-3">
         <div className="flex flex-wrap justify-between items-center gap-4">
 
@@ -82,8 +84,7 @@ const Header = () => {
              </a>
           </div>
 
-          {/* THAY ĐỔI 2: Tăng max-w-xl lên max-w-3xl để thanh tìm kiếm dài hơn 
-          */}
+          {/* 2. THANH TÌM KIẾM (Desktop) */}
           <div className="flex-1 max-w-3xl mx-auto hidden lg:block px-8">
             <SearchBox />
           </div>
@@ -136,6 +137,11 @@ const Header = () => {
                   </div>
               </div>
 
+              {/* --- 2. THÊM NÚT TIN TỨC VÀO ĐÂY --- */}
+              <Link to="/news" className={isActive('/news')}>
+                Tin tức
+              </Link>
+
               <Link to="/contact" className={isActive('/contact')}>
                 Liên hệ
               </Link>
@@ -161,7 +167,6 @@ const Header = () => {
                     </div>
                     <div className="hidden sm:flex flex-col items-start leading-tight">
                         <span className="font-bold text-sm max-w-[100px] truncate">{userInfo.name}</span>
-                        {/* <span className="text-[10px] text-gray-400">Thành viên</span> */}
                     </div>
                     <FaCaretDown className={`text-xs text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180 text-blue-600' : ''}`} />
                   </div>
@@ -199,7 +204,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 4. MOBILE MENU */}
+      {/* 4. MOBILE MENU & SEARCH */}
       <div className="lg:hidden border-t">
          <div className="px-4 py-3 bg-gray-50">
             <SearchBox />
@@ -222,6 +227,11 @@ const Header = () => {
                         <FaCogs className="mr-3 text-orange-500" /> Máy móc & Công nghệ
                     </Link>
                 </div>
+
+                {/* --- 3. THÊM MỤC TIN TỨC VÀO MOBILE MENU --- */}
+                <Link to="/news" className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-50 font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
+                    <FaNewspaper className="mr-3 text-green-600" /> Tin tức & Sự kiện
+                </Link>
 
                 <Link to="/contact" className="block px-4 py-3 rounded-lg hover:bg-gray-50 font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
                     Liên hệ

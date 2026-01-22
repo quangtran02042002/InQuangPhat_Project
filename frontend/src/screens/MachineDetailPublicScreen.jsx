@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
-import { FaCalendarAlt, FaEye, FaShareAlt, FaTag, FaPhoneAlt, FaArrowRight, FaCogs } from 'react-icons/fa';
-import dayjs from 'dayjs'; // Cần cài: npm install dayjs (hoặc dùng new Date().toLocaleDateString)
+import { 
+  FaCalendarAlt, FaShareAlt, FaTag, FaPhoneAlt, FaArrowRight, FaCogs, 
+  FaPlay, FaImage, FaExpand, FaTimes, FaHome 
+} from 'react-icons/fa';
+import dayjs from 'dayjs';
 
 const MachineDetailPublicScreen = () => {
   const { id } = useParams();
+  
+  // --- STATE DỮ LIỆU ---
   const [machine, setMachine] = useState(null);
-  const [relatedMachines, setRelatedMachines] = useState([]); // Máy liên quan
+  const [relatedMachines, setRelatedMachines] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Giả lập ngày đăng (Vì model máy chưa có field createdAt, nếu có thì dùng machine.createdAt)
+  // --- STATE GIAO DIỆN MEDIA ---
+  const [activeTab, setActiveTab] = useState('image'); // 'image' hoặc 'video'
+  const [selectedImage, setSelectedImage] = useState(''); // Ảnh đang hiện ở khung lớn
+  const [lightboxOpen, setLightboxOpen] = useState(false); // Trạng thái mở popup phóng to
+
   const publishDate = dayjs().format('DD/MM/YYYY'); 
 
   useEffect(() => {
@@ -19,12 +28,16 @@ const MachineDetailPublicScreen = () => {
         const { data } = await axios.get(`/api/v1/machines/${id}`);
         setMachine(data.machine);
         
-        // Gọi thêm API lấy danh sách máy để làm Sidebar "Máy liên quan"
-        // (Trong thực tế nên có API getRelatedMachines riêng)
+        // Mặc định chọn ảnh đầu tiên làm ảnh chính
+        if (data.machine.images && data.machine.images.length > 0) {
+            setSelectedImage(data.machine.images[0].url);
+        }
+
+        // Lấy máy liên quan
         const { data: allData } = await axios.get('/api/v1/machines');
         const related = allData.machines
-            .filter(m => m._id !== id) // Trừ máy đang xem
-            .slice(0, 5); // Lấy 5 máy
+            .filter(m => m._id !== id)
+            .slice(0, 5);
         setRelatedMachines(related);
 
         setLoading(false);
@@ -34,24 +47,33 @@ const MachineDetailPublicScreen = () => {
       }
     };
     fetchMachine();
-    // Scroll lên đầu khi chuyển trang
     window.scrollTo(0, 0);
   }, [id]);
 
   if (loading) return <div className="h-screen flex justify-center items-center text-gray-500">Đang tải dữ liệu...</div>;
   if (!machine) return <div className="h-screen flex justify-center items-center text-red-500">Không tìm thấy nội dung.</div>;
 
+  // Xử lý chuyển tab
+  const handleThumbnailClick = (imgUrl) => {
+      setActiveTab('image');
+      setSelectedImage(imgUrl);
+  };
+
+  const handleVideoClick = () => {
+      setActiveTab('video');
+  };
+
   return (
-    <div className="bg-white min-h-screen font-sans text-gray-800">
+    <div className="bg-white min-h-screen font-sans text-gray-800 relative">
       
-      {/* 1. BREADCRUMB (Điều hướng) */}
+      {/* 1. BREADCRUMB */}
       <div className="bg-gray-50 border-b border-gray-100 py-3 text-sm">
         <div className="container mx-auto px-4 max-w-6xl flex items-center text-gray-500">
-            <Link to="/" className="hover:text-blue-600">Trang chủ</Link>
+            <Link to="/" className="hover:text-blue-600 flex items-center"><FaHome className="mr-1"/> Trang chủ</Link>
             <span className="mx-2">/</span>
             <Link to="/infrastructure" className="hover:text-blue-600">Năng lực sản xuất</Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-800 font-medium truncate max-w-xs">{machine.category}</span>
+            <span className="text-gray-800 font-medium truncate max-w-xs">{machine.name}</span>
         </div>
       </div>
 
@@ -61,128 +83,168 @@ const MachineDetailPublicScreen = () => {
             {/* === CỘT TRÁI: NỘI DUNG CHÍNH (Chiếm 8 phần) === */}
             <div className="lg:col-span-8">
                 
-                {/* Tiêu đề lớn (Chuẩn báo chí) */}
                 <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
                     {machine.name}
                 </h1>
 
-                {/* Meta Data (Ngày đăng, Nút share) */}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
                     <div className="flex items-center text-sm text-gray-500">
                         <span className="flex items-center mr-4"><FaCalendarAlt className="mr-2" /> {publishDate}</span>
-                        <span className="flex items-center"><FaTag className="mr-2" /> {machine.category}</span>
+                        <span className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold"><FaTag className="mr-1" /> {machine.category}</span>
                     </div>
-                    <button className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-bold bg-blue-50 px-3 py-1 rounded-full transition">
-                        <FaShareAlt className="mr-2" /> Chia sẻ
-                    </button>
                 </div>
 
-                {/* Sapo (Mô tả ngắn - In đậm) */}
-                {/* Vì data của bạn chỉ có description (HTML), ta sẽ hiển thị 1 đoạn text static hoặc trích xuất nếu muốn */}
-                <div className="text-lg md:text-xl font-semibold text-gray-700 italic mb-8 border-l-4 border-blue-600 pl-4 bg-gray-50 py-2 rounded-r">
-                    Hệ thống máy {machine.name} hiện đại tại Xưởng In Quang Phát đảm bảo công suất lớn, chất lượng in sắc nét và tiến độ nhanh nhất cho khách hàng.
-                </div>
+                {/* --- KHU VỰC MEDIA VIEWER (QUAN TRỌNG) --- */}
+                <div className="mb-8 select-none">
+                    
+                    {/* KHUNG HIỂN THỊ LỚN */}
+                    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg group border border-gray-200">
+                        
+                        {/* TRƯỜNG HỢP 1: ĐANG XEM ẢNH */}
+                        {activeTab === 'image' && (
+                            <>
+                                <img 
+                                    src={selectedImage} 
+                                    alt="Main View" 
+                                    className="w-full h-full object-contain cursor-zoom-in transition-transform duration-500" 
+                                    onClick={() => setLightboxOpen(true)} // Bấm vào để mở Lightbox
+                                />
+                                {/* Nút phóng to ở góc */}
+                                <button 
+                                    onClick={() => setLightboxOpen(true)}
+                                    className="absolute bottom-4 right-4 bg-white/90 text-gray-800 p-2 rounded-full shadow hover:bg-white hover:text-blue-600 transition opacity-0 group-hover:opacity-100"
+                                    title="Phóng to ảnh"
+                                >
+                                    <FaExpand size={18} />
+                                </button>
+                            </>
+                        )}
 
-                {/* KHU VỰC VIDEO (Nếu có) - Đặt lên đầu để thu hút */}
-                {machine.videos && machine.videos.length > 0 && (
-                    <div className="mb-8">
-                        {machine.videos.map((vid, index) => (
-                            <div key={index} className="mb-4 rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-black">
-                                <video controls className="w-full h-auto aspect-video">
-                                    <source src={vid.url} type="video/mp4" />
-                                    Trình duyệt của bạn không hỗ trợ thẻ video.
-                                </video>
-                                <p className="text-white text-xs p-2 text-center bg-gray-900">
-                                    Video vận hành: {machine.name}
-                                </p>
+                        {/* TRƯỜNG HỢP 2: ĐANG XEM VIDEO */}
+                        {activeTab === 'video' && machine.videos && machine.videos.length > 0 && (
+                            <video controls className="w-full h-full" autoPlay>
+                                <source src={machine.videos[0].url} type="video/mp4" />
+                                Trình duyệt không hỗ trợ thẻ video.
+                            </video>
+                        )}
+
+                        {/* Nếu chọn Video mà không có video */}
+                        {activeTab === 'video' && (!machine.videos || machine.videos.length === 0) && (
+                            <div className="w-full h-full flex items-center justify-center text-white flex-col">
+                                <FaPlay className="text-4xl mb-2 opacity-50" />
+                                <p>Video đang cập nhật...</p>
                             </div>
-                        ))}
+                        )}
                     </div>
-                )}
 
-                {/* NỘI DUNG CHI TIẾT (Rich Text) */}
-                {/* Class 'prose' của Tailwind Typography sẽ tự động style các thẻ h1, h2, p, ul, img bên trong */}
-                <article className="prose prose-lg prose-blue max-w-none text-gray-800 leading-loose">
+                    {/* DANH SÁCH THUMBNAILS (BÊN DƯỚI) */}
+                    <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+                        
+                        {/* 1. Nút Video (Nếu có) */}
+                        {machine.videos && machine.videos.length > 0 && (
+                            <button 
+                                onClick={handleVideoClick}
+                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-gray-900 flex items-center justify-center group transition-all ${activeTab === 'video' ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 opacity-70 hover:opacity-100'}`}
+                            >
+                                <FaPlay className="text-white text-xl drop-shadow-md group-hover:scale-110 transition" />
+                                <span className="absolute bottom-1 text-[10px] text-white font-bold bg-black/50 px-1 rounded">VIDEO</span>
+                            </button>
+                        )}
+
+                        {/* 2. List Ảnh */}
+                        {machine.images && machine.images.map((img, idx) => (
+                            <button 
+                                key={idx}
+                                onClick={() => handleThumbnailClick(img.url)}
+                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${activeTab === 'image' && selectedImage === img.url ? 'border-blue-600 ring-2 ring-blue-100' : 'border-gray-200 opacity-60 hover:opacity-100'}`}
+                            >
+                                <img src={img.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                            </button>
+                        ))}
+
+                    </div>
+                </div>
+
+                {/* Sapo */}
+                <div className="text-lg font-semibold text-gray-700 italic mb-8 border-l-4 border-blue-600 pl-4 bg-gray-50 py-3 rounded-r">
+                    Hệ thống {machine.name} tại In Quang Phát được đầu tư đồng bộ, giúp tối ưu hóa quy trình sản xuất và đảm bảo chất lượng bản in sắc nét nhất.
+                </div>
+
+                {/* NỘI DUNG CHI TIẾT */}
+                <article className="prose prose-lg prose-blue max-w-none text-gray-800 leading-relaxed">
                     <div dangerouslySetInnerHTML={{ __html: machine.description }}></div>
                 </article>
 
-                {/* Gallery Ảnh (Cuối bài) */}
-                {machine.images && machine.images.length > 0 && (
-                    <div className="mt-10 pt-8 border-t">
-                        <h3 className="text-xl font-bold mb-4 flex items-center">
-                            <FaEye className="mr-2 text-blue-600" /> Hình ảnh thực tế
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {machine.images.map((img, idx) => (
-                                <img 
-                                    key={idx} 
-                                    src={img.url} 
-                                    alt={`Detail ${idx}`} 
-                                    className="rounded-lg shadow hover:opacity-90 transition cursor-pointer object-cover h-32 w-full"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
 
-            {/* === CỘT PHẢI: SIDEBAR (Chiếm 4 phần) === */}
+            {/* === CỘT PHẢI: SIDEBAR === */}
             <div className="lg:col-span-4 space-y-8">
                 
-                {/* Widget 1: Liên hệ nhanh (Sticky) */}
-                <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-blue-900 mb-2">Cần tư vấn máy này?</h3>
-                    <p className="text-sm text-blue-700 mb-4">Liên hệ ngay để nhận báo giá in ấn tốt nhất trên thị trường.</p>
-                    <a href="tel:0935110639" className="block w-full bg-red-600 hover:bg-red-700 text-white text-center font-bold py-3 rounded-lg transition shadow-md animate-pulse">
+                {/* Widget Liên hệ Sticky */}
+                <div className="bg-white p-6 rounded-xl border border-blue-200 shadow-lg sticky top-24">
+                    <h3 className="text-lg font-bold text-blue-900 mb-2 text-center uppercase">Tư vấn kỹ thuật</h3>
+                    <p className="text-sm text-gray-500 text-center mb-6">Liên hệ để nhận thông số chi tiết & báo giá in ấn</p>
+                    
+                    <a href="tel:0935110639" className="block w-full bg-red-600 hover:bg-red-700 text-white text-center font-bold py-4 rounded-full transition shadow-md animate-pulse mb-3">
                         <FaPhoneAlt className="inline mr-2" /> 0935.110.639
                     </a>
                 </div>
 
-                {/* Widget 2: Máy móc liên quan (Sidebar News) */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-24">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 uppercase tracking-wide">
+                {/* Widget Máy liên quan */}
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 uppercase">
                         Công nghệ khác
                     </h3>
                     <div className="flex flex-col gap-4">
                         {relatedMachines.map((item) => (
-                            <Link key={item._id} to={`/infrastructure/${item._id}`} className="group flex items-start gap-3">
-                                {/* Ảnh thumbnail nhỏ */}
-                                <div className="w-20 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
+                            <Link key={item._id} to={`/infrastructure/${item._id}`} className="group flex items-start gap-3 bg-white p-2 rounded shadow-sm hover:shadow-md transition">
+                                <div className="w-16 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-200">
                                     {item.images && item.images[0] ? (
-                                        <img src={item.images[0].url} className="w-full h-full object-cover group-hover:scale-110 transition duration-300" alt={item.name} />
+                                        <img src={item.images[0].url} className="w-full h-full object-cover" alt={item.name} />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400"><FaCogs /></div>
+                                        <div className="w-full h-full flex items-center justify-center"><FaCogs className="text-gray-400"/></div>
                                     )}
                                 </div>
-                                {/* Tiêu đề */}
                                 <div>
-                                    <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 transition leading-snug">
+                                    <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 leading-snug">
                                         {item.name}
                                     </h4>
-                                    <span className="text-xs text-gray-500 mt-1 block">{item.category}</span>
                                 </div>
                             </Link>
                         ))}
                     </div>
-                    
-                    <div className="mt-6 pt-4 border-t text-center">
-                        <Link to="/infrastructure" className="text-sm text-blue-600 font-bold hover:underline inline-flex items-center">
-                            Xem tất cả máy móc <FaArrowRight className="ml-1" />
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Widget 3: Banner Quảng cáo (Giả lập) */}
-                <div className="rounded-xl overflow-hidden shadow-md">
-                     <img src="https://via.placeholder.com/400x300/1e3a8a/ffffff?text=IN+NHANH+GIA+RE" alt="Ads" className="w-full h-auto" />
                 </div>
 
             </div>
-
         </div>
       </div>
+
+      {/* --- LIGHTBOX (MODAL PHÓNG TO ẢNH) --- */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+            {/* Nút đóng */}
+            <button 
+                onClick={() => setLightboxOpen(false)}
+                className="absolute top-5 right-5 text-white bg-gray-800/50 hover:bg-red-600 p-3 rounded-full transition z-50"
+            >
+                <FaTimes size={24} />
+            </button>
+
+            {/* Ảnh lớn */}
+            <img 
+                src={selectedImage} 
+                alt="Full View" 
+                className="max-w-full max-h-[90vh] object-contain rounded shadow-2xl" 
+            />
+            
+            <p className="absolute bottom-5 text-white/70 text-sm">Nhấn phím ESC hoặc bấm ra ngoài để đóng</p>
+            {/* Click ra ngoài để đóng */}
+            <div className="absolute inset-0 -z-10" onClick={() => setLightboxOpen(false)}></div>
+        </div>
+      )}
+
     </div>
   );
 };
 
-export default MachineDetailPublicScreen;
+export default MachineDetailPublicScreen; 

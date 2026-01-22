@@ -38,12 +38,11 @@ const Footer = () => {
       window.scrollTo(0, 0);
     }
   };
-
+  const isAdminRoute = location.pathname.startsWith('/admin');
   return (
     <footer>
       {/* 2. ĐẶT NÓ Ở ĐÂY (Trên cùng của Footer) */}
-      <CompanyStats />
-
+{!isAdminRoute && <CompanyStats />}
       {/* --- Phần nội dung Footer cũ bên dưới --- */}
       <div className="bg-gray-900 text-gray-300 py-12 border-t border-gray-800">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -52,7 +51,7 @@ const Footer = () => {
           <div>
             <h3 className="text-white text-lg font-bold mb-4 uppercase">In Quang Phát</h3>
             <p className="mb-4 text-sm leading-relaxed">
-              Đơn vị tiên phong trong lĩnh vực in ấn bao bì và ấn phẩm văn phòng tại Hà Nội.
+              Đơn vị tiên phong trong lĩnh vực in ấn bao bì và áo quần xuất khẩu văn phòng tại Huế.
               Cam kết chất lượng - Tiến độ - Giá thành hợp lý.
             </p>
             <div className="flex space-x-4">
@@ -67,7 +66,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start">
                 <FaMapMarkerAlt className="mr-2 mt-1 text-red-500" />
-                <span>Số 123 Đường Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội</span>
+                <span>Số 5, Đường Số 4, Cụm Công Nghiệp An Hoà, P. Hương An, Huế</span>
               </li>
               <li className="flex items-center">
                 <FaPhoneAlt className="mr-2 text-green-500" />
@@ -75,7 +74,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <FaEnvelope className="mr-2 text-yellow-500" />
-                <span>support@quangphat.com</span>
+                <span>inquangphat@quangphat.com</span>
               </li>
             </ul>
           </div>
@@ -89,7 +88,7 @@ const Footer = () => {
               </a>
               <li><Link to="/about" className="hover:text-white transition">Về chúng tôi</Link></li>
               <li><Link to="/contact" className="hover:text-white transition">Liên hệ & Báo giá</Link></li>
-              <li><Link to="/policy" className="hover:text-white transition">Chính sách bảo mật</Link></li>
+              {/* <li><Link to="/policy" className="hover:text-white transition">Chính sách bảo mật</Link></li> */}
             </ul>
           </div>
         </div>
