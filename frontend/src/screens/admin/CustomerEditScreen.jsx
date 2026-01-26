@@ -4,7 +4,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSave, FaBuilding, FaUserPlus, FaTrash, FaUserTie, FaLayerGroup } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Sidebar from '../../components/Sidebar';
-
+import AdminHeader from '../../components/AdminHeader';
 const CustomerEditScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -88,6 +88,7 @@ const CustomerEditScreen = () => {
     <div className="flex min-h-screen bg-gray-100 font-sans">
       <Sidebar />
       <div className="flex-1 p-8 overflow-y-auto h-screen pb-24">
+        <AdminHeader title="Thông Tin Khách Hàng" />
         <div className="max-w-5xl mx-auto">
             <Link to="/admin/customerlist" className="flex items-center text-gray-500 hover:text-blue-600 mb-6 font-medium"><FaArrowLeft className="mr-2" /> Quay lại danh sách</Link>
             

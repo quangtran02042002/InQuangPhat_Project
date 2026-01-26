@@ -7,7 +7,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { FaArrowLeft, FaSave, FaCloudUploadAlt } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
-
+import AdminHeader from '../../components/AdminHeader';
 const NewsEditScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();

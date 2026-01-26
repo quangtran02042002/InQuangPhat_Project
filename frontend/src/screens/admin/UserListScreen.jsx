@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
-
+import AdminHeader from '../../components/AdminHeader';
 // Helper: Random Avatar Color
 const getAvatarColor = (name) => {
     const colors = ['bg-red-100 text-red-600', 'bg-orange-100 text-orange-600', 'bg-amber-100 text-amber-600', 'bg-green-100 text-green-600', 'bg-teal-100 text-teal-600', 'bg-blue-100 text-blue-600', 'bg-indigo-100 text-indigo-600', 'bg-purple-100 text-purple-600', 'bg-pink-100 text-pink-600'];
@@ -83,10 +83,7 @@ const UserListScreen = () => {
         
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                <span className="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3"><FaUserShield /></span>
-                Quản lý Tài khoản
-            </h1>
+            <AdminHeader title="Quản Lí Tài Khoản" />
         </div>
 
         {/* --- TOOLBAR (SEARCH) --- */}

@@ -7,7 +7,7 @@ import Sidebar from '../../components/Sidebar';
 
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-
+import AdminHeader from '../../components/AdminHeader';
 const CATEGORY_DATA = {
   offset: [
     'Tem nhãn', 'Hộp cứng', 'Hộp giấy', 'Kẹp file',

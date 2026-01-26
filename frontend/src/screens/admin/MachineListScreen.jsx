@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { FaEdit, FaTrash, FaPlus, FaCogs, FaSearch, FaFilter, FaTimes, FaImage, FaIndustry } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
-
+import AdminHeader from '../../components/AdminHeader';
 // Hàm lấy màu badge cho danh mục máy (Giả sử bạn có các danh mục này)
 const getCategoryBadge = (category) => {
     const cat = category ? category.toLowerCase() : '';
@@ -84,13 +84,10 @@ const MachineListScreen = () => {
       <Sidebar />
       
       <div className="flex-1 p-8 overflow-y-auto h-screen pb-24">
-        
+        <AdminHeader title="Quản Lí Máy Móc & Thiết Bị" />
         {/* HEADER & NÚT THÊM */}
         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                <span className="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3"><FaCogs /></span>
-                Quản lý Máy móc & Thiết bị
-            </h1>
+            
             <Link to="/admin/machine/new" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center shadow-lg font-bold text-sm transition transform active:scale-95">
                 <FaPlus className="mr-2" /> Thêm Máy Mới
             </Link>

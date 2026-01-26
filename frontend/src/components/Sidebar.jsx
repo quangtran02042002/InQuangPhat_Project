@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
+import { FaWarehouse ,FaWallet ,
     FaBuilding, FaBoxOpen, FaClipboardList, FaUsers, FaSignOutAlt, 
     FaChartLine, FaUserCog, FaNewspaper, FaCogs, FaTruck, FaHome 
 } from 'react-icons/fa';
@@ -96,7 +96,15 @@ const Sidebar = () => {
           <FaNewspaper className="mr-3 text-lg" />
           <span className="font-medium text-sm">Quản lý Tin tức</span>
         </Link>
+<Link to="/admin/materials" className={`flex items-center px-4 py-3 rounded-lg transition mb-1 ${isActive('/admin/materials')}`}>
+    <FaWarehouse className="mr-3 text-lg" />
+    <span className="font-medium text-sm">Quản lý Kho vật tư</span>
+</Link>
 
+<Link to="/admin/finance" className={`flex items-center px-4 py-3 rounded-lg transition mb-1 ${isActive('/admin/finance')}`}>
+    <FaWallet className="mr-3 text-lg" />
+    <span className="font-medium text-sm">Quản lý Thu Chi</span>
+</Link>
         <Link to="/admin/users" className={`flex items-center px-4 py-3 rounded-lg transition mb-1 ${isActive('/admin/users')}`}>
           <FaUsers className="mr-3 text-lg" />
           <span className="font-medium text-sm">Quản lý User</span>

@@ -6,7 +6,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { FaArrowLeft, FaSave, FaCloudUploadAlt, FaTrash, FaVideo, FaTimes } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
-
+import AdminHeader from '../../components/AdminHeader';
 // 1. IMPORT VALIDATE
 import { validateTextMixed } from '../../utils/validation';
 

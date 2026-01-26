@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { FaEdit, FaTrash, FaPlus, FaNewspaper, FaEye, FaSearch, FaTimes, FaCalendarAlt, FaImage } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
-
+import AdminHeader from '../../components/AdminHeader';
 const NewsListScreen = () => {
   const navigate = useNavigate();
   const [newsList, setNewsList] = useState([]);
@@ -61,11 +61,9 @@ const NewsListScreen = () => {
       <div className="flex-1 p-8 overflow-y-auto h-screen pb-24">
         
         {/* HEADER & NÚT THÊM */}
-        <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                <span className="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3"><FaNewspaper /></span>
-                Quản lý Tin tức & Sự kiện
-            </h1>
+        
+            <AdminHeader title="Quản Lí Tin Tức  & Sự Kiện" />
+            <div className="flex justify-between items-center mb-6">
             <Link to="/admin/news/create" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center shadow-lg font-bold text-sm transition transform active:scale-95">
                 <FaPlus className="mr-2" /> Viết bài mới
             </Link>

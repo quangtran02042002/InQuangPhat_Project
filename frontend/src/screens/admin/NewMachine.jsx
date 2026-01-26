@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios'; // Đảm bảo bạn đã cài axios: npm install axios
-
+import AdminHeader from '../../components/AdminHeader';
 const NewMachine = () => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');

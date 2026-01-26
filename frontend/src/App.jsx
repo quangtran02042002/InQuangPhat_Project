@@ -37,16 +37,19 @@ import SupplierListScreen from './screens/admin/SupplierListScreen';
 import SupplierEditScreen from './screens/admin/SupplierEditScreen';
 import CustomerListScreen from './screens/admin/CustomerListScreen';
 import CustomerEditScreen from './screens/admin/CustomerEditScreen';
+import MaterialScreen from './screens/admin/MaterialScreen';
+import FinanceScreen from './screens/admin/FinanceScreen';
+import UserProfileScreen from './screens/UserProfileScreen';
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
 const AppContent = () => {
   const location = useLocation(); // Hook này chỉ hoạt động bên trong Router
-  
+
   // Kiểm tra xem có đang ở trang admin không
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="flex flex-col min-h-screen">
-      
+
       {/* 1. Ẩn Header nếu là trang Admin */}
       {!isAdminRoute && <Header />}
 
@@ -59,49 +62,51 @@ const AppContent = () => {
           <Route path="/search/:keyword/page/:pageNumber" element={<HomeScreen />} />
           <Route path="/category/:category" element={<HomeScreen />} />
           <Route path="/category/:category/page/:pageNumber" element={<HomeScreen />} />
-          
+
           <Route path="/product/:id" element={<ProductScreen />} />
           <Route path="/contact" element={<ContactScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
-          
+
           <Route path="/news" element={<NewsListScreenUser />} />
           <Route path="/news/:id" element={<NewsDetailScreen />} />
-          
+
           <Route path="/infrastructure" element={<InfrastructureScreen />} />
           <Route path="/infrastructure/:id" element={<MachineDetailPublicScreen />} />
-          
+
           <Route path="/products" element={<AllProductsScreen />} />
           <Route path="/about" element={<AboutScreen />} />
-          
+          <Route path="/profile" element={<UserProfileScreen />} />
           {/* ADMIN ROUTES */}
           <Route element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<DashboardScreen />} />
             <Route path="/admin/quotes" element={<QuoteListScreen />} />
-            
+
             <Route path="/admin/productlist" element={<ProductListScreen />} />
             <Route path="/admin/productlist/:pageNumber" element={<ProductListScreen />} />
             <Route path="/admin/product/create" element={<ProductEditScreen />} />
             <Route path="/admin/product/:id/edit" element={<ProductEditScreen />} />
-            
+
             <Route path="/admin/users" element={<UserListScreen />} />
             <Route path="/admin/profile" element={<ProfileScreen />} />
-            
+
             <Route path="/admin/newslist" element={<NewsListScreen />} />
             <Route path="/admin/news/create" element={<NewsEditScreen />} />
             <Route path="/admin/news/:id/edit" element={<NewsEditScreen />} />
-            
+
             <Route path="/admin/machinelist" element={<MachineListScreen />} />
             <Route path="/admin/machine/new" element={<MachineEditScreen />} />
             <Route path="/admin/machine/:id/edit" element={<MachineEditScreen />} />
-            
+
             <Route path="/admin/supplierlist" element={<SupplierListScreen />} />
             <Route path="/admin/supplier/new" element={<SupplierEditScreen />} />
             <Route path="/admin/supplier/:id/edit" element={<SupplierEditScreen />} />
 
             <Route path="/admin/customerlist" element={<CustomerListScreen />} />
-<Route path="/admin/customer/create" element={<CustomerEditScreen />} />
-<Route path="/admin/customer/:id/edit" element={<CustomerEditScreen />} />
+            <Route path="/admin/customer/create" element={<CustomerEditScreen />} />
+            <Route path="/admin/customer/:id/edit" element={<CustomerEditScreen />} />
+            <Route path="/admin/materials" element={<MaterialScreen />} />
+            <Route path="/admin/finance" element={<FinanceScreen />} />
           </Route>
         </Routes>
       </main>
@@ -111,7 +116,7 @@ const AppContent = () => {
 
       {/* 3. Ẩn Nút Chat Nổi nếu là trang Admin */}
       {!isAdminRoute && <FloatingContact />}
-      
+
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
@@ -123,7 +128,7 @@ function App() {
     <Router>
       <ScrollToTop />
       {/* Gọi AppContent bên trong Router để useLocation hoạt động */}
-      <AppContent /> 
+      <AppContent />
     </Router>
   );
 }

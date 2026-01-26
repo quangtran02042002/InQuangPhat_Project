@@ -5,7 +5,7 @@ import { FaCheckDouble, FaEye, FaPhone, FaCalendarAlt, FaSearch, FaFilter, FaTim
 
 import Sidebar from '../../components/Sidebar';
 import QuoteDetailModal from '../../components/QuoteDetailModal'; 
-
+import AdminHeader from '../../components/AdminHeader';
 const QuoteListScreen = () => {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,12 +95,7 @@ const QuoteListScreen = () => {
       <div className="flex-1 p-8 overflow-y-auto h-screen pb-24">
         
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                <span className="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3"><FaClipboardList /></span>
-                Quản lý Yêu cầu Báo giá
-            </h1>
-        </div>
+        <AdminHeader title="Quản lý Yêu cầu Báo giá" />
 
         {/* --- TOOLBAR (SEARCH & FILTER) --- */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">

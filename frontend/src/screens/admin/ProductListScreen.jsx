@@ -8,7 +8,7 @@ import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
 import Paginate from '../../components/Paginate';
 import Loader from '../../components/Loader';
-
+import AdminHeader from '../../components/AdminHeader';
 const ProductListScreen = () => {
   const navigate = useNavigate();
   const { pageNumber } = useParams();
@@ -119,11 +119,9 @@ const ProductListScreen = () => {
       <div className="flex-1 p-8 overflow-y-auto h-screen pb-24">
         
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-            <span className="bg-blue-100 text-blue-600 p-2 rounded-lg mr-3"><FaBoxOpen /></span>
-            Quản lý Sản phẩm
-          </h1>
+        
+          <AdminHeader title="Danh Sách Sản Phẩm" />
+          <div className="flex justify-between items-center mb-6">
           <Link
             to="/admin/product/create"
             className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center shadow-lg font-bold text-sm transition transform active:scale-95"

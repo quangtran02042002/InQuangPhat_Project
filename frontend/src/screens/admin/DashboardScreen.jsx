@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import { FaMoneyBillWave, FaBox, FaUserPlus, FaChartPie, FaLightbulb, FaArrowRight } from 'react-icons/fa';
-
+import AdminHeader from '../../components/AdminHeader';
 // Import các thành phần biểu đồ từ Recharts
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -48,10 +48,7 @@ const DashboardScreen = () => {
 
       <div className="flex-1 p-8 overflow-y-auto">
         {/* HEADER */}
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Xin chào, {userInfo?.name}! 👋</h1>
-            <p className="text-slate-500">Đây là tổng quan tình hình kinh doanh của hệ thống.</p>
-        </div>
+        <AdminHeader title="Tổng quan hệ thống" />
         
         {loading ? (
             <div className="text-center mt-20 text-blue-600 font-medium animate-pulse">Đang tải dữ liệu thống kê...</div>

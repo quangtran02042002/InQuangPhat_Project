@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaUserCircle, FaKey, FaSave, FaShieldAlt } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
-
+import AdminHeader from '../../components/AdminHeader';
 const ProfileScreen = () => {
   // State cho Thông tin cơ bản
   const [name, setName] = useState('');
@@ -94,6 +94,7 @@ const ProfileScreen = () => {
       <Sidebar />
 
       <div className="flex-1 p-8 overflow-y-auto">
+        <AdminHeader title="Hồ Sơ Cá Nhân" />
         <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center uppercase">
                 <FaUserCircle className="mr-3 text-blue-600" /> Hồ sơ cá nhân
