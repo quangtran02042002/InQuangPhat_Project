@@ -29,7 +29,7 @@ const productSchema = mongoose.Schema(
     priceTable: [
       {
         minQuantity: { type: Number, required: true },
-        price: { type: Number, required: true }
+        price: { type: String, required: true }
       }
     ],
 

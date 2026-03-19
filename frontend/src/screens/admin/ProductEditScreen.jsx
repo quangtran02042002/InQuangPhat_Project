@@ -7,7 +7,7 @@ import Sidebar from '../../components/Sidebar';
 
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import AdminHeader from '../../components/AdminHeader';
+
 const CATEGORY_DATA = {
   offset: [
     'Tem nhãn', 'Hộp cứng', 'Hộp giấy', 'Kẹp file',
@@ -27,8 +27,8 @@ const ProductEditScreen = () => {
   // --- STATE ---
   const [name, setName] = useState('');
   
-  // Bảng giá nhiều mức
-  const [priceTable, setPriceTable] = useState([{ minQuantity: 1, price: 0 }]);
+  // Bảng giá nhiều mức (Mặc định 100%)
+  const [priceTable, setPriceTable] = useState([{ minQuantity: 1, price: 100 }]);
   
   const [images, setImages] = useState([]); 
   const [category, setCategory] = useState('');
@@ -37,8 +37,6 @@ const ProductEditScreen = () => {
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   const modules = {
     toolbar: [
@@ -50,7 +48,10 @@ const ProductEditScreen = () => {
   };
 
   useEffect(() => {
-    if (!userInfo || !userInfo.isAdmin) {
+    // SỬA LỖI Ở ĐÂY: Chuyển userInfo vào trong để tránh bị re-render liên tục
+    const currentUser = JSON.parse(localStorage.getItem('userInfo'));
+    
+    if (!currentUser || !currentUser.isAdmin) {
       navigate('/login');
       return;
     }
@@ -64,7 +65,7 @@ const ProductEditScreen = () => {
           if (data.priceTable && data.priceTable.length > 0) {
             setPriceTable(data.priceTable);
           } else {
-            setPriceTable([{ minQuantity: 1, price: 0 }]);
+            setPriceTable([{ minQuantity: 1, price: 100 }]);
           }
           
           if (data.images && data.images.length > 0) {
@@ -83,7 +84,7 @@ const ProductEditScreen = () => {
       };
       fetchProduct();
     }
-  }, [id, isEditMode, navigate, userInfo]);
+  }, [id, isEditMode, navigate]); // Đã xóa userInfo khỏi mảng phụ thuộc để tránh bug ghi đè
 
   const handleCategoryChange = (e) => {
     const selectedCat = e.target.value;
@@ -92,15 +93,21 @@ const ProductEditScreen = () => {
     else if (CATEGORY_DATA.garment.includes(selectedCat)) setGroup('garment');
   };
 
-  // --- HÀM XỬ LÝ PRICE TABLE ---
+  // --- HÀM XỬ LÝ PRICE TABLE (Đã sửa để hoạt động mượt mà) ---
   const handlePriceChange = (index, field, value) => {
-    const newPriceTable = [...priceTable];
-    newPriceTable[index][field] = Number(value);
-    setPriceTable(newPriceTable);
+    const updatedTable = priceTable.map((item, i) => {
+      if (i === index) {
+        // Cho phép chuỗi rỗng ('') để người dùng xóa số cũ trước khi nhập số mới
+        return { ...item, [field]: value === '' ? '' : Number(value) };
+      }
+      return item;
+    });
+    setPriceTable(updatedTable);
   };
 
   const addPriceRow = () => {
-    setPriceTable([...priceTable, { minQuantity: 0, price: 0 }]);
+    const lastPrice = priceTable.length > 0 ? priceTable[priceTable.length - 1].price : 100;
+    setPriceTable([...priceTable, { minQuantity: 0, price: lastPrice }]);
   };
 
   const removePriceRow = (index) => {
@@ -120,10 +127,11 @@ const ProductEditScreen = () => {
 
     setUploading(true);
     try {
+      const currentUser = JSON.parse(localStorage.getItem('userInfo'));
       const config = {
         headers: { 
             'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${userInfo.token}`
+            Authorization: `Bearer ${currentUser.token}`
         },
       };
       
@@ -157,16 +165,20 @@ const ProductEditScreen = () => {
     
     if (priceTable.length === 0) return toast.warning("Vui lòng nhập ít nhất 1 mức giá");
     for (let item of priceTable) {
-        if (item.minQuantity <= 0 || item.price <= 0) {
-            return toast.warning("Số lượng và Giá phải lớn hơn 0");
+        if (item.minQuantity === '' || item.minQuantity <= 0) {
+            return toast.warning("Số lượng tối thiểu phải lớn hơn 0");
+        }
+        if (item.price === '' || item.price <= 0 || item.price > 100) {
+            return toast.warning("Tỉ lệ giá (%) phải nằm trong khoảng từ 1 đến 100");
         }
     }
 
     setLoading(true);
 
     try {
+      const currentUser = JSON.parse(localStorage.getItem('userInfo'));
       const config = {
-        headers: { Authorization: `Bearer ${userInfo.token}` },
+        headers: { Authorization: `Bearer ${currentUser.token}` },
       };
 
       const imagesToSend = images.map(url => ({ url }));
@@ -199,7 +211,6 @@ const ProductEditScreen = () => {
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
 
-      {/* Thêm pb-24 để nội dung cuối không bị che nếu có footer */}
       <div className="flex-1 p-6 md:p-8 overflow-y-auto h-screen pb-24">
         <div className="max-w-7xl mx-auto">
             
@@ -227,7 +238,7 @@ const ProductEditScreen = () => {
                             <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Nhập tên sản phẩm..." />
                         </div>
 
-                        {/* Danh mục & Nhóm (Đã chuyển lên đây để thay thế chỗ Tồn kho) */}
+                        {/* Danh mục & Nhóm */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Danh mục</label>
@@ -247,12 +258,12 @@ const ProductEditScreen = () => {
                             </div>
                         </div>
 
-                        {/* --- BẢNG GIÁ (PRICE TABLE) --- */}
+                        {/* --- BẢNG GIÁ THEO TỈ LỆ CHIẾT KHẤU (%) --- */}
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div className="flex justify-between items-center mb-4">
-                                <label className="block text-sm font-bold text-gray-700">Bảng giá theo số lượng <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-bold text-gray-700">Bảng Chiết Khấu Theo Số Lượng <span className="text-red-500">*</span></label>
                                 <button type="button" onClick={addPriceRow} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 flex items-center shadow-sm">
-                                    <FaPlus className="mr-1" /> Thêm mức giá
+                                    <FaPlus className="mr-1" /> Thêm mức số lượng
                                 </button>
                             </div>
                             
@@ -260,24 +271,28 @@ const ProductEditScreen = () => {
                                 {priceTable.map((item, index) => (
                                     <div key={index} className="flex items-center gap-4 bg-white p-2 rounded border border-gray-200 shadow-sm">
                                         <div className="flex-1">
-                                            <span className="text-[10px] text-gray-400 mb-1 block uppercase font-bold">Số lượng tối thiểu (&ge;)</span>
+                                            <span className="text-[10px] text-gray-400 mb-1 block uppercase font-bold">Số lượng đặt in (&ge;)</span>
                                             <input 
                                                 type="number" 
                                                 value={item.minQuantity} 
                                                 onChange={(e) => handlePriceChange(index, 'minQuantity', e.target.value)}
                                                 className="w-full border-b border-gray-300 px-2 py-1 text-sm focus:border-blue-500 outline-none font-medium"
-                                                placeholder="VD: 100"
+                                                placeholder="VD: 1000"
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <span className="text-[10px] text-gray-400 mb-1 block uppercase font-bold">Đơn giá (VNĐ)</span>
-                                            <input 
-                                                type="number" 
-                                                value={item.price} 
-                                                onChange={(e) => handlePriceChange(index, 'price', e.target.value)}
-                                                className="w-full border-b border-gray-300 px-2 py-1 text-sm focus:border-blue-500 outline-none font-bold text-blue-600"
-                                                placeholder="VD: 5000"
-                                            />
+                                            <span className="text-[10px] text-gray-400 mb-1 block uppercase font-bold">Tỉ lệ giá (%)</span>
+                                            <div className="flex items-center border-b border-gray-300 focus-within:border-blue-500 transition-colors pb-1">
+                                                <input 
+                                                    type="number" 
+                                                    min="1" max="100"
+                                                    value={item.price} 
+                                                    onChange={(e) => handlePriceChange(index, 'price', e.target.value)}
+                                                    className="w-full px-2 text-sm outline-none font-bold text-blue-600 bg-transparent"
+                                                    placeholder="VD: 100"
+                                                />
+                                                <span className="text-gray-500 text-sm font-bold pr-2 shrink-0">%</span>
+                                            </div>
                                         </div>
                                         <div className="pt-4">
                                             <button 
@@ -292,9 +307,14 @@ const ProductEditScreen = () => {
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-xs text-gray-400 mt-3 italic">* Nhập số lượng và đơn giá tương ứng. Ví dụ: >= 100 cái giá 10k.</p>
+                            <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded text-xs text-gray-600 leading-relaxed">
+                                <p className="font-bold text-blue-800 mb-1">Hướng dẫn nhập tỉ lệ %:</p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                    <li>Mốc số lượng nhỏ nhất: Nhập <span className="font-bold text-gray-800">100%</span> (Đại diện cho giá gốc).</li>
+                                    <li>Mốc số lượng lớn hơn: Nhập số <span className="font-bold text-red-500">nhỏ dần</span> (Ví dụ 90, 85) để tạo hiệu ứng giảm giá.</li>
+                                </ul>
+                            </div>
                         </div>
-                        {/* -------------------------------- */}
 
                         {/* Mô tả */}
                         <div>

@@ -40,6 +40,8 @@ import CustomerEditScreen from './screens/admin/CustomerEditScreen';
 import MaterialScreen from './screens/admin/MaterialScreen';
 import FinanceScreen from './screens/admin/FinanceScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
+import ChemicalScreen from './screens/admin/ChemicalScreen';
+import PaperPriceScreen from './screens/admin/PaperPriceScreen';
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
 const AppContent = () => {
   const location = useLocation(); // Hook này chỉ hoạt động bên trong Router
@@ -107,6 +109,8 @@ const AppContent = () => {
             <Route path="/admin/customer/:id/edit" element={<CustomerEditScreen />} />
             <Route path="/admin/materials" element={<MaterialScreen />} />
             <Route path="/admin/finance" element={<FinanceScreen />} />
+            <Route path="/admin/chemicals" element={<ChemicalScreen />} />
+            <Route path="/admin/paper-prices" element={<PaperPriceScreen />} />
           </Route>
         </Routes>
       </main>

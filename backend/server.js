@@ -17,6 +17,10 @@ const financeRoutes = require('./routes/financeRoutes');
 const customerRoutes = require('./routes/customerRoutes'); 
 // -----------------------------------------------
 const notificationRoutes = require('./routes/notificationRoutes');
+const chemicalRoutes = require('./routes/chemicalRoutes');
+const paperPriceRoutes = require('./routes/paperPriceRoutes')
+const configRoutes = require('./routes/configRoutes');
+
 dotenv.config(); 
 const app = express(); 
 connectDB();
@@ -37,7 +41,9 @@ app.use('/api/finance', financeRoutes);
 // Route Customer
 app.use('/api/customers', customerRoutes);
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/api/chemicals', chemicalRoutes);
+app.use('/api/paper-prices', paperPriceRoutes); // API Bảng giá chính
+app.use('/api/config', configRoutes);
 app.get('/', (req, res) => {
   res.send('API In Quang Phát đang chạy...');
 });
