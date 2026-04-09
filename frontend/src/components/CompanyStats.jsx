@@ -6,27 +6,27 @@ const CompanyStats = () => {
   return (
     <section>
       {/* 1. THỐNG KÊ (Màu xanh) */}
-      <div className="bg-blue-900 py-16 text-white text-center">
+      <div className="bg-[#004D38] py-16 text-white text-center">
         <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="group hover:transform hover:scale-105 transition duration-300">
-                <FaUsers className="text-5xl mx-auto mb-4 text-blue-300 group-hover:text-white transition" />
+                <FaUsers className="text-5xl mx-auto mb-4 text-emerald-300 group-hover:text-white transition" />
                 <span className="text-4xl font-bold block mb-2">3000+</span>
-                <span className="text-blue-200">Khách hàng tin cậy</span>
+                <span className="text-emerald-200">Khách hàng tin cậy</span>
             </div>
             <div className="group hover:transform hover:scale-105 transition duration-300">
-                <FaPrint className="text-5xl mx-auto mb-4 text-blue-300 group-hover:text-white transition" />
+                <FaPrint className="text-5xl mx-auto mb-4 text-emerald-300 group-hover:text-white transition" />
                 <span className="text-4xl font-bold block mb-2">5M+</span>
-                <span className="text-blue-200">Sản phẩm/năm</span>
+                <span className="text-emerald-200">Sản phẩm/năm</span>
             </div>
             <div className="group hover:transform hover:scale-105 transition duration-300">
-                <FaAward className="text-5xl mx-auto mb-4 text-blue-300 group-hover:text-white transition" />
+                <FaAward className="text-5xl mx-auto mb-4 text-emerald-300 group-hover:text-white transition" />
                 <span className="text-4xl font-bold block mb-2">100%</span>
-                <span className="text-blue-200">Hài lòng về chất lượng</span>
+                <span className="text-emerald-200">Hài lòng về chất lượng</span>
             </div>
             <div className="group hover:transform hover:scale-105 transition duration-300">
-                <FaHistory className="text-5xl mx-auto mb-4 text-blue-300 group-hover:text-white transition" />
+                <FaHistory className="text-5xl mx-auto mb-4 text-emerald-300 group-hover:text-white transition" />
                 <span className="text-4xl font-bold block mb-2">12+</span>
-                <span className="text-blue-200">Năm kinh nghiệm</span>
+                <span className="text-emerald-200">Năm kinh nghiệm</span>
             </div>
         </div>
       </div>

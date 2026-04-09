@@ -57,13 +57,13 @@ const Header = () => {
 
   const isParentActive = () => {
     return location.pathname.includes('/products') || location.pathname.includes('/infrastructure') 
-      ? 'text-blue-600 font-bold' 
-      : 'text-gray-700 hover:text-blue-600';
+      ? 'text-[#006B4D] font-bold' 
+      : 'text-gray-700 hover:text-[#006B4D]';
   };
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path) && path !== '/'
-    ? 'text-blue-600 font-bold' 
-    : 'text-gray-700 hover:text-blue-600';
+    ? 'text-[#006B4D] font-bold' 
+    : 'text-gray-700 hover:text-[#006B4D]';
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50 font-sans">
@@ -80,7 +80,7 @@ const Header = () => {
              </button>
 
              <a href="/" onClick={handleHomeClick} className="flex items-center gap-2 cursor-pointer">
-                <span className="text-2xl font-bold text-blue-800 tracking-tighter uppercase whitespace-nowrap">In Quang Phát</span>
+                <span className="text-2xl font-bold text-[#006B4D] tracking-tighter uppercase whitespace-nowrap">In Quang Phát</span>
              </a>
           </div>
 
@@ -94,7 +94,7 @@ const Header = () => {
             
             {/* A. NAV LINKS */}
             <nav className="hidden lg:flex space-x-6 xl:space-x-8 items-center font-medium text-gray-600 whitespace-nowrap">
-              <a href="/" onClick={handleHomeClick} className="hover:text-blue-600 transition cursor-pointer">
+              <a href="/" onClick={handleHomeClick} className="hover:text-[#006B4D] transition cursor-pointer">
                 Trang chủ
               </a>
 
@@ -111,9 +111,9 @@ const Header = () => {
                   <div className={`flex items-center py-2 ${isParentActive()}`}>
                       Năng lực sản xuất <FaChevronDown className="ml-1 text-[10px] opacity-70" />
                   </div>
-                  <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-white shadow-xl border-t-4 border-blue-600 transition-all duration-200 ${dropdownOpen ? 'opacity-100 visible mt-0' : 'opacity-0 invisible mt-2'}`}>
+                  <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-80 bg-white shadow-xl border-t-4 border-[#006B4D] transition-all duration-200 ${dropdownOpen ? 'opacity-100 visible mt-0' : 'opacity-0 invisible mt-2'}`}>
                       <Link to="/products" className="flex items-start px-6 py-4 hover:bg-gray-50 border-b group/item transition">
-                          <div className="bg-blue-100 p-3 rounded-full mr-4 text-blue-600 group-hover/item:bg-blue-600 group-hover/item:text-white transition mt-1 flex-shrink-0">
+                          <div className="bg-[#E6F0ED] p-3 rounded-full mr-4 text-[#006B4D] group-hover/item:bg-[#006B4D] group-hover/item:text-white transition mt-1 flex-shrink-0">
                               <FaBoxOpen size={18} />
                           </div>
                           <div>
@@ -161,14 +161,14 @@ const Header = () => {
                     onMouseEnter={() => setUserMenuOpen(true)}
                     onMouseLeave={() => setUserMenuOpen(false)}
                 > 
-                  <div className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200 shadow-sm">
+                  <div className="flex items-center gap-2 text-gray-700 hover:text-[#006B4D] transition">
+                    <div className="w-10 h-10 rounded-full bg-[#E6F0ED] flex items-center justify-center text-[#006B4D] border border-[#006B4D]/10 shadow-sm">
                         <FaUser className="text-sm" />
                     </div>
                     <div className="hidden sm:flex flex-col items-start leading-tight">
                         <span className="font-bold text-sm max-w-[100px] truncate">{userInfo.name}</span>
                     </div>
-                    <FaCaretDown className={`text-xs text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180 text-blue-600' : ''}`} />
+                    <FaCaretDown className={`text-xs text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180 text-[#006B4D]' : ''}`} />
                   </div>
 
                   <div className={`absolute right-0 top-full pt-2 w-60 transition-all duration-200 transform ${userMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'}`}>
@@ -176,7 +176,7 @@ const Header = () => {
                         <div className="px-4 py-3 border-b bg-gray-50 sm:hidden">
                             <p className="text-sm font-bold text-gray-800">{userInfo.name}</p>
                         </div>
-                        <Link to="/profile" className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+                        <Link to="/profile" className="flex items-center px-4 py-3 text-gray-700 hover:bg-[#E6F0ED] hover:text-[#006B4D] transition">
                             <FaUserCircle className="mr-3 text-lg" /> Hồ sơ cá nhân
                         </Link>
                         {userInfo.isAdmin && (
@@ -191,8 +191,8 @@ const Header = () => {
                   </div>
                 </div>
               ) : (
-                <Link to="/login" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium transition py-2">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-100 hover:text-blue-600 transition">
+                <Link to="/login" className="flex items-center gap-2 text-gray-600 hover:text-[#006B4D] font-medium transition py-2">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-[#E6F0ED] hover:text-[#006B4D] transition">
                     <FaUser />
                   </div>
                   <span className="hidden sm:inline">Đăng nhập</span>
@@ -215,13 +215,13 @@ const Header = () => {
                     Trang chủ
                 </Link>
                 <Link to="/about" className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-50 font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
-                    <FaInfoCircle className="mr-3 text-blue-500" /> Về chúng tôi
+                    <FaInfoCircle className="mr-3 text-[#006B4D]" /> Về chúng tôi
                 </Link>
                 
                 <div className="border-t border-b border-gray-100 py-2">
                     <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Hồ sơ năng lực</p>
                     <Link to="/products" className="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700" onClick={() => setMobileMenuOpen(false)}>
-                        <FaBoxOpen className="mr-3 text-blue-500" /> Sản phẩm mẫu
+                        <FaBoxOpen className="mr-3 text-[#006B4D]" /> Sản phẩm mẫu
                     </Link>
                     <Link to="/infrastructure" className="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700" onClick={() => setMobileMenuOpen(false)}>
                         <FaCogs className="mr-3 text-orange-500" /> Máy móc & Công nghệ

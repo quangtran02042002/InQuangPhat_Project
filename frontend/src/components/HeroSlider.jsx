@@ -76,7 +76,7 @@ const HeroSlider = () => {
               </p>
               <Link 
                 to={banner.link}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full transition transform hover:-translate-y-1 hover:shadow-2xl border-2 border-transparent"
+                className="bg-[#006B4D] hover:bg-[#004D38] text-white font-bold py-3 px-10 rounded-full transition transform hover:-translate-y-1 hover:shadow-2xl border-2 border-transparent"
               >
                 {banner.btnText}
               </Link>

@@ -48,3 +48,61 @@ a {
 a:hover {
   text-decoration: none !important; /* Hoặc để 'underline' nếu muốn hiện khi hover */
 }
+
+/* ---- CSS FIX: Bảng trong bài viết (chống bị .prose override) ---- */
+.prose table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0 !important;
+  font-size: 14.5px !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: table !important;
+}
+
+.prose thead tr {
+  background: linear-gradient(90deg, #005a3f 0%, #008a5a 100%) !important;
+  border-bottom: none !important;
+}
+
+.prose thead th {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 12.5px !important;
+  letter-spacing: 0.04em !important;
+  padding: 15px 20px !important;
+  text-align: left !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.prose tbody tr {
+  border-bottom: 1px solid #e2f0ea !important;
+}
+.prose tbody tr:last-child {
+  border-bottom: none !important;
+  background-color: #f0fdfb !important;
+}
+.prose tbody tr:nth-child(even) {
+  background-color: #f8fdfb !important;
+}
+.prose tbody tr:nth-child(odd) {
+  background-color: #ffffff !important;
+}
+
+.prose tbody td {
+  padding: 13px 20px !important;
+  color: #374151 !important;
+  border: none !important;
+  line-height: 1.55 !important;
+}
+.prose tbody td:first-child {
+  font-weight: 700 !important;
+  color: #006B4D !important;
+}
+
+/* Wrapper div quanh table */
+.prose div > table {
+  border-radius: 0 !important;
+}

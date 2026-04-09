@@ -29,7 +29,7 @@ const Product = ({ product }) => {
       <div className="p-4">
         <div className="text-xs text-gray-500 mb-1 uppercase tracking-wide">{product.category}</div>
         <Link to={`/product/${product._id}`}>
-          <h3 className="text-lg font-bold text-gray-800 hover:text-blue-600 truncate mb-2">
+          <h3 className="text-lg font-bold text-gray-800 hover:text-[#006B4D] truncate mb-2">
             {product.name}
           </h3>
         </Link>
@@ -44,9 +44,9 @@ const Product = ({ product }) => {
         <div className="flex justify-between items-end">
           <div>
             <span className="text-xs text-gray-500">Giá từ:</span>
-            <div className="text-xl font-bold text-blue-700">{displayPrice}₫</div>
+            <div className="text-xl font-bold text-[#006B4D]">{displayPrice}₫</div>
           </div>
-          <Link to={`/product/${product._id}`} className="bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-800 p-2 rounded-lg transition-colors text-sm font-medium">
+          <Link to={`/product/${product._id}`} className="bg-gray-100 hover:bg-[#006B4D] hover:text-white text-gray-800 p-2 rounded-lg transition-colors text-sm font-medium">
             Xem chi tiết
           </Link>
         </div>

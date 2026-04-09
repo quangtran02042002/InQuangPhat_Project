@@ -55,7 +55,7 @@ const Footer = () => {
               Cam kết chất lượng - Tiến độ - Giá thành hợp lý.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700"><FaFacebookF /></a>
+              <a href="#" className="bg-[#006B4D] text-white p-2 rounded-full hover:bg-[#004D38]"><FaFacebookF /></a>
               <a href="#" className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700"><FaYoutube /></a>
             </div>
           </div>
@@ -83,7 +83,7 @@ const Footer = () => {
           <div>
             <h3 className="text-white text-lg font-bold mb-4 uppercase">Hỗ trợ khách hàng</h3>
             <ul className="space-y-2 text-sm">
-              <a href="/" onClick={handleHomeClick} className="hover:text-blue-600 transition cursor-pointer">
+              <a href="/" onClick={handleHomeClick} className="hover:text-[#006B4D] transition cursor-pointer">
                 Trang chủ
               </a>
               <li><Link to="/about" className="hover:text-white transition">Về chúng tôi</Link></li>

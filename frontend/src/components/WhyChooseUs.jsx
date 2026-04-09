@@ -21,8 +21,8 @@ const WhyChooseUs = () => {
       icon: <FaShippingFast />,
       title: 'GIAO HÀNG ĐÚNG HẸN',
       desc: 'Cam kết tiến độ sản xuất, hỗ trợ giao hàng tận nơi tại Hà Nội.',
-      color: 'text-blue-600',
-      bg: 'bg-blue-100'
+      color: 'text-[#006B4D]',
+      bg: 'bg-[#E6F0ED]'
     },
     {
       icon: <FaCheckCircle />,

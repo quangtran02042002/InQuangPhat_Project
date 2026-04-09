@@ -56,7 +56,7 @@ const CategoryGrid = () => {
         </div>
         
         {/* Mũi tên nhỏ */}
-        <div className="mt-1 ml-2 text-gray-300 group-hover:text-blue-500 transition">
+        <div className="mt-1 ml-2 text-gray-300 group-hover:text-[#006B4D] transition">
              <FaArrowRight size={12}/>
         </div>
     </Link>
@@ -70,14 +70,14 @@ const CategoryGrid = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             
             {/* === CỘT TRÁI: IN OFFSET (Nền tổng thể vẫn màu Xanh) === */}
-            <div className="bg-blue-50/60 rounded-3xl p-6 lg:p-8 border border-blue-100/50">
-                <div className="flex items-center mb-6 pb-4 border-b border-blue-200/30">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-4 shadow-sm">
+            <div className="bg-[#E6F0ED]/60 rounded-3xl p-6 lg:p-8 border border-[#006B4D]/10">
+                <div className="flex items-center mb-6 pb-4 border-b border-[#006B4D]/20">
+                    <div className="w-12 h-12 bg-[#E6F0ED] rounded-full flex items-center justify-center text-[#006B4D] mr-4 shadow-sm">
                         <FaBoxOpen size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-blue-900 uppercase tracking-wider">In Offset & Bao Bì</h3>
-                        <p className="text-sm text-blue-600/80 font-medium">Giải pháp bao bì giấy chuyên nghiệp</p>
+                        <h3 className="text-xl font-bold text-[#004D38] uppercase tracking-wider">In Offset & Bao Bì</h3>
+                        <p className="text-sm text-[#006B4D]/80 font-medium">Giải pháp bao bì giấy chuyên nghiệp</p>
                     </div>
                 </div>
                 

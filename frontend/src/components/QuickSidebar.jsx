@@ -29,12 +29,12 @@ const QuickSidebar = () => {
           className="group flex items-center cursor-pointer"
         >
           {/* ICON TRÒN */}
-          <div className="w-10 h-10 rounded-full bg-gray border border-gray-200 shadow-md flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:border-blue-600 transition-all duration-300 relative z-10 sidebar-icon">
+          <div className="w-10 h-10 rounded-full bg-gray border border-gray-200 shadow-md flex items-center justify-center text-gray-400 group-hover:text-[#006B4D] group-hover:border-[#006B4D] transition-all duration-300 relative z-10 sidebar-icon">
             {item.icon}
           </div>
 
           {/* LABEL (Hiện ra khi hover hoặc active) */}
-          <div className="absolute left-4 pl-8 pr-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-r-full opacity-0 group-hover:opacity-100 -z-0 transition-all duration-300 transform -translate-x-full group-hover:translate-x-0 shadow-lg whitespace-nowrap sidebar-label">
+          <div className="absolute left-4 pl-8 pr-4 py-2 bg-[#006B4D] text-white text-sm font-bold rounded-r-full opacity-0 group-hover:opacity-100 -z-0 transition-all duration-300 transform -translate-x-full group-hover:translate-x-0 shadow-lg whitespace-nowrap sidebar-label">
             {item.label}
           </div>
         </Link>
@@ -43,11 +43,11 @@ const QuickSidebar = () => {
       {/* CSS RIÊNG CHO TRẠNG THÁI ACTIVE (Sáng đèn khi cuộn tới) */}
       <style jsx>{`
         .active-sidebar .sidebar-icon {
-          background-color: #2563EB; /* blue-600 */
+          background-color: #006B4D;
           color: white;
-          border-color: #2563EB;
+          border-color: #006B4D;
           transform: scale(1.1);
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 107, 77, 0.3);
         }
       `}</style>
     </div>

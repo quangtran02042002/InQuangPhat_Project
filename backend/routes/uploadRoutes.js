@@ -3,6 +3,7 @@ const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const dotenv = require('dotenv');
+const { protect } = require('../middleware/authMiddleware');
 
 dotenv.config();
 const router = express.Router();
@@ -23,10 +24,13 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 
 // SỬA: Đổi từ single('image') sang array('images', 10)
-router.post('/', upload.array('images', 10), (req, res) => {
+router.post('/', protect, upload.array('images', 10), (req, res) => {
   const urls = req.files.map(file => file.path);
   res.send(urls); // Trả về dạng mảng ['link1', 'link2']
 });

@@ -1,167 +1,759 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaFlask, FaTrash, FaPlus, FaExclamationTriangle, FaEdit } from 'react-icons/fa';
+import {
+    FaFlask, FaTrash, FaPlus, FaExclamationTriangle, FaWarehouse,
+    FaSearch, FaTimes, FaClipboardList, FaArrowDown, FaArrowUp,
+    FaUser, FaStickyNote, FaBoxOpen, FaSync, FaFilter,
+} from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
+import AdminHeader from '../../components/AdminHeader';
 
+// ============================================================
+// HELPERS
+// ============================================================
+const formatQty = (num) => Number(num).toLocaleString('vi-VN');
+const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'vừa xong';
+    if (m < 60) return `${m} phút trước`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} giờ trước`;
+    const d = Math.floor(h / 24);
+    return `${d} ngày trước`;
+};
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 const ChemicalScreen = () => {
-  const [chemicals, setChemicals] = useState([]);
-  const [formData, setFormData] = useState({ name: '', unit: '', quantity: 0, minStock: 5, safetyNote: '', supplier: '' });
-  const [editQuantity, setEditQuantity] = useState({});
-  const [deleteId, setDeleteId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+    // ---------- TAB STATE ----------
+    const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'dispatch'
 
-  useEffect(() => { fetchChemicals(); }, []);
+    // ---------- SHARED STATE ----------
+    const [chemicals, setChemicals] = useState([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const fetchChemicals = async () => {
-    try {
-      const { data } = await axios.get('/api/chemicals');
-      setChemicals(data);
-    } catch (error) { toast.error("Lỗi tải dữ liệu"); }
-  };
+    // ---------- INVENTORY TAB STATE ----------
+    const [formData, setFormData] = useState({
+        name: '', unit: '', quantity: 0, minStock: 5, safetyNote: '', supplier: '',
+    });
+    const [editQuantity, setEditQuantity] = useState({});
+    const [deleteId, setDeleteId] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isAddFormOpen, setIsAddFormOpen] = useState(false);
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
-    try {
-        await axios.post('/api/chemicals', formData);
-        toast.success('Đã thêm hóa chất mới');
-        setFormData({ name: '', unit: '', quantity: 0, minStock: 5, safetyNote: '', supplier: '' });
-        fetchChemicals();
-    } catch (error) { toast.error('Lỗi khi thêm'); }
-  };
+    // ---------- DISPATCH TAB STATE ----------
+    const [dispatches, setDispatches] = useState([]);
+    const [dispatchLoading, setDispatchLoading] = useState(false);
+    const [dispatchForm, setDispatchForm] = useState({
+        chemicalId: '',
+        type: 'xuat',
+        quantity: '',
+        recipient: '',
+        note: '',
+    });
+    const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
+    const [filterType, setFilterType] = useState('all'); // 'all' | 'nhap' | 'xuat'
+    const [filterChemical, setFilterChemical] = useState('');
 
-  const updateQuantity = async (id, currentQty) => {
-      const newQty = editQuantity[id];
-      if (newQty === undefined || newQty === currentQty) return;
-      
-      try {
-          await axios.put(`/api/chemicals/${id}`, { quantity: newQty });
-          toast.success('Cập nhật tồn kho thành công');
-          fetchChemicals();
-      } catch (error) { toast.error('Lỗi cập nhật'); }
-  };
+    // ============================================================
+    // FETCH
+    // ============================================================
+    const fetchChemicals = useCallback(async () => {
+        try {
+            const { data } = await axios.get('/api/chemicals');
+            setChemicals(data);
+        } catch {
+            toast.error('Lỗi tải danh sách hóa chất');
+        }
+    }, []);
 
-  const deleteHandler = async () => {
-     try {
-         await axios.delete(`/api/chemicals/${deleteId}`);
-         setChemicals(chemicals.filter(x => x._id !== deleteId));
-         setIsModalOpen(false);
-         toast.success('Đã xóa hóa chất');
-     } catch (error) { toast.error('Lỗi khi xóa'); }
-  };
+    const fetchDispatches = useCallback(async () => {
+        setDispatchLoading(true);
+        try {
+            const params = {};
+            if (filterChemical) params.chemical = filterChemical;
+            const { data } = await axios.get('/api/chemicals/dispatches', { params });
+            setDispatches(data);
+        } catch {
+            toast.error('Lỗi tải lịch sử cấp phát');
+        } finally {
+            setDispatchLoading(false);
+        }
+    }, [filterChemical]);
 
-  return (
-    <div className="flex h-screen bg-gray-50 font-sans">
-      <div className="h-full flex-shrink-0">
-         <Sidebar />
-      </div>
+    useEffect(() => { fetchChemicals(); }, [fetchChemicals]);
+    useEffect(() => {
+        if (activeTab === 'dispatch') fetchDispatches();
+    }, [activeTab, fetchDispatches]);
 
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center uppercase">
-                <FaFlask className="mr-3 text-purple-600" /> Quản lý Kho Hóa Chất / Mực In
-            </h1>
-        </div>
+    // ============================================================
+    // INVENTORY HANDLERS
+    // ============================================================
+    const submitHandler = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('/api/chemicals', formData);
+            toast.success('Đã thêm hóa chất mới');
+            setFormData({ name: '', unit: '', quantity: 0, minStock: 5, safetyNote: '', supplier: '' });
+            setIsAddFormOpen(false);
+            fetchChemicals();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Lỗi khi thêm');
+        }
+    };
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* CỘT TRÁI: FORM THÊM MỚI */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-purple-100 h-fit">
-                <h3 className="font-bold text-lg mb-5 text-gray-800 border-b border-purple-100 pb-2 flex items-center">
-                    <FaPlus className="text-purple-500 mr-2"/> Thêm Danh Mục Mới
-                </h3>
-                <form onSubmit={submitHandler} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Tên hóa chất / Mực in</label>
-                        <input type="text" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} placeholder="VD: Mực UV xanh, Dung môi Xylene..."/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Đơn vị</label>
-                            <input type="text" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={formData.unit} onChange={e=>setFormData({...formData, unit: e.target.value})} placeholder="Can, Lít, Kg..."/>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Cảnh báo hết (Min)</label>
-                            <input type="number" required className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={formData.minStock} onChange={e=>setFormData({...formData, minStock: parseInt(e.target.value)})}/>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Cảnh báo An toàn / Bảo quản</label>
-                        <input type="text" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none placeholder-red-300" value={formData.safetyNote} onChange={e=>setFormData({...formData, safetyNote: e.target.value})} placeholder="VD: Dễ cháy, để nơi thoáng mát..."/>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Nhà cung cấp</label>
-                        <input type="text" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" value={formData.supplier} onChange={e=>setFormData({...formData, supplier: e.target.value})}/>
-                    </div>
-                    <button type="submit" className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition shadow-md">
-                        + Tạo danh mục
-                    </button>
-                </form>
+    const updateQuantity = async (id, currentQty) => {
+        const newQty = editQuantity[id];
+        if (newQty === undefined || Number(newQty) === currentQty) return;
+        try {
+            await axios.put(`/api/chemicals/${id}`, { quantity: Number(newQty) });
+            toast.success('Cập nhật tồn kho thành công');
+            fetchChemicals();
+        } catch {
+            toast.error('Lỗi cập nhật');
+        }
+    };
+
+    const deleteHandler = async () => {
+        try {
+            await axios.delete(`/api/chemicals/${deleteId}`);
+            setChemicals(chemicals.filter((x) => x._id !== deleteId));
+            setIsModalOpen(false);
+            toast.success('Đã xóa hóa chất');
+        } catch {
+            toast.error('Lỗi khi xóa');
+        }
+    };
+
+    const filteredChemicals = chemicals.filter(
+        (c) =>
+            c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.supplier && c.supplier.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const lowStockChemicals = chemicals.filter((c) => c.quantity <= c.minStock);
+
+    // ============================================================
+    // DISPATCH HANDLERS
+    // ============================================================
+    const handleDispatchSubmit = async (e) => {
+        e.preventDefault();
+        if (!dispatchForm.chemicalId) {
+            toast.warning('Vui lòng chọn hóa chất');
+            return;
+        }
+        if (!dispatchForm.quantity || Number(dispatchForm.quantity) <= 0) {
+            toast.warning('Số lượng phải lớn hơn 0');
+            return;
+        }
+        setDispatchSubmitting(true);
+        try {
+            const { data } = await axios.post('/api/chemicals/dispatches', {
+                chemicalId: dispatchForm.chemicalId,
+                type: dispatchForm.type,
+                quantity: Number(dispatchForm.quantity),
+                recipient: dispatchForm.recipient,
+                note: dispatchForm.note,
+                createdBy: 'Admin',
+            });
+
+            const typeLabel = dispatchForm.type === 'nhap' ? 'Nhập kho' : 'Xuất kho';
+            toast.success(`✅ ${typeLabel} thành công! Tồn kho còn: ${formatQty(data.updatedQuantity)}`);
+
+            if (data.isLow) {
+                toast.warning(`⚠️ Cảnh báo: Hóa chất đã xuống dưới ngưỡng an toàn!`, { autoClose: 6000 });
+            }
+
+            setDispatchForm({ chemicalId: '', type: 'xuat', quantity: '', recipient: '', note: '' });
+            await fetchChemicals();
+            await fetchDispatches();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Lỗi khi tạo phiếu cấp phát');
+        } finally {
+            setDispatchSubmitting(false);
+        }
+    };
+
+    const filteredDispatches = dispatches.filter((d) => filterType === 'all' || d.type === filterType);
+
+    const totalNhap = dispatches.filter((d) => d.type === 'nhap').reduce((s, d) => s + d.quantity, 0);
+    const totalXuat = dispatches.filter((d) => d.type === 'xuat').reduce((s, d) => s + d.quantity, 0);
+
+    // ============================================================
+    // SELECTED CHEMICAL INFO (for dispatch form)
+    // ============================================================
+    const selectedChemical = chemicals.find((c) => c._id === dispatchForm.chemicalId);
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    return (
+        <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+
+            {/* OVERLAY & SIDEBAR MOBILE */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-[#111827]/50 z-40 lg:hidden backdrop-blur-sm"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+            <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0 lg:block`}>
+                <Sidebar />
             </div>
 
-            {/* CỘT PHẢI: DANH SÁCH HÓA CHẤT */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 font-bold text-gray-700 bg-gray-50 flex justify-between items-center">
-                    <span>Danh sách Tồn kho Hóa chất</span>
-                    <span className="text-sm font-normal text-gray-500 bg-white px-3 py-1 rounded-full border">
-                        Tổng: {chemicals.length} mã
-                    </span>
-                </div>
-                <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
-                    <table className="min-w-full leading-normal">
-                        <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase sticky top-0 z-10">
-                            <tr>
-                                <th className="px-5 py-3 text-left">Tên Hóa Chất</th>
-                                <th className="px-5 py-3 text-center">Đơn vị</th>
-                                <th className="px-5 py-3 text-center">Tồn kho hiện tại</th>
-                                <th className="px-5 py-3 text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {chemicals.map((item) => (
-                                <tr key={item._id} className="border-b border-gray-50 hover:bg-purple-50 transition">
-                                    <td className="px-5 py-4">
-                                        <div className="font-bold text-gray-800">{item.name}</div>
-                                        {item.safetyNote && (
-                                            <div className="text-[11px] text-red-500 mt-1 flex items-center font-medium">
-                                                <FaExclamationTriangle className="mr-1"/> {item.safetyNote}
+            <div className="flex-1 flex flex-col w-full overflow-hidden">
+
+                {/* ADMIN HEADER */}
+                <AdminHeader
+                    title="Kho Hóa Chất & Mực In"
+                    onMenuClick={() => setIsSidebarOpen(true)}
+                />
+
+                {/* ── TAB BAR (giống FinishingPriceScreen) ── */}
+                <header className="bg-white border-b border-gray-200 px-4 md:px-8 shrink-0 flex flex-col sm:flex-row justify-between gap-0">
+                    <nav className="flex gap-1 text-sm font-medium overflow-x-auto">
+                        <button
+                            onClick={() => setActiveTab('inventory')}
+                            className={`flex items-center gap-2 whitespace-nowrap px-5 py-3.5 border-b-2 transition-colors ${
+                                activeTab === 'inventory'
+                                    ? 'border-[#006B4D] text-[#006B4D] font-extrabold'
+                                    : 'border-transparent text-[#6B7280] hover:text-[#111827]'
+                            }`}
+                        >
+                            <FaWarehouse className="text-xs" />
+                            Kho Tồn Kho
+                            {lowStockChemicals.length > 0 && (
+                                <span className="bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ml-1">
+                                    {lowStockChemicals.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('dispatch')}
+                            className={`flex items-center gap-2 whitespace-nowrap px-5 py-3.5 border-b-2 transition-colors ${
+                                activeTab === 'dispatch'
+                                    ? 'border-[#006B4D] text-[#006B4D] font-extrabold'
+                                    : 'border-transparent text-[#6B7280] hover:text-[#111827]'
+                            }`}
+                        >
+                            <FaClipboardList className="text-xs" />
+                            Cấp Phát Hóa Chất
+                        </button>
+                    </nav>
+                </header>
+
+                {/* STICKY LOW-STOCK ALERT BANNER */}
+                {lowStockChemicals.length > 0 && (
+                    <div className="bg-red-50 border-b-2 border-red-200 px-4 md:px-8 py-2.5 flex items-center gap-3 shrink-0">
+                        <div className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shrink-0 animate-pulse">
+                            <FaExclamationTriangle className="text-white text-xs" />
+                        </div>
+                        <span className="text-red-700 font-bold text-sm flex-1">
+                            🚨 {lowStockChemicals.length} mặt hàng đang dưới ngưỡng an toàn:{' '}
+                            <span className="font-extrabold">
+                                {lowStockChemicals.slice(0, 3).map((c) => c.name).join(', ')}
+                                {lowStockChemicals.length > 3 && ` và ${lowStockChemicals.length - 3} khác`}
+                            </span>
+                        </span>
+                        <button
+                            onClick={() => setActiveTab('dispatch')}
+                            className="text-red-600 font-extrabold text-xs bg-red-100 px-3 py-1.5 rounded-lg hover:bg-red-200 transition shrink-0"
+                        >
+                            Nhập kho →
+                        </button>
+                    </div>
+                )}
+
+                {/* ====================================================== */}
+                {/* TAB 1: KHO TỒN KHO                                      */}
+                {/* ====================================================== */}
+                {activeTab === 'inventory' && (
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                        <div className="max-w-7xl mx-auto">
+
+                            {/* Title Section */}
+                            <div className="flex items-center justify-between gap-4 mb-6 md:mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl md:text-2xl shadow-sm shrink-0">
+                                        <FaFlask />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Quản lý Tồn kho</h2>
+                                        <p className="text-[#6B7280] text-xs md:text-sm mt-0.5">
+                                            Theo dõi số lượng mực in, dung môi và hóa chất
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsAddFormOpen(true)}
+                                    className="lg:hidden flex items-center gap-2 bg-[#006B4D] text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-[#00543c] transition active:scale-95 shrink-0"
+                                >
+                                    <FaPlus /> Thêm
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+
+                                {/* CỘT TRÁI: FORM THÊM MỚI */}
+                                <div className={`${isAddFormOpen ? 'fixed inset-0 z-50 bg-[#111827]/60 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm' : 'hidden lg:block'}`}>
+                                    <div className={`bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl lg:shadow-sm lg:border lg:border-gray-200 w-full max-w-md ${isAddFormOpen ? 'animate-fade-in-up sm:animate-fade-in-down max-h-[90vh] flex flex-col' : 'h-fit'}`}>
+                                        <div className="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB] rounded-t-2xl">
+                                            <h3 className="font-extrabold text-lg text-[#111827] flex items-center">
+                                                <FaPlus className="text-[#006B4D] mr-2" /> Thêm Danh Mục Mới
+                                            </h3>
+                                            {isAddFormOpen && (
+                                                <button type="button" onClick={() => setIsAddFormOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-2 rounded-full shadow-sm transition lg:hidden">
+                                                    <FaTimes size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className={`p-5 md:p-6 ${isAddFormOpen ? 'overflow-y-auto' : ''}`}>
+                                            <form onSubmit={submitHandler} className="space-y-5">
+                                                <div>
+                                                    <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">
+                                                        Tên hóa chất / Mực in <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <input type="text" required className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Mực UV xanh, Xylene..." />
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-3 md:gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] md:text-[11px] font-bold text-[#6B7280] uppercase mb-2">
+                                                            Đơn vị <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="text" required className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} placeholder="Kg, Lít..." />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] md:text-[11px] font-bold text-[#6B7280] uppercase mb-2">
+                                                            SL Đầu
+                                                        </label>
+                                                        <input type="number" min="0" step="any" className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value === '' ? '' : parseFloat(e.target.value) })} placeholder="0" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] md:text-[11px] font-bold text-[#6B7280] uppercase mb-2">
+                                                            Cảnh báo <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="number" min="0" required className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" value={formData.minStock} onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) })} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">
+                                                        Lưu ý An toàn / Bảo quản
+                                                    </label>
+                                                    <input type="text" className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm placeholder-red-300" value={formData.safetyNote} onChange={(e) => setFormData({ ...formData, safetyNote: e.target.value })} placeholder="VD: Dễ cháy, để nơi thoáng mát..." />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Nhà cung cấp</label>
+                                                    <input type="text" className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} placeholder="Nhập tên NCC..." />
+                                                </div>
+                                                <div className="pt-2">
+                                                    <button type="submit" className="w-full bg-[#006B4D] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[#00543c] transition flex items-center justify-center">
+                                                        <FaPlus className="mr-2" /> Tạo danh mục
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CỘT PHẢI: DANH SÁCH HÓA CHẤT */}
+                                <div className="lg:col-span-2 flex flex-col gap-4">
+                                    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center w-full sm:w-auto text-[#6B7280] font-bold">
+                                            <FaWarehouse className="text-[#006B4D] mr-2 text-xl" />
+                                            Tổng: <span className="text-[#111827] ml-1 bg-[#E6F0ED] px-2 py-0.5 rounded-lg">{chemicals.length} mã</span>
+                                            {lowStockChemicals.length > 0 && (
+                                                <span className="ml-2 bg-red-100 text-red-600 text-xs font-extrabold px-2 py-0.5 rounded-lg">
+                                                    {lowStockChemicals.length} sắp hết
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="w-full sm:w-1/2 md:w-64 relative">
+                                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input type="text" placeholder="Tìm tên, nhà cung cấp..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-[#111827] text-sm rounded-full pl-10 pr-4 py-2 outline-none focus:border-[#006B4D] focus:ring-1 focus:ring-[#006B4D] transition-all" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex-1">
+                                        <div className="overflow-x-auto custom-scrollbar max-h-[650px]">
+                                            <table className="min-w-full leading-normal text-left">
+                                                <thead className="bg-[#F9FAFB] text-[10px] md:text-xs font-bold text-[#6B7280] uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200">
+                                                    <tr>
+                                                        <th className="px-5 py-4 w-1/2">Tên Hóa Chất</th>
+                                                        <th className="px-5 py-4 text-center">Đơn vị</th>
+                                                        <th className="px-5 py-4 text-center">Tồn kho hiện tại</th>
+                                                        <th className="px-5 py-4 text-center">Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-sm">
+                                                    {filteredChemicals.length === 0 ? (
+                                                        <tr><td colSpan="4" className="text-center py-10 text-gray-400 font-medium">Chưa có dữ liệu</td></tr>
+                                                    ) : filteredChemicals.map((item, idx) => (
+                                                        <tr key={item._id} className={`hover:bg-[#E6F0ED]/30 transition-colors ${idx !== filteredChemicals.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                            <td className="px-5 py-4 min-w-[200px]">
+                                                                <div className="font-bold text-[#111827] text-base">{item.name}</div>
+                                                                {item.safetyNote && (
+                                                                    <div className="text-[11px] text-orange-600 bg-orange-50 px-2 py-1 rounded inline-flex items-center font-bold mt-1.5 border border-orange-100">
+                                                                        <FaExclamationTriangle className="mr-1" /> {item.safetyNote}
+                                                                    </div>
+                                                                )}
+                                                                <div className="text-[11px] text-gray-500 mt-1 font-medium"><span className="text-gray-400">NCC:</span> {item.supplier || 'Chưa cập nhật'}</div>
+                                                            </td>
+                                                            <td className="px-5 py-4 text-center font-bold text-gray-500 bg-gray-50/50">{item.unit}</td>
+                                                            <td className="px-5 py-4 text-center">
+                                                                <div className="flex flex-col items-center justify-center gap-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        className={`w-20 md:w-24 text-center border-b-2 bg-transparent px-1 py-1.5 outline-none font-extrabold text-lg transition-colors ${item.quantity <= item.minStock ? 'border-red-500 text-red-600' : 'border-gray-200 focus:border-[#006B4D] text-[#006B4D]'}`}
+                                                                        defaultValue={item.quantity}
+                                                                        onChange={(e) => setEditQuantity({ ...editQuantity, [item._id]: e.target.value })}
+                                                                        onBlur={() => updateQuantity(item._id, item.quantity)}
+                                                                    />
+                                                                    {item.quantity <= item.minStock && (
+                                                                        <div className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full mt-1 border border-red-100">
+                                                                            Sắp hết! (Định mức: {item.minStock})
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-5 py-4 text-center">
+                                                                <button onClick={() => { setDeleteId(item._id); setIsModalOpen(true); }} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                                    <FaTrash size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                )}
+
+                {/* ====================================================== */}
+                {/* TAB 2: CẤP PHÁT HÓA CHẤT                               */}
+                {/* ====================================================== */}
+                {activeTab === 'dispatch' && (
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                        <div className="max-w-7xl mx-auto">
+
+                            {/* Title */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl md:text-2xl shadow-sm shrink-0">
+                                    <FaClipboardList />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Cấp Phát Hóa Chất</h2>
+                                    <p className="text-[#6B7280] text-xs md:text-sm mt-f0.5">
+                                        Ghi nhận phiếu nhập / xuất — tồn kho tự động cập nhật
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* STATS ROW */}
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                                        <FaArrowDown />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Tổng nhập (kỳ này)</p>
+                                        <p className="text-xl font-extrabold text-green-600">{formatQty(totalNhap)}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                                        <FaArrowUp />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Tổng xuất (kỳ này)</p>
+                                        <p className="text-xl font-extrabold text-red-500">{formatQty(totalXuat)}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#E6F0ED] rounded-xl flex items-center justify-center text-[#006B4D]">
+                                        <FaClipboardList />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Tổng phiếu</p>
+                                        <p className="text-xl font-extrabold text-[#111827]">{dispatches.length}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                                {/* CỘT TRÁI: FORM TẠO PHIẾU */}
+                                <div className="lg:col-span-1">
+                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                                        <div className="p-5 border-b border-gray-100 bg-[#F9FAFB]">
+                                            <h3 className="font-extrabold text-[#111827] flex items-center gap-2">
+                                                <FaBoxOpen className="text-[#006B4D]" /> Tạo Phiếu Mới
+                                            </h3>
+                                        </div>
+                                        <form onSubmit={handleDispatchSubmit} className="p-5 space-y-4">
+
+                                            {/* LOẠI PHIẾU TOGGLE */}
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">Loại phiếu</label>
+                                                <div className="flex rounded-xl overflow-hidden border border-gray-200">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDispatchForm({ ...dispatchForm, type: 'xuat' })}
+                                                        className={`flex-1 py-2.5 text-sm font-extrabold flex items-center justify-center gap-2 transition-colors ${dispatchForm.type === 'xuat' ? 'bg-red-500 text-white' : 'bg-white text-gray-500 hover:bg-red-50'}`}
+                                                    >
+                                                        <FaArrowUp className="text-xs" /> Xuất Kho
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDispatchForm({ ...dispatchForm, type: 'nhap' })}
+                                                        className={`flex-1 py-2.5 text-sm font-extrabold flex items-center justify-center gap-2 transition-colors ${dispatchForm.type === 'nhap' ? 'bg-green-500 text-white' : 'bg-white text-gray-500 hover:bg-green-50'}`}
+                                                    >
+                                                        <FaArrowDown className="text-xs" /> Nhập Kho
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* CHỌN HÓA CHẤT */}
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                    Hóa chất <span className="text-red-500">*</span>
+                                                </label>
+                                                <select
+                                                    required
+                                                    value={dispatchForm.chemicalId}
+                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, chemicalId: e.target.value })}
+                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm bg-white"
+                                                >
+                                                    <option value="">-- Chọn hóa chất --</option>
+                                                    {chemicals.map((c) => (
+                                                        <option key={c._id} value={c._id}>
+                                                            {c.name} (Còn: {c.quantity} {c.unit})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {/* Tồn kho preview */}
+                                                {selectedChemical && (
+                                                    <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${selectedChemical.quantity <= selectedChemical.minStock ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#E6F0ED] text-[#006B4D]'}`}>
+                                                        <FaFlask className="shrink-0" />
+                                                        Tồn kho hiện tại: <span className="text-base font-extrabold">{formatQty(selectedChemical.quantity)}</span> {selectedChemical.unit}
+                                                        {selectedChemical.quantity <= selectedChemical.minStock && (
+                                                            <span className="ml-auto bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-[10px]">⚠️ Sắp hết</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* SỐ LƯỢNG */}
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                    Số lượng {selectedChemical ? `(${selectedChemical.unit})` : ''} <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="any"
+                                                    required
+                                                    value={dispatchForm.quantity}
+                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, quantity: e.target.value })}
+                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-extrabold text-[#111827] shadow-sm text-right text-lg"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+
+                                            {/* NGƯỜI NHẬN */}
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                    <FaUser className="inline mr-1" />
+                                                    Người nhận {dispatchForm.type === 'nhap' ? '/ Nguồn nhập' : ''}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={dispatchForm.recipient}
+                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, recipient: e.target.value })}
+                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm"
+                                                    placeholder={dispatchForm.type === 'nhap' ? 'VD: NCC Hóa chất Minh Thành' : 'VD: Nguyễn Văn A (SX In)'}
+                                                />
+                                            </div>
+
+                                            {/* GHI CHÚ */}
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                    <FaStickyNote className="inline mr-1" /> Ghi chú
+                                                </label>
+                                                <textarea
+                                                    rows={2}
+                                                    value={dispatchForm.note}
+                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, note: e.target.value })}
+                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm resize-none"
+                                                    placeholder="Ghi chú thêm nếu cần..."
+                                                />
+                                            </div>
+
+                                            {/* SUBMIT */}
+                                            <button
+                                                type="submit"
+                                                disabled={dispatchSubmitting}
+                                                className={`w-full py-3 rounded-xl font-extrabold text-white shadow-md transition flex items-center justify-center gap-2 active:scale-95 ${
+                                                    dispatchForm.type === 'xuat'
+                                                        ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
+                                                        : 'bg-green-500 hover:bg-green-600 shadow-green-200'
+                                                } disabled:opacity-60`}
+                                            >
+                                                {dispatchSubmitting ? (
+                                                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                                                ) : dispatchForm.type === 'xuat' ? (
+                                                    <><FaArrowUp /> Tạo Phiếu Xuất</>
+                                                ) : (
+                                                    <><FaArrowDown /> Tạo Phiếu Nhập</>
+                                                )}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                {/* CỘT PHẢI: LỊCH SỬ CẤP PHÁT */}
+                                <div className="lg:col-span-2 flex flex-col gap-4">
+
+                                    {/* Filter bar */}
+                                    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <FaFilter className="text-gray-400 text-xs shrink-0" />
+                                            <span className="text-sm font-bold text-gray-600">Lọc:</span>
+                                            <div className="flex gap-1">
+                                                {[
+                                                    { key: 'all', label: 'Tất cả' },
+                                                    { key: 'nhap', label: '↓ Nhập' },
+                                                    { key: 'xuat', label: '↑ Xuất' },
+                                                ].map(({ key, label }) => (
+                                                    <button
+                                                        key={key}
+                                                        onClick={() => setFilterType(key)}
+                                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                                                            filterType === key
+                                                                ? 'bg-[#006B4D] text-white'
+                                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <select
+                                                value={filterChemical}
+                                                onChange={(e) => setFilterChemical(e.target.value)}
+                                                className="flex-1 sm:w-48 border border-gray-200 text-sm rounded-xl px-3 py-2 outline-none focus:border-[#006B4D] font-medium"
+                                            >
+                                                <option value="">Tất cả hóa chất</option>
+                                                {chemicals.map((c) => (
+                                                    <option key={c._id} value={c._id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                onClick={fetchDispatches}
+                                                className="p-2 border border-gray-200 rounded-xl text-gray-500 hover:text-[#006B4D] hover:bg-gray-50 transition"
+                                                title="Làm mới"
+                                            >
+                                                <FaSync className={dispatchLoading ? 'animate-spin' : ''} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Table */}
+                                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1">
+                                        {dispatchLoading ? (
+                                            <div className="py-16 flex flex-col items-center gap-3 text-gray-400">
+                                                <div className="w-8 h-8 border-2 border-[#006B4D] border-t-transparent rounded-full animate-spin" />
+                                                <span className="text-sm font-medium">Đang tải lịch sử...</span>
+                                            </div>
+                                        ) : filteredDispatches.length === 0 ? (
+                                            <div className="py-16 flex flex-col items-center gap-3 text-gray-400">
+                                                <FaClipboardList className="text-4xl text-gray-200" />
+                                                <span className="text-sm font-medium">Chưa có phiếu cấp phát nào</span>
+                                            </div>
+                                        ) : (
+                                            <div className="overflow-x-auto custom-scrollbar max-h-[560px]">
+                                                <table className="min-w-full text-sm leading-normal">
+                                                    <thead className="bg-[#F9FAFB] text-[10px] font-bold text-[#6B7280] uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200">
+                                                        <tr>
+                                                            <th className="px-4 py-3 text-left">Hóa chất</th>
+                                                            <th className="px-4 py-3 text-center">Loại</th>
+                                                            <th className="px-4 py-3 text-center">Số lượng</th>
+                                                            <th className="px-4 py-3 text-left hidden md:table-cell">Người nhận</th>
+                                                            <th className="px-4 py-3 text-left hidden lg:table-cell">Ghi chú</th>
+                                                            <th className="px-4 py-3 text-left">Thời gian</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {filteredDispatches.map((d, idx) => (
+                                                            <tr key={d._id} className={`hover:bg-gray-50/80 transition-colors ${idx !== filteredDispatches.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="font-bold text-[#111827]">{d.chemicalName}</div>
+                                                                    <div className="text-[11px] text-gray-400">Còn sau: {formatQty(d.quantityAfter)} {d.chemicalUnit}</div>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
+                                                                        d.type === 'nhap'
+                                                                            ? 'bg-green-100 text-green-700 border border-green-200'
+                                                                            : 'bg-red-100 text-red-600 border border-red-200'
+                                                                    }`}>
+                                                                        {d.type === 'nhap' ? <FaArrowDown className="text-[10px]" /> : <FaArrowUp className="text-[10px]" />}
+                                                                        {d.type === 'nhap' ? 'Nhập' : 'Xuất'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className={`font-extrabold text-base ${d.type === 'nhap' ? 'text-green-600' : 'text-red-500'}`}>
+                                                                        {d.type === 'nhap' ? '+' : '-'}{formatQty(d.quantity)}
+                                                                    </span>
+                                                                    <div className="text-[10px] text-gray-400">{d.chemicalUnit}</div>
+                                                                </td>
+                                                                <td className="px-4 py-3 hidden md:table-cell">
+                                                                    <div className="font-medium text-[#111827] flex items-center gap-1">
+                                                                        {d.recipient ? (
+                                                                            <><FaUser className="text-gray-300 text-xs" /> {d.recipient}</>
+                                                                        ) : (
+                                                                            <span className="text-gray-300 italic">—</span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs max-w-[160px] truncate">
+                                                                    {d.note || '—'}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="text-[#111827] font-medium text-xs">{timeAgo(d.createdAt)}</div>
+                                                                    <div className="text-[10px] text-gray-400">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         )}
-                                        <div className="text-[11px] text-gray-400 mt-0.5">NCC: {item.supplier || 'Chưa cập nhật'}</div>
-                                    </td>
-                                    <td className="px-5 py-4 text-center text-sm font-bold text-gray-600">
-                                        {item.unit}
-                                    </td>
-                                    <td className="px-5 py-4 text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <input 
-                                                type="number" 
-                                                className={`w-20 text-center border p-1.5 rounded outline-none font-bold ${item.quantity <= item.minStock ? 'border-red-400 text-red-600 bg-red-50' : 'border-gray-300 focus:border-purple-500'}`}
-                                                defaultValue={item.quantity}
-                                                onChange={(e) => setEditQuantity({...editQuantity, [item._id]: e.target.value})}
-                                                onBlur={() => updateQuantity(item._id, item.quantity)}
-                                            />
-                                        </div>
-                                        {item.quantity <= item.minStock && (
-                                            <div className="text-[10px] text-red-500 font-bold mt-1">Sắp hết! (Dưới {item.minStock})</div>
-                                        )}
-                                    </td>
-                                    <td className="px-5 py-4 text-center">
-                                         <button onClick={()=>{setDeleteId(item._id); setIsModalOpen(true)}} className="p-2 text-gray-400 hover:text-red-500 bg-white rounded-full hover:shadow transition">
-                                             <FaTrash/>
-                                         </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                )}
             </div>
-        </div>
-      </div>
 
-      <ConfirmModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)} onConfirm={deleteHandler} title="Xóa hóa chất" message="Hóa chất này sẽ bị xóa khỏi danh mục kho. Bạn chắc chắn chứ?" />
-    </div>
-  );
+            <ConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={deleteHandler}
+                title="Xóa hóa chất"
+                message="Hóa chất này sẽ bị xóa khỏi danh mục kho. Bạn chắc chắn chứ?"
+            />
+        </div>
+    );
 };
+
 export default ChemicalScreen;

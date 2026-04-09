@@ -5,11 +5,11 @@ const CategoryDetail = ({ content }) => {
   if (!content) return null;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden mb-8 animate-fade-in-down">
+    <div className="bg-white rounded-2xl shadow-sm border border-[#006B4D]/10 overflow-hidden mb-8 animate-fade-in-down">
       
       {/* 1. Header & Intro */}
       <div className="p-8 pb-0">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 text-blue-900 border-l-4 border-blue-600 pl-4">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 text-[#004D38] border-l-4 border-[#006B4D] pl-4">
           {content.title}
         </h2>
         <p className="text-gray-600 text-lg leading-relaxed mb-6 italic border-b border-gray-100 pb-6">
@@ -22,14 +22,14 @@ const CategoryDetail = ({ content }) => {
         
         {/* Cột Trái: Vai trò & Loại hình */}
         <div className="space-y-6">
-            <div className="bg-blue-50 p-6 rounded-xl">
-                <h3 className="font-bold text-blue-700 mb-4 flex items-center text-lg">
+            <div className="bg-[#E6F0ED] p-6 rounded-xl">
+                <h3 className="font-bold text-[#006B4D] mb-4 flex items-center text-lg">
                     <FaInfoCircle className="mr-2"/> VAI TRÒ & LỢI ÍCH
                 </h3>
                 <ul className="space-y-3">
                     {content.role.map((r, i) => (
                         <li key={i} className="flex items-start text-gray-700">
-                            <FaCheckCircle className="text-blue-500 mr-3 mt-1 shrink-0"/> 
+                            <FaCheckCircle className="text-[#006B4D] mr-3 mt-1 shrink-0"/> 
                             <span>{r}</span>
                         </li>
                     ))}

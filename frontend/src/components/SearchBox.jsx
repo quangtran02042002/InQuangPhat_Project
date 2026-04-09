@@ -97,7 +97,7 @@ const SearchBox = () => {
     <div ref={wrapperRef} className="relative w-full max-w-lg mx-auto md:mx-0 z-50">
       
       {/* INPUT BAR */}
-      <form onSubmit={submitHandler} className="flex bg-gray-50 rounded-full border border-gray-300 overflow-hidden relative shadow-inner focus-within:ring-2 focus-within:ring-blue-300 focus-within:border-blue-400 transition-all">
+      <form onSubmit={submitHandler} className="flex bg-gray-50 rounded-full border border-gray-300 overflow-hidden relative shadow-inner focus-within:ring-2 focus-within:ring-[#006B4D]/30 focus-within:border-[#006B4D] transition-all">
         <input
           type="text"
           value={keyword}
@@ -114,7 +114,7 @@ const SearchBox = () => {
             </button>
         )}
 
-        <button type="submit" className="px-6 text-white bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center font-bold">
+        <button type="submit" className="px-6 text-white bg-[#006B4D] hover:bg-[#004D38] transition flex items-center justify-center font-bold">
           <FaSearch />
         </button>
       </form>
@@ -125,22 +125,22 @@ const SearchBox = () => {
           
           {/* 1. PHẦN DANH MỤC (HIỂN THỊ RÕ RÀNG) */}
           {categorySuggestions.length > 0 && (
-            <div className="bg-blue-50/50">
-                <div className="px-4 py-2 text-[10px] font-extrabold text-blue-500 uppercase tracking-wider border-b border-blue-100 flex items-center">
+            <div className="bg-[#E6F0ED]/50">
+                <div className="px-4 py-2 text-[10px] font-extrabold text-[#006B4D] uppercase tracking-wider border-b border-[#006B4D]/10 flex items-center">
                     <FaTags className="mr-2" /> Danh mục phù hợp
                 </div>
                 <ul>
                     {categorySuggestions.map((cat, index) => (
-                        <li key={index} className="border-b border-blue-50 last:border-none">
+                        <li key={index} className="border-b border-[#E6F0ED] last:border-none">
                             <Link 
                                 // Nếu bạn chưa có route category cụ thể, có thể trỏ về search keyword
                                 // Hoặc dùng: to={`/category/${cat.slug}`} nếu đã làm trang danh mục
                                 to={`/search/${cat.name}`} 
-                                className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:text-blue-700 hover:bg-white transition flex justify-between items-center group cursor-pointer"
+                                className="block px-4 py-2.5 text-sm font-bold text-gray-700 hover:text-[#006B4D] hover:bg-white transition flex justify-between items-center group cursor-pointer"
                                 onClick={() => setShowSuggestions(false)}
                             >
                                 <span className="flex items-center"><FaFire className="text-orange-500 mr-2 text-xs"/> {cat.name}</span>
-                                <FaArrowRight className="text-xs text-gray-300 group-hover:text-blue-500 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                                <FaArrowRight className="text-xs text-gray-300 group-hover:text-[#006B4D] -translate-x-2 group-hover:translate-x-0 transition-all" />
                             </Link>
                         </li>
                     ))}
@@ -173,7 +173,7 @@ const SearchBox = () => {
                         
                         {/* Thông tin */}
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition truncate">
+                            <div className="text-sm font-bold text-gray-800 group-hover:text-[#006B4D] transition truncate">
                                 {product.name}
                             </div>
                             <div className="flex items-center mt-0.5">
@@ -198,7 +198,7 @@ const SearchBox = () => {
           <div className="bg-gray-50 p-2 border-t border-gray-100">
             <button 
                 onClick={submitHandler}
-                className="w-full text-center py-2 text-sm text-blue-600 font-bold hover:bg-blue-100 rounded-lg transition"
+                className="w-full text-center py-2 text-sm text-[#006B4D] font-bold hover:bg-[#E6F0ED] rounded-lg transition"
             >
                 Xem tất cả kết quả cho "{keyword}"
             </button>

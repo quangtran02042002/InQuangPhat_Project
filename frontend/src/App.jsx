@@ -38,10 +38,20 @@ import SupplierEditScreen from './screens/admin/SupplierEditScreen';
 import CustomerListScreen from './screens/admin/CustomerListScreen';
 import CustomerEditScreen from './screens/admin/CustomerEditScreen';
 import MaterialScreen from './screens/admin/MaterialScreen';
-import FinanceScreen from './screens/admin/FinanceScreen';
+// import FinanceScreen from './screens/admin/FinanceScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import ChemicalScreen from './screens/admin/ChemicalScreen';
 import PaperPriceScreen from './screens/admin/PaperPriceScreen';
+import InkPriceScreen from './screens/admin/InkPriceScreen';
+import MaterialPriceScreen from './screens/admin/MaterialPriceScreen';
+// import DebtScreen from './screens/admin/DebtScreen';
+import PrintFormulaScreen from './screens/admin/PrintFormulaScreen';
+import ProductionOrderScreen from './screens/admin/ProductionOrderScreen';
+import InventoryScreen from './screens/admin/InventoryScreen';
+import PrintPriceCalcScreen from './screens/admin/PrintPriceCalcScreen';
+import FinishingPriceScreen from './screens/admin/FinishingPriceScreen';
+// Admin screens loaded ✓
+
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
 const AppContent = () => {
   const location = useLocation(); // Hook này chỉ hoạt động bên trong Router
@@ -108,9 +118,17 @@ const AppContent = () => {
             <Route path="/admin/customer/create" element={<CustomerEditScreen />} />
             <Route path="/admin/customer/:id/edit" element={<CustomerEditScreen />} />
             <Route path="/admin/materials" element={<MaterialScreen />} />
-            <Route path="/admin/finance" element={<FinanceScreen />} />
+            {/* <Route path="/admin/finance" element={<FinanceScreen />} /> */}
             <Route path="/admin/chemicals" element={<ChemicalScreen />} />
             <Route path="/admin/paper-prices" element={<PaperPriceScreen />} />
+            <Route path="/admin/ink-prices" element={<InkPriceScreen />} />
+            <Route path="/admin/material-prices" element={<MaterialPriceScreen />} />
+            {/* <Route path="/admin/debts" element={<DebtScreen />} /> */}
+            <Route path="/admin/print-formulas" element={<PrintFormulaScreen />} />
+            <Route path="/admin/print-price-calc" element={<PrintPriceCalcScreen />} />
+            <Route path="/admin/finishing-prices" element={<FinishingPriceScreen />} />
+            <Route path="/admin/production-orders" element={<ProductionOrderScreen />} />
+            <Route path="/admin/inventory" element={<InventoryScreen />} />
           </Route>
         </Routes>
       </main>

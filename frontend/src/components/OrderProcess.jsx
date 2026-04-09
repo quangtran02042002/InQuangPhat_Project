@@ -8,7 +8,7 @@ const OrderProcess = () => {
       icon: <FaClipboardList />,
       title: "1. Chọn quy cách sản phẩm",
       desc: "Quý khách tham khảo mẫu mã trên website hoặc gửi trực tiếp mẫu cần in qua Zalo cho chúng tôi.",
-      color: "bg-blue-100 text-blue-600"
+      color: "bg-[#E6F0ED] text-[#006B4D]"
     },
     {
       id: 2,
@@ -34,37 +34,37 @@ const OrderProcess = () => {
   ];
 
   return (
-    <div className="py-16 bg-gradient-to-b from-blue-50 to-white overflow-hidden relative">
+    <div className="py-16 bg-gradient-to-b from-[#E6F0ED]/50 to-white overflow-hidden relative">
       {/* Hình nền trang trí mờ phía sau */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute top-0 left-0 w-64 h-64 bg-[#006B4D]/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-64 h-64 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-x-1/2 translate-y-1/2"></div>
 
       <div className="container mx-auto px-4 relative z-10">
         
         {/* Tiêu đề Section */}
         <div className="text-center mb-16">
-            <h4 className="text-blue-600 font-bold uppercase tracking-widest mb-2">Làm việc chuyên nghiệp</h4>
+            <h4 className="text-[#006B4D] font-bold uppercase tracking-widest mb-2">Làm việc chuyên nghiệp</h4>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">QUY TRÌNH ĐẶT HÀNG TẠI IN QUANG PHÁT</h2>
-            <div className="w-20 h-1 bg-blue-600 mx-auto rounded mt-4"></div>
+            <div className="w-20 h-1 bg-[#006B4D] mx-auto rounded mt-4"></div>
         </div>
 
         <div className="flex flex-col lg:flex-row items-center gap-12">
             
             {/* --- CỘT TRÁI MỚI: MINH HỌA VECTOR QUY TRÌNH --- */}
             <div className="w-full lg:w-5/12 flex justify-center mb-8 lg:mb-0">
-                <div className="relative w-full max-w-md h-80 flex items-center justify-center p-6 rounded-3xl overflow-hidden bg-blue-50/50 border border-blue-100 shadow-sm">
+                <div className="relative w-full max-w-md h-80 flex items-center justify-center p-6 rounded-3xl overflow-hidden bg-[#E6F0ED]/50 border border-[#006B4D]/10 shadow-sm">
                     
                     {/* Các hình tròn trang trí mờ làm nền */}
-                    <div className="absolute top-0 left-0 w-32 h-32 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+                    <div className="absolute top-0 left-0 w-32 h-32 bg-[#006B4D]/20 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
                     
                     {/* TỔ HỢP ICON QUY TRÌNH (Vector Illustration) */}
-                    <div className="relative z-10 flex items-center justify-between w-full text-blue-300/80">
+                    <div className="relative z-10 flex items-center justify-between w-full text-[#006B4D]/40">
                         
                         {/* Bước đầu: Tư vấn */}
                         <div className="flex flex-col items-center group">
-                            <FaRegComments size={80} className="mb-2 transform group-hover:scale-110 transition-transform duration-300 text-blue-400" />
-                            <span className="text-sm font-bold uppercase tracking-wider text-blue-500">Tư vấn</span>
+                            <FaRegComments size={80} className="mb-2 transform group-hover:scale-110 transition-transform duration-300 text-[#006B4D]/60" />
+                            <span className="text-sm font-bold uppercase tracking-wider text-[#006B4D]">Tư vấn</span>
                         </div>
 
                         {/* Mũi tên nối */}
@@ -75,8 +75,8 @@ const OrderProcess = () => {
                         {/* Bước giữa: Sản xuất */}
                         <div className="flex flex-col items-center group">
                             {/* Thêm class 'animate-spin-slow' nếu bạn muốn nó quay chậm (cần config tailwind) */}
-                            <FaCogs size={100} className="mb-2 transform group-hover:rotate-12 transition-transform duration-300 text-blue-500" />
-                            <span className="text-sm font-bold uppercase tracking-wider text-blue-600">Sản xuất</span>
+                            <FaCogs size={100} className="mb-2 transform group-hover:rotate-12 transition-transform duration-300 text-[#006B4D]/70" />
+                            <span className="text-sm font-bold uppercase tracking-wider text-[#006B4D]">Sản xuất</span>
                         </div>
 
                         {/* Mũi tên nối */}
@@ -86,14 +86,14 @@ const OrderProcess = () => {
 
                         {/* Bước cuối: Giao hàng */}
                         <div className="flex flex-col items-center group">
-                             <FaShippingFast size={80} className="mb-2 transform group-hover:-translate-y-1 transition-transform duration-300 text-blue-400" />
-                             <span className="text-sm font-bold uppercase tracking-wider text-blue-500">Vận chuyển</span>
+                             <FaShippingFast size={80} className="mb-2 transform group-hover:-translate-y-1 transition-transform duration-300 text-[#006B4D]/60" />
+                             <span className="text-sm font-bold uppercase tracking-wider text-[#006B4D]">Vận chuyển</span>
                         </div>
 
                     </div>
                     
                     {/* Chữ chìm làm nền */}
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-4xl font-extrabold text-blue-100 uppercase tracking-[0.2em] opacity-50 select-none">
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-4xl font-extrabold text-[#006B4D]/10 uppercase tracking-[0.2em] opacity-50 select-none">
                         Workflow
                     </div>
                 </div>

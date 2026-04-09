@@ -118,7 +118,7 @@ const HomeScreen = () => {
 };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
 
       {!keyword && !category ? <Meta /> : <Meta title={`Danh mục: ${keyword || category} | In Quang Phát`} />}
 
@@ -161,11 +161,11 @@ const HomeScreen = () => {
               <CategoryGrid /> 
           ) : (
               /* TRƯỜNG HỢP 2: ĐANG LỌC/TÌM KIẾM -> Hiện danh sách sản phẩm chi tiết */
-              <div className="container mx-auto px-4 py-12">
+              <div className="container mx-auto px-4 py-16 max-w-7xl">
                     
                     {/* 1. THANH NÚT BẤM LỌC NHANH */}
-                    <div className="mb-10 text-center">
-                        <h2 className="text-xl font-bold text-gray-800 uppercase mb-4 tracking-wide">
+                    <div className="mb-12 text-center">
+                        <h2 className="text-lg md:text-xl font-extrabold text-[#111827] uppercase mb-6 tracking-wider">
                             {activeGroup === 'offset' ? 'Danh mục Bao Bì - Offset' : 
                              activeGroup === 'garment' ? 'Danh mục May Mặc - In Lụa' : 
                              'Khám phá danh mục khác'}
@@ -176,10 +176,10 @@ const HomeScreen = () => {
                                 <button
                                     key={cat}
                                     onClick={() => handleCategoryClick(cat)}
-                                    className={`px-5 py-2 rounded-full text-sm font-semibold transition-all border
+                                    className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all border
                                         ${activeCategory === cat 
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
-                                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                                            ? 'bg-[#006B4D] text-white border-[#006B4D] shadow-sm' 
+                                            : 'bg-white text-[#6B7280] border-gray-200 hover:border-[#006B4D] hover:text-[#006B4D]'
                                         }`}
                                 >
                                     {cat}
@@ -188,9 +188,9 @@ const HomeScreen = () => {
                              
                             <button 
                                 onClick={() => navigate('/products')}
-                                className="px-5 py-2 rounded-full border border-red-200 text-red-500 font-medium hover:bg-red-50 transition"
+                                className="px-5 py-2.5 rounded-full border border-gray-200 text-[#6B7280] font-bold hover:bg-gray-100 transition-colors"
                             >
-                                 ✕ Thoát
+                                 ✕ Bỏ lọc
                             </button>
                         </div>
                     </div>
@@ -201,35 +201,35 @@ const HomeScreen = () => {
                     )}
 
                     {/* 3. TIÊU ĐỀ DANH SÁCH SẢN PHẨM */}
-                    <div className="mb-8 flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                        <div className="flex items-center">
-                           <div className="bg-blue-100 p-2 rounded-full mr-3 text-blue-600">
+                    <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-[#E6F0ED] rounded-xl flex items-center justify-center text-[#006B4D] text-lg shrink-0 border border-[#006B4D]/10">
                                {category ? <FaFilter /> : <FaSearch />}
                            </div>
-                           <h2 className="text-lg text-gray-700">
-                               Mẫu sản phẩm tham khảo: <span className="font-bold text-blue-800 uppercase">"{category || keyword}"</span>
+                           <h2 className="text-lg md:text-xl text-[#111827] font-bold">
+                               Mẫu sản phẩm tham khảo: <span className="font-extrabold text-[#006B4D] uppercase tracking-wide">"{category || keyword}"</span>
                            </h2>
                         </div>
                         {/* Nút quay lại Grid danh mục */}
-                        <button onClick={() => navigate('/')} className="text-sm text-gray-500 hover:text-blue-600 flex items-center font-medium transition">
-                            <FaArrowLeft className="mr-1" /> Quay lại danh mục
+                        <button onClick={() => navigate('/')} className="text-sm text-[#6B7280] hover:text-[#006B4D] flex items-center font-bold bg-[#F9FAFB] px-4 py-2 rounded-xl border border-gray-100 transition-colors">
+                            <FaArrowLeft className="mr-2" /> Quay lại danh mục
                         </button> 
-                    </div>
+                    </div> 
 
                     {/* 4. LƯỚI HIỂN THỊ SẢN PHẨM */}
                     {loading ? (
-                        <div className="text-center py-32">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="mt-4 text-blue-600">Đang tải dữ liệu...</p>
+                        <div className="text-center py-24 flex flex-col items-center">
+                            <div className="w-12 h-12 border-4 border-[#E6F0ED] border-t-[#006B4D] rounded-full animate-spin mb-4"></div>
+                            <p className="text-[#6B7280] font-medium">Đang tải dữ liệu...</p>
                         </div>
                     ) : (
                         <>
                           {products.length === 0 && (
-                             <div className="text-center py-20 bg-white rounded-xl border border-gray-100 shadow-sm border-dashed">
-                                 <div className="text-6xl mb-4">📦</div>
-                                 <p className="text-gray-500 text-lg">Chưa có mẫu nào trong mục này.</p>
-                                 <p className="text-sm text-gray-400 mt-2">Vui lòng liên hệ Zalo để xem thêm kho mẫu thực tế.</p>
-                                 <button onClick={() => navigate('/')} className="mt-4 text-blue-600 font-bold hover:underline">Quay lại trang chủ</button>
+                             <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm border-dashed">
+                                 <div className="text-6xl mb-4 opacity-50">📦</div>
+                                 <p className="text-[#111827] font-bold text-lg">Chưa có mẫu nào trong mục này.</p>
+                                 <p className="text-sm text-[#6B7280] mt-2">Vui lòng liên hệ Zalo để xem thêm kho mẫu thực tế.</p>
+                                 <button onClick={() => navigate('/')} className="mt-6 text-[#006B4D] font-bold hover:underline bg-[#E6F0ED] px-6 py-2 rounded-full">Quay lại trang chủ</button>
                              </div>
                           )}
 

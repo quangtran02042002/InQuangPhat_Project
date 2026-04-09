@@ -4,17 +4,21 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { FaArrowLeft, FaSave, FaCloudUploadAlt, FaTrash, FaVideo, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaCloudUploadAlt, FaTrash, FaVideo, FaTimes, FaCogs, FaImage, FaBars } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import AdminHeader from '../../components/AdminHeader';
 // 1. IMPORT VALIDATE
 import { validateTextMixed } from '../../utils/validation';
+import { useImagePaste } from '../../hooks/useImagePaste';
 
 const MachineEditScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
   const quillRef = useRef(null);
+
+  // === STATE QUẢN LÝ GIAO DIỆN MOBILE ===
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // --- STATE ---
   const [name, setName] = useState('');
@@ -30,6 +34,15 @@ const MachineEditScreen = () => {
 
   const [uploading, setUploading] = useState(false);
 
+  // === HOOK: DÁN ẢNH TỪ CLIPBOARD ===
+  useImagePaste({
+    onImageUploaded: (url) => {
+      // Đã được upload API backend (Cloudinary), đóng vai trò như ảnh cũ:
+      setOldImages((prev) => [...prev, { url }]);
+    },
+    enabled: true
+  });
+
   const categories = [
     "Máy in Offset",
     "Máy gia công sau in", 
@@ -39,7 +52,7 @@ const MachineEditScreen = () => {
     "Khác"
   ];
 
-  // --- XỬ LÝ ẢNH & VIDEO (Giữ nguyên như cũ) ---
+  // --- XỬ LÝ ẢNH & VIDEO ---
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
     setImages((prev) => [...prev, ...files]);
@@ -120,7 +133,7 @@ const MachineEditScreen = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    // 1. Validate Tên máy (Dùng validateTextMixed vì tên máy có số và ký tự)
+    // 1. Validate Tên máy
     if (!validateTextMixed(name)) {
         toast.error('Tên máy không hợp lệ (cần ít nhất 2 ký tự)');
         return;
@@ -132,14 +145,12 @@ const MachineEditScreen = () => {
         return;
     }
 
-    // 3. Validate Ảnh (Bắt buộc phải có ít nhất 1 ảnh để hiển thị trang chủ)
-    // Logic: Tổng ảnh cũ + ảnh mới phải > 0
+    // 3. Validate Ảnh
     if (oldImages.length === 0 && images.length === 0) {
         toast.error('Vui lòng tải lên ít nhất 1 hình ảnh minh họa');
         return;
     }
 
-    // Nếu qua hết các bước kiểm tra thì mới xử lý gửi đi
     setUploading(true);
     const formData = new FormData();
     formData.append('name', name);
@@ -174,161 +185,224 @@ const MachineEditScreen = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 p-8 overflow-y-auto">
-        <Link to="/admin/machinelist" className="flex items-center text-gray-600 hover:text-blue-600 mb-6 transition">
-          <FaArrowLeft className="mr-2" /> Quay lại danh sách máy
-        </Link>
+    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+      
+      {/* ================= OVERLAY & SIDEBAR MOBILE ================= */}
+      {isSidebarOpen && (
+        <div 
+            className="fixed inset-0 bg-[#111827]/50 z-40 lg:hidden backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
+      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0 lg:block`}>
+         <Sidebar />
+      </div>
+
+      <div className="flex-1 flex flex-col w-full overflow-hidden">
         
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-5xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6 uppercase border-b pb-4">
-                {isEditMode ? 'Chỉnh sửa thông tin máy' : 'Thêm máy móc mới'}
-            </h1>
-            
-            <form onSubmit={submitHandler} className="space-y-6" encType="multipart/form-data">
+        {/* ================= ADMIN HEADER ================= */}
+        <AdminHeader 
+            title={isEditMode ? 'Cập nhật Thông tin Máy' : 'Thêm Máy móc mới'} 
+            onMenuClick={() => setIsSidebarOpen(true)} 
+        />
+
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+            <div className="max-w-5xl mx-auto">
+                <Link to="/admin/machinelist" className="inline-flex items-center text-sm font-bold text-[#6B7280] hover:text-[#006B4D] mb-6 transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+                    <FaArrowLeft className="mr-2" /> Quay lại danh sách máy
+                </Link>
                 
-                {/* Tên Máy & Danh Mục */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tên máy <span className="text-red-500">*</span></label>
-                        <input 
-                            type="text" 
-                            value={name} 
-                            onChange={(e) => setName(e.target.value)} 
-                            className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" 
-                            placeholder="VD: Máy in Offset Komori..." 
-                            
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục <span className="text-red-500">*</span></label>
-                        <select 
-                            value={category} 
-                            onChange={(e) => setCategory(e.target.value)} 
-                            className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            
+                <form onSubmit={submitHandler} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" encType="multipart/form-data">
+                    
+                    {/* Form Header */}
+                    <div className="bg-[#E6F0ED] px-6 md:px-8 py-5 md:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#006B4D]/10">
+                        <h1 className="text-xl md:text-2xl font-extrabold text-[#006B4D] flex items-center">
+                            <FaCogs className="mr-3" /> {isEditMode ? 'Chỉnh sửa thông tin máy' : 'Thêm máy móc mới'}
+                        </h1>
+                        <button 
+                            type="submit" 
+                            disabled={uploading}
+                            className="bg-[#006B4D] text-white hover:bg-[#00543c] font-bold py-2.5 px-6 rounded-xl shadow-md transition flex items-center justify-center sm:w-auto disabled:opacity-50 active:scale-95"
                         >
-                            <option value="">-- Chọn danh mục --</option>
-                            {categories.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* --- KHU VỰC ẢNH --- */}
-                <div className="border-t pt-4">
-                    <label className="block text-lg font-semibold text-gray-800 mb-2">Hình ảnh sản phẩm <span className="text-red-500">*</span></label>
-                    <div className="mb-4">
-                        <label className="cursor-pointer inline-flex items-center bg-white border border-dashed border-blue-400 text-blue-600 px-6 py-3 rounded hover:bg-blue-50 transition shadow-sm w-full justify-center">
-                            <FaCloudUploadAlt className="mr-2 text-xl" /> 
-                            <span className="font-semibold">Chọn ảnh từ máy tính</span>
-                            <input type="file" className="hidden" onChange={handleImagesChange} multiple accept="image/*" />
-                        </label>
+                            {uploading ? 'Đang lưu...' : <><FaSave className="mr-2" /> Lưu thông tin</>}
+                        </button>
                     </div>
 
-                    {/* Preview Ảnh MỚI */}
-                    {imagesPreview.length > 0 && (
-                        <div className="mb-4 grid grid-cols-2 md:grid-cols-6 gap-4">
-                            {imagesPreview.map((img, index) => (
-                                <div key={index} className="relative group border rounded-lg overflow-hidden h-24 shadow-sm">
-                                    <img src={img} alt="Preview" className="w-full h-full object-cover" />
-                                    <button type="button" onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-80 hover:opacity-100 transition shadow">
-                                        <FaTimes size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Danh sách Ảnh CŨ */}
-                    {isEditMode && oldImages.length > 0 && (
-                        <div className="p-4 bg-gray-50 rounded border border-gray-200">
-                            <p className="text-sm text-gray-700 font-bold mb-2">Ảnh hiện có trên server:</p>
-                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                                {oldImages.map((img, idx) => (
-                                    <div key={idx} className="relative group h-24 w-full border rounded overflow-hidden shadow-sm">
-                                        <img src={img.url} alt="Old" className="w-full h-full object-cover" />
-                                        <button type="button" onClick={() => removeOldImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white w-6 h-6 flex items-center justify-center hover:bg-red-700 transition z-10">
-                                            <FaTimes size={12} />
-                                        </button>
-                                    </div>
-                                ))}
+                    <div className="p-6 md:p-8 space-y-8 md:space-y-10">
+                        
+                        {/* Tên Máy & Danh Mục */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                            <div className="md:col-span-2 flex items-center gap-2 border-b border-gray-100 pb-2">
+                                <span className="w-1.5 h-5 bg-[#006B4D] rounded-full inline-block"></span>
+                                <h3 className="text-base md:text-lg font-bold text-[#111827]">Thông tin cơ bản</h3>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Tên máy <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    value={name} 
+                                    onChange={(e) => setName(e.target.value)} 
+                                    className="w-full border border-gray-200 p-3 md:p-3.5 text-sm md:text-base rounded-xl outline-none focus:border-[#006B4D] focus:ring-1 focus:ring-[#006B4D] font-bold text-[#111827] shadow-sm transition" 
+                                    placeholder="VD: Máy in Offset Komori..." 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Danh mục <span className="text-red-500">*</span></label>
+                                <select 
+                                    value={category} 
+                                    onChange={(e) => setCategory(e.target.value)} 
+                                    className="w-full border border-gray-200 p-3 md:p-3.5 text-sm md:text-base rounded-xl outline-none focus:border-[#006B4D] focus:ring-1 focus:ring-[#006B4D] bg-white font-medium text-[#111827] shadow-sm cursor-pointer transition"
+                                >
+                                    <option value="">-- Chọn danh mục --</option>
+                                    {categories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
-                    )}
-                </div>
 
-                {/* --- KHU VỰC VIDEO --- */}
-                <div className="border-t pt-4">
-                    <label className="block text-lg font-semibold text-gray-800 mb-2">Video thực tế</label>
-                    <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center">
-                        <input type="file" id="video-upload" className="hidden" accept="video/*" multiple onChange={handleVideosChange} />
-                        <label htmlFor="video-upload" className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition inline-flex items-center shadow-lg">
-                             <FaVideo className="mr-2" /> Chọn Video (MP4, MOV)
-                        </label>
-                        <p className="text-xs text-gray-500 mt-3">Tối đa 50MB/file.</p>
-                    </div>
+                        {/* --- KHU VỰC ẢNH --- */}
+                        <div className="space-y-4 border-t border-gray-100 pt-6 md:pt-8">
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center text-base md:text-lg font-extrabold text-[#111827]">
+                                    <FaImage className="text-[#006B4D] mr-2"/> Hình ảnh minh họa <span className="text-red-500 ml-1">*</span>
+                                </label>
+                            </div>
+                            
+                            <label className="cursor-pointer flex flex-col items-center justify-center bg-[#F9FAFB] border-2 border-dashed border-[#006B4D]/30 text-[#006B4D] px-6 py-6 md:py-8 rounded-2xl hover:bg-[#E6F0ED] hover:border-[#006B4D]/50 transition-all shadow-sm w-full group">
+                                <FaCloudUploadAlt className="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform" /> 
+                                <span className="font-bold text-sm md:text-base">Click để tải ảnh lên (Hoặc ấn Ctrl+V)</span>
+                                <span className="text-xs text-gray-500 mt-1 font-medium">Hỗ trợ JPG, PNG. Có thể chọn nhiều ảnh cùng lúc</span>
+                                <input type="file" className="hidden" onChange={handleImagesChange} multiple accept="image/*" />
+                            </label>
 
-                    {/* Video MỚI & CŨ (Giữ nguyên logic hiển thị) */}
-                    {videoFiles.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            <p className="text-xs text-blue-600 font-bold">Video mới chọn:</p>
-                            {videoFiles.map((file, index) => (
-                                <div key={index} className="flex justify-between items-center bg-blue-50 p-3 border border-blue-200 rounded-lg">
-                                    <span className="truncate text-sm">{file.name}</span>
-                                    <button type="button" onClick={() => removeVideo(index)} className="text-red-500"><FaTrash /></button>
+                            {/* Preview Ảnh MỚI */}
+                            {imagesPreview.length > 0 && (
+                                <div className="mt-4">
+                                    <p className="text-xs font-bold text-[#006B4D] uppercase tracking-wider mb-3">Ảnh mới chọn:</p>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4">
+                                        {imagesPreview.map((img, index) => (
+                                            <div key={index} className="relative group rounded-xl overflow-hidden aspect-square border border-gray-200 shadow-sm">
+                                                <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                                                <button type="button" onClick={() => removeImage(index)} className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                                                    <FaTimes size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                    {isEditMode && oldVideos.length > 0 && (
-                         <div className="mt-4 space-y-2">
-                            <p className="text-xs text-gray-700 font-bold">Video hiện có:</p>
-                            {oldVideos.map((vid, index) => (
-                                <div key={index} className="flex justify-between items-center bg-white p-3 border rounded-lg shadow-sm">
-                                    <a href={vid.url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline truncate">Xem video hiện tại</a>
-                                    <button type="button" onClick={() => removeOldVideo(index)} className="text-gray-400 hover:text-red-500 border px-2 py-1 rounded">Xóa bỏ</button>
+                            )}
+
+                            {/* Danh sách Ảnh CŨ */}
+                            {isEditMode && oldImages.length > 0 && (
+                                <div className="mt-6 p-4 md:p-5 bg-gray-50 rounded-2xl border border-gray-200">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Ảnh hiện có trên hệ thống:</p>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4">
+                                        {oldImages.map((img, idx) => (
+                                            <div key={idx} className="relative group rounded-xl overflow-hidden aspect-square border border-gray-200 shadow-sm bg-white">
+                                                <img src={img.url} alt="Old" className="w-full h-full object-cover" />
+                                                <button type="button" onClick={() => removeOldImage(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                                                    <FaTimes size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    )}
-                </div>
 
-                {/* Mô tả chi tiết */}
-                <div className="border-t pt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
-                    <div className="bg-white">
-                        <ReactQuill ref={quillRef} theme="snow" modules={modules} value={description} onChange={setDescription} className="h-64 mb-12" />
+                        {/* --- KHU VỰC VIDEO --- */}
+                        <div className="space-y-4 border-t border-gray-100 pt-6 md:pt-8">
+                            <label className="flex items-center text-base md:text-lg font-extrabold text-[#111827]">
+                                <FaVideo className="text-orange-500 mr-2"/> Video thực tế
+                            </label>
+                            
+                            <label htmlFor="video-upload" className="cursor-pointer flex flex-col items-center justify-center bg-orange-50 border-2 border-dashed border-orange-300 text-orange-600 px-6 py-6 md:py-8 rounded-2xl hover:bg-orange-100 transition-all shadow-sm w-full group">
+                                <FaCloudUploadAlt className="text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform" /> 
+                                <span className="font-bold text-sm md:text-base">Click để tải Video lên (MP4, MOV)</span>
+                                <span className="text-xs text-orange-500/70 mt-1 font-medium">Tối đa 50MB/file</span>
+                                <input type="file" id="video-upload" className="hidden" accept="video/*" multiple onChange={handleVideosChange} />
+                            </label>
+
+                            {/* Video MỚI */}
+                            {videoFiles.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                    <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Video mới chọn:</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {videoFiles.map((file, index) => (
+                                            <div key={index} className="flex justify-between items-center bg-white p-3 border border-orange-200 rounded-xl shadow-sm">
+                                                <div className="flex items-center truncate pr-3">
+                                                    <FaVideo className="text-orange-400 mr-2 shrink-0"/>
+                                                    <span className="truncate text-sm font-medium text-[#111827]">{file.name}</span>
+                                                </div>
+                                                <button type="button" onClick={() => removeVideo(index)} className="text-red-400 hover:text-red-600 p-1.5 bg-red-50 rounded-lg transition-colors"><FaTrash size={12}/></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Video CŨ */}
+                            {isEditMode && oldVideos.length > 0 && (
+                                 <div className="mt-6 p-4 md:p-5 bg-gray-50 rounded-2xl border border-gray-200">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Video hiện có:</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {oldVideos.map((vid, index) => (
+                                            <div key={index} className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded-xl shadow-sm">
+                                                <a href={vid.url} target="_blank" rel="noreferrer" className="flex items-center truncate pr-3 text-sm text-[#006B4D] hover:underline font-bold">
+                                                    <FaVideo className="mr-2 shrink-0"/> Xem video hiện tại
+                                                </a>
+                                                <button type="button" onClick={() => removeOldVideo(index)} className="text-red-400 hover:text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors">Xóa bỏ</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mô tả chi tiết (ReactQuill) */}
+                        <div className="border-t border-gray-100 pt-6 md:pt-8">
+                            <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-3">Bài viết Mô tả chi tiết</label>
+                            <div className="bg-white rounded-xl overflow-hidden border border-gray-200 focus-within:border-[#006B4D] focus-within:ring-1 focus-within:ring-[#006B4D] transition-all">
+                                <ReactQuill 
+                                    ref={quillRef} 
+                                    theme="snow" 
+                                    modules={modules} 
+                                    value={description} 
+                                    onChange={setDescription} 
+                                    className="h-64 mb-10 md:mb-12" // Tránh việc toolbar che mất text bên dưới
+                                />
+                            </div>
+                        </div>
+
+                        {/* Nút Submit Dưới Cùng */}
+                        <div className="pt-8 border-t border-gray-100">
+                            <button 
+                                type="submit" 
+                                disabled={uploading}
+                                className={`w-full text-white font-extrabold py-4 rounded-xl shadow-md transition-all active:scale-95 flex justify-center items-center text-base md:text-lg ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#006B4D] hover:bg-[#00543c]'}`}
+                            >
+                                {uploading ? (
+                                    <span className="flex items-center">
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Đang xử lý tải lên...
+                                    </span>
+                                ) : (
+                                    <>
+                                        <FaSave className="mr-2" /> {isEditMode ? 'LƯU CẬP NHẬT THÔNG TIN' : 'XÁC NHẬN THÊM MÁY MỚI'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
                     </div>
-                </div>
-
-                {/* Nút Submit */}
-                <div className="pt-8 border-t">
-                    <button 
-                        type="submit" 
-                        disabled={uploading}
-                        className={`w-full text-white font-bold py-4 rounded-lg shadow-lg transition flex justify-center items-center text-lg ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900'}`}
-                    >
-                        {uploading ? (
-                            <span className="flex items-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Đang tải lên Cloudinary...
-                            </span>
-                        ) : (
-                            <>
-                                <FaSave className="mr-2" /> {isEditMode ? 'LƯU CẬP NHẬT' : 'XÁC NHẬN THÊM MÁY'}
-                            </>
-                        )}
-                    </button>
-                </div>
-
-            </form>
-        </div>
+                </form>
+            </div>
+        </main>
       </div>
     </div>
   );

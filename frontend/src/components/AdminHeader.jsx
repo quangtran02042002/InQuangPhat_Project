@@ -2,14 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaBell, FaBars } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-const AdminHeader = ({ title }) => {
+// Đã thêm prop onMenuClick để nhận sự kiện mở Sidebar từ các trang
+const AdminHeader = ({ title, onMenuClick }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const prevUnreadCountRef = useRef(0); // Để biết có thông báo MỚI không
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+
+  // Xin quyền Notification của trình duyệt khi load web
+  useEffect(() => {
+     if ('Notification' in window && Notification.permission !== 'granted') {
+         Notification.requestPermission();
+     }
+  }, []);
 
   // Hàm lấy thông báo từ API
   const fetchNotifications = async () => {
@@ -17,7 +27,25 @@ const AdminHeader = ({ title }) => {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
       const { data } = await axios.get('/api/notifications', config);
       setNotifications(data);
-      setUnreadCount(data.filter(n => !n.isRead).length);
+      
+      const currentUnread = data.filter(n => !n.isRead).length;
+      
+      // Nếu có thông báo MỚI so với lần check trước
+      if (currentUnread > prevUnreadCountRef.current) {
+         const newNotifs = data.filter(n => !n.isRead).slice(0, currentUnread - prevUnreadCountRef.current);
+         newNotifs.forEach(n => {
+            // Hiển thị Toast trong Web
+            toast.info(`🔔 ${n.title}`, { position: 'top-right', autoClose: 5000 });
+            
+            // Đẩy Push Notification ra ngoài Window/Chrome
+            if ('Notification' in window && Notification.permission === 'granted') {
+               new Notification(n.title, { body: n.message, icon: '/favicon.ico' });
+            }
+         });
+      }
+      
+      setUnreadCount(currentUnread);
+      prevUnreadCountRef.current = currentUnread;
     } catch (error) {
       console.error("Lỗi lấy thông báo:", error);
     }
@@ -26,8 +54,8 @@ const AdminHeader = ({ title }) => {
   useEffect(() => {
     if (userInfo) {
         fetchNotifications();
-        // Tự động check thông báo mới mỗi 30 giây
-        const interval = setInterval(fetchNotifications, 30000);
+        // Tự động check thông báo mới mỗi 10 giây (giảm từ 30s để Realtime hơn)
+        const interval = setInterval(fetchNotifications, 10000);
         return () => clearInterval(interval);
     }
   }, []);
@@ -62,81 +90,121 @@ const AdminHeader = ({ title }) => {
   const getIcon = (type) => {
       switch(type) {
           case 'quote': return '💰';
-          case 'stock': return '⚠️';
+          case 'stock': return '📦';
+          case 'debt': return '💵';
+          case 'order': return '⛔';
+          case 'process': return '🔄';
           default: return '🔔';
       }
   }
 
   return (
-    <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-      {/* 1. TIÊU ĐỀ TRANG */}
-      <h1 className="text-2xl font-bold text-gray-800 uppercase flex items-center">
-        {title}
-      </h1>
+    <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 shrink-0 flex items-center justify-between sticky top-0 z-20">
+      
+      {/* 1. KHU VỰC BÊN TRÁI: NÚT MOBILE & TIÊU ĐỀ */}
+      <div className="flex items-center gap-3 md:gap-4">
+        {/* Nút Hamburger cho Mobile (Chỉ hiện trên màn hình nhỏ) */}
+        {onMenuClick && (
+            <button 
+                onClick={onMenuClick} 
+                className="lg:hidden text-gray-500 hover:text-[#006B4D] transition-colors p-1"
+            >
+                <FaBars size={20}/>
+            </button>
+        )}
+        
+        <h1 className="text-lg md:text-xl font-extrabold text-[#111827] whitespace-nowrap truncate max-w-[200px] sm:max-w-md">
+          {title}
+        </h1>
+      </div>
 
-      {/* 2. KHU VỰC THÔNG BÁO & USER */}
-      <div className="flex items-center gap-6" ref={dropdownRef}>
+      {/* 2. KHU VỰC BÊN PHẢI: THÔNG BÁO & USER */}
+      <div className="flex items-center gap-4 md:gap-6" ref={dropdownRef}>
         
         {/* CÁI CHUÔNG */}
         <div className="relative cursor-pointer" onClick={handleBellClick}>
-          <FaBell className={`text-2xl transition ${unreadCount > 0 ? 'text-blue-600 animate-pulse' : 'text-gray-400'}`} />
+          <button className={`p-1.5 md:p-2 rounded-full transition-colors ${showDropdown ? 'bg-[#E6F0ED]' : 'hover:bg-gray-100'}`}>
+              <FaBell className={`text-[20px] transition-colors ${unreadCount > 0 ? 'text-[#006B4D] animate-pulse' : 'text-gray-400'}`} />
+          </button>
           
           {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
-              {unreadCount}
+            <span className="absolute top-0 right-0 md:-top-1 md:-right-1 bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
 
-          {/* DROPDOWN MENU */}
+          {/* DROPDOWN MENU THÔNG BÁO */}
           {showDropdown && (
-            <div className="absolute right-0 mt-4 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 origin-top-right">
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <span className="font-bold text-sm text-gray-700">Thông báo ({notifications.length})</span>
-                    <span className="text-xs text-blue-600 cursor-pointer hover:underline" onClick={fetchNotifications}>Làm mới</span>
+            <div className="absolute right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50 origin-top-right animate-fade-in-down">
+                <div className="px-5 py-3.5 border-b border-gray-100 bg-[#F9FAFB] flex justify-between items-center">
+                    <span className="font-extrabold text-sm text-[#111827]">Thông báo ({notifications.length})</span>
+                    <span className="text-xs text-[#006B4D] font-bold cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); fetchNotifications(); }}>Làm mới</span>
                 </div>
-                <div className="max-h-80 overflow-y-auto">
+                
+                <div className="max-h-80 overflow-y-auto custom-scrollbar">
                     {notifications.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 text-sm">Không có thông báo mới.</div>
+                        <div className="p-8 text-center text-gray-400 text-sm font-medium flex flex-col items-center">
+                            <FaBell className="text-3xl mb-3 text-gray-200" />
+                            Không có thông báo mới
+                        </div>
                     ) : (
                         notifications.map((notif) => (
                             <Link 
                                 key={notif._id} 
                                 to={notif.link || '#'} 
-                                className={`block px-4 py-3 border-b border-gray-50 hover:bg-blue-50 transition ${!notif.isRead ? 'bg-blue-50/40' : ''}`}
+                                onClick={() => setShowDropdown(false)}
+                                className={`block px-5 py-4 border-b border-gray-50 hover:bg-[#E6F0ED]/50 transition-colors ${!notif.isRead ? 'bg-[#E6F0ED]/30' : ''}`}
                             >
                                 <div className="flex items-start">
-                                    <div className="mr-3 mt-1 text-lg">
+                                    <div className="mr-3 mt-0.5 text-lg shrink-0">
                                         {getIcon(notif.type)}
                                     </div>
-                                    <div>
-                                        <p className={`text-sm ${!notif.isRead ? 'font-bold text-gray-800' : 'text-gray-600'}`}>{notif.title}</p>
-                                        <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{notif.message}</p>
-                                        <p className="text-[10px] text-gray-400 mt-1 text-right">
-                                            {new Date(notif.createdAt).toLocaleDateString('vi-VN')} {new Date(notif.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                                    <div className="flex-1">
+                                        <p className={`text-sm leading-tight ${!notif.isRead ? 'font-extrabold text-[#111827]' : 'font-medium text-gray-600'}`}>
+                                            {notif.title}
+                                        </p>
+                                        <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
+                                            {notif.message}
+                                        </p>
+                                        <p className="text-[10px] font-bold text-gray-400 mt-2">
+                                            {new Date(notif.createdAt).toLocaleDateString('vi-VN')} • {new Date(notif.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
                                         </p>
                                     </div>
+                                    {/* Chấm xanh nhỏ báo chưa đọc */}
+                                    {!notif.isRead && (
+                                        <div className="w-2 h-2 bg-[#006B4D] rounded-full shrink-0 ml-2 mt-1.5"></div>
+                                    )}
                                 </div>
                             </Link>
                         ))
                     )}
                 </div>
+                {/* Nút Xem tất cả (Optional - có thể bỏ nếu không có trang này) */}
+                {notifications.length > 0 && (
+                    <div className="p-3 border-t border-gray-100 bg-[#F9FAFB] text-center">
+                        <span className="text-xs font-bold text-[#006B4D] cursor-pointer hover:underline">Đánh dấu tất cả đã đọc</span>
+                    </div>
+                )}
             </div>
           )}
         </div>
 
-        {/* THÔNG TIN USER */}
-        <div className="flex items-center gap-3 border-l pl-6 border-gray-200">
+        {/* Gạch dọc phân cách */}
+        <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+
+        {/* THÔNG TIN USER & AVATAR */}
+        <div className="flex items-center gap-3">
              <div className="text-right hidden md:block">
-                 <div className="text-sm font-bold text-gray-800">{userInfo?.name}</div>
-                 <div className="text-xs text-gray-500">Admin</div>
+                 <div className="text-sm font-extrabold text-[#111827]">{userInfo?.name}</div>
+                 <div className="text-xs font-bold text-[#6B7280]">Admin</div>
              </div>
-             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border-2 border-white shadow-sm">
-                 {userInfo?.name?.charAt(0).toUpperCase()}
+             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#E6F0ED] flex items-center justify-center text-[#006B4D] font-extrabold text-sm border-2 border-white shadow-sm cursor-pointer hover:bg-[#006B4D] hover:text-white transition-colors">
+                 {userInfo?.name?.charAt(0).toUpperCase() || 'A'}
              </div>
         </div>
 
       </div>
-    </div>
+    </header>
   );
 };
 

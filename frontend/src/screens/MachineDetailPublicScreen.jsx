@@ -67,13 +67,13 @@ const MachineDetailPublicScreen = () => {
     <div className="bg-white min-h-screen font-sans text-gray-800 relative">
       
       {/* 1. BREADCRUMB */}
-      <div className="bg-gray-50 border-b border-gray-100 py-3 text-sm">
-        <div className="container mx-auto px-4 max-w-6xl flex items-center text-gray-500">
-            <Link to="/" className="hover:text-blue-600 flex items-center"><FaHome className="mr-1"/> Trang chủ</Link>
-            <span className="mx-2">/</span>
-            <Link to="/infrastructure" className="hover:text-blue-600">Năng lực sản xuất</Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-800 font-medium truncate max-w-xs">{machine.name}</span>
+      <div className="bg-white border-b border-gray-100 py-4 text-sm font-sans">
+        <div className="container mx-auto px-4 max-w-6xl flex items-center text-[#6B7280]">
+            <Link to="/" className="hover:text-[#006B4D] font-bold flex items-center transition-colors"><FaHome className="mr-2"/> Trang chủ</Link>
+            <span className="mx-3 opacity-50">/</span>
+            <Link to="/infrastructure" className="hover:text-[#006B4D] font-bold transition-colors">Năng lực sản xuất</Link>
+            <span className="mx-3 opacity-50">/</span>
+            <span className="text-[#111827] font-bold truncate max-w-xs">{machine.name}</span>
         </div>
       </div>
 
@@ -83,14 +83,14 @@ const MachineDetailPublicScreen = () => {
             {/* === CỘT TRÁI: NỘI DUNG CHÍNH (Chiếm 8 phần) === */}
             <div className="lg:col-span-8">
                 
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+                <h1 className="text-3xl md:text-5xl font-extrabold text-[#111827] tracking-tight leading-tight mb-6">
                     {machine.name}
                 </h1>
 
-                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
-                    <div className="flex items-center text-sm text-gray-500">
-                        <span className="flex items-center mr-4"><FaCalendarAlt className="mr-2" /> {publishDate}</span>
-                        <span className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold"><FaTag className="mr-1" /> {machine.category}</span>
+                <div className="flex items-center justify-between border-b border-gray-100 pb-6 mb-8">
+                    <div className="flex items-center text-sm font-bold text-[#6B7280]">
+                        <span className="flex items-center mr-5"><FaCalendarAlt className="mr-2 text-[#006B4D]" /> {publishDate}</span>
+                        <span className="flex items-center bg-[#E6F0ED] text-[#006B4D] px-3 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-widest border border-[#006B4D]/10"><FaTag className="mr-2" /> {machine.category}</span>
                     </div>
                 </div>
 
@@ -144,10 +144,10 @@ const MachineDetailPublicScreen = () => {
                         {machine.videos && machine.videos.length > 0 && (
                             <button 
                                 onClick={handleVideoClick}
-                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-gray-900 flex items-center justify-center group transition-all ${activeTab === 'video' ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 opacity-70 hover:opacity-100'}`}
+                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-gray-900 flex items-center justify-center group transition-all ${activeTab === 'video' ? 'border-[#006B4D] ring-2 ring-[#006B4D]/30' : 'border-transparent opacity-70 hover:opacity-100'}`}
                             >
                                 <FaPlay className="text-white text-xl drop-shadow-md group-hover:scale-110 transition" />
-                                <span className="absolute bottom-1 text-[10px] text-white font-bold bg-black/50 px-1 rounded">VIDEO</span>
+                                <span className="absolute bottom-1 text-[10px] text-white font-bold bg-black/50 px-1.5 rounded">VIDEO</span>
                             </button>
                         )}
 
@@ -156,7 +156,7 @@ const MachineDetailPublicScreen = () => {
                             <button 
                                 key={idx}
                                 onClick={() => handleThumbnailClick(img.url)}
-                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${activeTab === 'image' && selectedImage === img.url ? 'border-blue-600 ring-2 ring-blue-100' : 'border-gray-200 opacity-60 hover:opacity-100'}`}
+                                className={`relative w-24 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all ${activeTab === 'image' && selectedImage === img.url ? 'border-[#006B4D] ring-2 ring-[#006B4D]/30' : 'border-transparent opacity-60 hover:opacity-100'}`}
                             >
                                 <img src={img.url} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                             </button>
@@ -166,12 +166,12 @@ const MachineDetailPublicScreen = () => {
                 </div>
 
                 {/* Sapo */}
-                <div className="text-lg font-semibold text-gray-700 italic mb-8 border-l-4 border-blue-600 pl-4 bg-gray-50 py-3 rounded-r">
+                <div className="text-lg font-medium text-[#111827] leading-relaxed italic mb-8 border-l-4 border-[#006B4D] pl-6 py-2">
                     Hệ thống {machine.name} tại In Quang Phát được đầu tư đồng bộ, giúp tối ưu hóa quy trình sản xuất và đảm bảo chất lượng bản in sắc nét nhất.
                 </div>
 
                 {/* NỘI DUNG CHI TIẾT */}
-                <article className="prose prose-lg prose-blue max-w-none text-gray-800 leading-relaxed">
+                <article className="prose prose-lg prose-[#006B4D] max-w-none text-[#111827] leading-relaxed break-words">
                     <div dangerouslySetInnerHTML={{ __html: machine.description }}></div>
                 </article>
 
@@ -181,32 +181,32 @@ const MachineDetailPublicScreen = () => {
             <div className="lg:col-span-4 space-y-8">
                 
                 {/* Widget Liên hệ Sticky */}
-                <div className="bg-white p-6 rounded-xl border border-blue-200 shadow-lg sticky top-24">
-                    <h3 className="text-lg font-bold text-blue-900 mb-2 text-center uppercase">Tư vấn kỹ thuật</h3>
-                    <p className="text-sm text-gray-500 text-center mb-6">Liên hệ để nhận thông số chi tiết & báo giá in ấn</p>
+                <div className="bg-[#F9FAFB] p-8 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
+                    <h3 className="text-xl font-extrabold text-[#111827] mb-3 text-center uppercase tracking-wide">Tư vấn kỹ thuật</h3>
+                    <p className="text-[#6B7280] text-center mb-8">Liên hệ để nhận thông số chi tiết & báo giá in ấn</p>
                     
-                    <a href="tel:0935110639" className="block w-full bg-red-600 hover:bg-red-700 text-white text-center font-bold py-4 rounded-full transition shadow-md animate-pulse mb-3">
-                        <FaPhoneAlt className="inline mr-2" /> 0935.110.639
+                    <a href="tel:0935110639" className="block w-full bg-[#006B4D] hover:bg-[#00553d] text-white text-center font-bold py-4 rounded-xl transition-colors shadow-sm mb-2 flex items-center justify-center">
+                        <FaPhoneAlt className="mr-3" /> 0935.110.639
                     </a>
                 </div>
 
                 {/* Widget Máy liên quan */}
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 uppercase">
+                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 className="text-lg font-extrabold text-[#111827] mb-6 uppercase tracking-wider">
                         Công nghệ khác
                     </h3>
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-5">
                         {relatedMachines.map((item) => (
-                            <Link key={item._id} to={`/infrastructure/${item._id}`} className="group flex items-start gap-3 bg-white p-2 rounded shadow-sm hover:shadow-md transition">
-                                <div className="w-16 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-200">
+                            <Link key={item._id} to={`/infrastructure/${item._id}`} className="group flex items-center gap-4 bg-white rounded flex-shrink-0">
+                                <div className="w-20 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-[#F9FAFB] border border-gray-100 relative">
                                     {item.images && item.images[0] ? (
-                                        <img src={item.images[0].url} className="w-full h-full object-cover" alt={item.name} />
+                                        <img src={item.images[0].url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center"><FaCogs className="text-gray-400"/></div>
+                                        <div className="w-full h-full flex items-center justify-center"><FaCogs className="text-[#6B7280]"/></div>
                                     )}
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-800 group-hover:text-blue-600 line-clamp-2 leading-snug">
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-[#111827] group-hover:text-[#006B4D] transition-colors line-clamp-2 leading-snug truncate">
                                         {item.name}
                                     </h4>
                                 </div>

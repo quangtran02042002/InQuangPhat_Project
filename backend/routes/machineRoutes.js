@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../config/cloudinaryConfig'); 
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // Nhớ thêm getSingleMachine vào dòng import này
 const { 
@@ -22,6 +23,7 @@ router.route('/machines/:id').get(getSingleMachine);
 
 // Route tạo mới (Admin)
 router.route('/admin/machine/new').post(
+    protect, admin,
     upload.fields([
         { name: 'images', maxCount: 10 }, 
         { name: 'videos', maxCount: 5 }
@@ -30,15 +32,14 @@ router.route('/admin/machine/new').post(
 );
 router.route('/admin/machine/:id')
     .get(getSingleMachine)
-    .delete(deleteMachine)
+    .delete(protect, admin, deleteMachine)
     .put(
+        protect, admin,
         upload.fields([
             { name: 'images', maxCount: 10 }, 
             { name: 'videos', maxCount: 5 }
         ]), 
         updateMachine // <-- Gắn hàm update vào method PUT
     );
-// Route xóa (Admin)
-router.route('/admin/machine/:id').delete(deleteMachine);
 
 module.exports = router;

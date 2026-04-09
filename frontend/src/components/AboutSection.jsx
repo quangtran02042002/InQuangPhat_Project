@@ -30,11 +30,11 @@ const AboutSection = () => {
 
           {/* CỘT CHỮ (BÊN PHẢI) */}
           <div className="w-full lg:w-1/2">
-            <h4 className="text-blue-600 font-bold text-sm uppercase tracking-wider mb-2">Về chúng tôi</h4>
+            <h4 className="text-[#006B4D] font-bold text-sm uppercase tracking-wider mb-2">Về chúng tôi</h4>
             
             {/* ... (GIỮ NGUYÊN CÁC ĐOẠN VĂN MÔ TẢ) ... */}
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 leading-tight">
-              Đối tác in ấn tin cậy của hơn <span className="text-blue-600">3000+</span> doanh nghiệp
+              Đối tác in ấn tin cậy của hơn <span className="text-[#006B4D]">3000+</span> doanh nghiệp
             </h2>
             <p className="text-gray-600 mb-4 leading-relaxed text-justify">
               {/* ... nội dung cũ ... */}
@@ -49,7 +49,7 @@ const AboutSection = () => {
     {/* Nút 1: Xem sản phẩm (Nút Chính - Màu Đậm) */}
 
     {/* Nút 2: Về chúng tôi (Nút Phụ - Viền rỗng) */}
-    <Link to="/about" className="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition transform hover:-translate-y-1">
+    <Link to="/about" className="border-2 border-[#006B4D] text-[#006B4D] px-6 py-3 rounded-full font-bold hover:bg-[#E6F0ED] transition transform hover:-translate-y-1">
         Tìm hiểu về Quang Phát
     </Link>
 </div>
@@ -59,7 +59,7 @@ const AboutSection = () => {
                 {/* 3. NÚT BẤM GỌI HÀM SCROLL */}
                 <button 
                     onClick={scrollToProducts}
-                    className="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-blue-700 hover:shadow-xl transition transform hover:-translate-y-1 flex items-center cursor-pointer"
+                    className="bg-[#006B4D] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#004D38] hover:shadow-xl transition transform hover:-translate-y-1 flex items-center cursor-pointer"
                 >
                     Xem mẫu sản phẩm ngay <FaArrowRight className="ml-2 animate-bounce-x"/>
                 </button>

@@ -20,8 +20,8 @@ const Paginate = ({ pages, page, isAdmin = false, keyword = '' }) => {
           <div
             className={`w-10 h-10 flex items-center justify-center rounded-lg font-bold transition duration-300 ${
               x + 1 === page
-                ? 'bg-blue-600 text-white shadow-lg transform scale-110'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 hover:border-blue-300'
+                ? 'bg-[#006B4D] text-white shadow-lg transform scale-110'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 hover:border-[#006B4D]/30'
             }`}
           >
             {x + 1}

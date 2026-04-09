@@ -32,14 +32,14 @@ const FloatingContact = () => {
         href={`https://zalo.me/${CONTACT_INFO.zalo}`}
         target="_blank" 
         rel="noreferrer"
-        className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-xl hover:scale-110 transition duration-300 relative border-2 border-white animate-bounce-slow"
+        className="w-14 h-14 bg-[#006B4D] rounded-full flex items-center justify-center text-white shadow-xl hover:scale-110 transition duration-300 relative border-2 border-white animate-bounce-slow"
         title="Chat Zalo"
       >
         {/* Icon Zalo từ thư viện SiZalo hoặc dùng Text nếu chưa cài icon */}
         <SiZalo className="text-3xl" />
         
         {/* Tooltip hiển thị khi hover */}
-        <span className="absolute right-full mr-3 bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition duration-300 whitespace-nowrap shadow-md">
+        <span className="absolute right-full mr-3 bg-[#006B4D] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition duration-300 whitespace-nowrap shadow-md">
             Chat Zalo ngay
         </span>
         

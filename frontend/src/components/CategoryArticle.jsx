@@ -27,7 +27,7 @@ const CategoryArticle = ({ categorySlug }) => {
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-12">
 
             {/* 1. TIÊU ĐỀ & MỞ BÀI */}
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 border-l-8 border-blue-600 pl-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 border-l-8 border-[#006B4D] pl-6">
                 {content.title}
             </h1>
             <p className="text-gray-600 text-lg leading-relaxed mb-8 text-justify">
@@ -46,7 +46,7 @@ const CategoryArticle = ({ categorySlug }) => {
                 {/* 2. VAI TRÒ / LỢI ÍCH (Cột Trái) */}
                 <div>
                     <h3 className="flex items-center text-xl font-bold text-gray-800 mb-4 uppercase">
-                        <FaInfoCircle className="text-blue-600 mr-2" /> Vai trò & Lợi ích
+                        <FaInfoCircle className="text-[#006B4D] mr-2" /> Vai trò & Lợi ích
                     </h3>
                     <ul className="space-y-3">
                         {content.role.map((item, index) => (
@@ -57,8 +57,8 @@ const CategoryArticle = ({ categorySlug }) => {
                         ))}
                     </ul>
 
-                    <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <h4 className="font-bold text-blue-800 text-sm mb-2 uppercase">Phân loại phổ biến:</h4>
+                    <div className="mt-6 bg-[#E6F0ED] p-4 rounded-lg border border-[#006B4D]/10">
+                        <h4 className="font-bold text-[#004D38] text-sm mb-2 uppercase">Phân loại phổ biến:</h4>
                         <p className="text-gray-700 text-sm">{content.types}</p>
                     </div>
                 </div>
