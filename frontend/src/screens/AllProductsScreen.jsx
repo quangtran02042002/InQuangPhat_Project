@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaBoxOpen, FaFilter, FaArrowRight, FaChevronRight, FaTags, FaLayerGroup } from 'react-icons/fa';
 
@@ -25,27 +25,31 @@ const CATEGORY_GROUPS = [
     {
         title: "IN VẢI & CÔNG NGHỆ",
         items: [
-            { name: "In Lụa / Vải", keywords: ["lụa", "vải", "áo"] },
-            { name: "In Chuyển Nhiệt (Pet)", keywords: ["chuyển nhiệt", "pet"] },
-            { name: "In Cao Thành (High Density)", keywords: ["cao thành", "nổi", "3d"] },
+            { name: "Waterbased (Mực Nước)", keywords: ["waterbased", "mực nước", "lụa", "vải"] },
+            { name: "Rubber (Mực Cao Su)", keywords: ["rubber", "cao su"] },
+            { name: "In Áo Offset", keywords: ["offset", "chuyển nhiệt", "in áo offset"] },
             { name: "In Foil (Ép Kim/Nhũ)", keywords: ["ép kim", "nhũ", "foil"] },
-            { name: "In Rubber (Mực Cao Su)", keywords: ["rubber", "cao su"] },
             { name: "In Silicone", keywords: ["silicone"] },
             { name: "In Puff (In Nổi Phồng)", keywords: ["puff", "nổi phồng"] },
-            { name: "Mực nước (Waterbased)", keywords: ["mực nước", "waterbased"] }
+            { name: "In Cao Thành (High Density)", keywords: ["cao thành", "nổi 3d", "high density"] }
         ]
     }
 ];
 
 const AllProductsScreen = () => {
-  const { pageNumber } = useParams();
+  const { group = 'offset', category, pageNumber } = useParams(); // URL params
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState({ 0: true, 1: false }); // Default: Offset expanded, Vải collapsed
+  const [expandedGroups, setExpandedGroups] = useState({ 0: group === 'offset', 1: group === 'garment' });
+  
+  // Lấy dữ liệu category group tương ứng
+  const currentGroupData = group === 'garment' ? CATEGORY_GROUPS[1] : CATEGORY_GROUPS[0];
   
   const toggleGroup = (index) => {
     setExpandedGroups(prev => ({
@@ -54,13 +58,23 @@ const AllProductsScreen = () => {
     }));
   };
   
-  const [activeCategory, setActiveCategory] = useState({ name: 'Tất cả', keywords: [] });
-
   useEffect(() => {
+    // Nếu vào đường dẫn /products chung chung, tự động redirect sang /products/offset
+    if (location.pathname === '/products') {
+      navigate('/products/offset', { replace: true });
+      return;
+    }
+
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`/api/products?pageNumber=${pageNumber || 1}`);
+        const currentPage = pageNumber || 1;
+        let url = `/api/products?pageNumber=${currentPage}&group=${group}`;
+        if (category) {
+            url += `&category=${encodeURIComponent(category)}`;
+        }
+        
+        const { data } = await axios.get(url);
         setProducts(data.products);
         setPage(data.page);
         setPages(data.pages);
@@ -71,16 +85,11 @@ const AllProductsScreen = () => {
       }
     };
     fetchProducts();
-  }, [pageNumber]);
+  }, [group, category, pageNumber, location.pathname, navigate]);
 
-  const filteredProducts = activeCategory.name === 'Tất cả'
-    ? products
-    : products.filter(p => {
-        const dbCategory = p.category ? p.category.toLowerCase() : '';
-        return activeCategory.keywords.some(k => dbCategory.includes(k.toLowerCase()));
-    });
+  const filteredProducts = products; // Đã lọc ở backend
 
-  const currentContent = categoryContent[activeCategory.name];
+  const currentContent = category ? categoryContent[category] : null;
 
   return (
     <div className="bg-[#F9FAFB] min-h-screen pb-16 font-sans">
@@ -98,7 +107,7 @@ const AllProductsScreen = () => {
           <div className="px-4 py-4 flex items-center justify-between">
               <span className="font-extrabold text-[#111827] flex items-center gap-2 truncate pr-2 uppercase tracking-wide">
                   <FaFilter className="text-[#006B4D] shrink-0"/> 
-                  <span className="truncate">{activeCategory.name}</span>
+                  <span className="truncate">{category || 'Tất cả sản phẩm'}</span>
               </span>
               <button 
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -111,44 +120,35 @@ const AllProductsScreen = () => {
           {showMobileMenu && (
               <div className="absolute top-full left-0 w-full bg-white shadow-xl border-b border-gray-100 max-h-[70vh] overflow-y-auto animate-fade-in-down">
                   <div className="p-4 space-y-6">
-                        <button 
-                            onClick={() => { setActiveCategory({ name: 'Tất cả', keywords: [] }); setShowMobileMenu(false); }}
-                            className={`w-full text-left px-5 py-4 rounded-xl font-bold border transition-colors ${activeCategory.name === 'Tất cả' ? 'bg-[#E6F0ED] border-transparent text-[#006B4D]' : 'bg-[#F9FAFB] border-gray-100 text-[#111827]'}`}
+                        <Link 
+                            to={`/products/${group}`}
+                            onClick={() => setShowMobileMenu(false)}
+                            className={`block w-full text-left px-5 py-4 rounded-xl font-bold border transition-colors ${!category ? 'bg-[#E6F0ED] border-transparent text-[#006B4D]' : 'bg-[#F9FAFB] border-gray-100 text-[#111827]'}`}
                         >
                             Tất cả sản phẩm
-                        </button>
-                        {CATEGORY_GROUPS.map((group, index) => (
-                            <div key={index} className="border-b border-gray-100 last:border-none pb-4 last:pb-0">
-                                <button 
-                                    onClick={() => toggleGroup(index)}
-                                    className="w-full flex items-center justify-between py-3 px-2 text-sm font-extrabold text-[#111827] uppercase tracking-widest hover:bg-gray-50 rounded-xl transition-colors"
-                                >
-                                    <span className="flex items-center">
-                                        {index === 0 ? <FaBoxOpen className="mr-3 text-[#006B4D]"/> : <FaTags className="mr-3 text-[#006B4D]"/>} 
-                                        {group.title}
-                                    </span>
-                                    <FaChevronRight className={`transition-transform duration-300 ${expandedGroups[index] ? 'rotate-90' : ''}`} />
-                                </button>
-                                
-                                {expandedGroups[index] && (
-                                    <div className="grid grid-cols-1 gap-2 mt-2 ml-2 animate-fade-in-down">
-                                        {group.items.map((item) => (
-                                            <button
-                                                key={item.name}
-                                                onClick={() => { setActiveCategory(item); setShowMobileMenu(false); }}
-                                                className={`text-left px-5 py-4 rounded-xl text-sm border transition-all font-bold ${
-                                                    activeCategory.name === item.name 
-                                                    ? 'bg-[#E6F0ED] border-transparent text-[#006B4D]' 
-                                                    : 'bg-white border-gray-100 text-[#6B7280]'
-                                                }`}
-                                            >
-                                                {item.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                        </Link>
+                        <div className="border-b border-gray-100 pb-4">
+                            <h4 className="flex items-center text-sm font-extrabold text-[#111827] uppercase tracking-widest mb-4">
+                                {group === 'offset' ? <FaBoxOpen className="mr-3 text-[#006B4D]"/> : <FaTags className="mr-3 text-[#006B4D]"/>} 
+                                {currentGroupData.title}
+                            </h4>
+                            <div className="grid grid-cols-1 gap-2 ml-2">
+                                {currentGroupData.items.map((item) => (
+                                    <Link
+                                        key={item.name}
+                                        to={`/products/${group}/category/${encodeURIComponent(item.name)}`}
+                                        onClick={() => setShowMobileMenu(false)}
+                                        className={`block text-left px-5 py-4 rounded-xl text-sm border transition-all font-bold ${
+                                            category === item.name 
+                                            ? 'bg-[#E6F0ED] border-transparent text-[#006B4D]' 
+                                            : 'bg-white border-gray-100 text-[#6B7280]'
+                                        }`}
+                                    >
+                                        {item.name}
+                                    </Link>
+                                ))}
                             </div>
-                        ))}
+                        </div>
                   </div>
               </div>
           )}
@@ -165,56 +165,46 @@ const AllProductsScreen = () => {
                         <FaFilter className="text-[#006B4D]"/> DANH MỤC
                     </div>
                     
-                    <button 
-                        onClick={() => setActiveCategory({ name: 'Tất cả', keywords: [] })}
-                        className={`w-full text-left px-5 py-4 rounded-xl flex items-center justify-between transition-all duration-200 mb-4 border-l-4 ${
-                            activeCategory.name === 'Tất cả' 
+                    <Link 
+                        to={`/products/${group}`}
+                        className={`w-full block text-left px-5 py-4 rounded-xl flex items-center justify-between transition-all duration-200 mb-4 border-l-4 ${
+                            !category 
                             ? 'bg-[#E6F0ED] text-[#006B4D] font-bold border-[#006B4D]' 
                             : 'text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#006B4D] border-transparent font-medium'
                         }`}
                     >
                         <span className="font-bold">Tất cả sản phẩm</span>
                         <FaLayerGroup className="shrink-0 ml-2" />
-                    </button>
+                    </Link>
 
-                    <div className="space-y-8 mt-8">
-                        {CATEGORY_GROUPS.map((group, index) => (
-                            <div key={index} className="border-b border-gray-50 last:border-none pb-4 last:pb-0">
-                                <button 
-                                    onClick={() => toggleGroup(index)}
-                                    className="w-full flex items-center justify-between py-2 px-2 group hover:bg-[#F9FAFB] rounded-xl transition-all duration-300"
-                                >
-                                    <h4 className="text-[11px] font-extrabold text-[#6B7280] group-hover:text-[#006B4D] uppercase tracking-[0.15em] flex items-center transition-colors">
-                                        {index === 0 ? <FaBoxOpen className="mr-3 text-[#006B4D] text-sm"/> : <FaTags className="mr-3 text-[#006B4D] text-sm"/>} 
-                                        {group.title}
-                                    </h4>
-                                    <FaChevronRight className={`text-[10px] text-[#6B7280] transition-transform duration-500 ${expandedGroups[index] ? 'rotate-90' : ''}`} />
-                                </button>
-                                
-                                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expandedGroups[index] ? 'max-h-[1000px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                                    <ul className="space-y-1 ml-1 pl-2 border-l border-[#006B4D]/10">
-                                        {group.items.map((item) => (
-                                            <li key={item.name}>
-                                                <button
-                                                    onClick={() => setActiveCategory(item)}
-                                                    className={`group w-full text-left px-4 py-2.5 rounded-lg text-xs flex items-center justify-between transition-all duration-200 font-bold border-l-2 ${
-                                                        activeCategory.name === item.name 
-                                                        ? 'bg-[#E6F0ED] text-[#006B4D] border-[#006B4D] pl-4' 
-                                                        : 'text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#006B4D] border-transparent'
-                                                    }`}
-                                                >
-                                                    <span className="whitespace-normal leading-tight pr-2 block w-full">{item.name}</span> 
-                                                    
-                                                    {activeCategory.name === item.name && (
-                                                        <FaChevronRight className="text-[8px] shrink-0" />
-                                                    )}
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="space-y-4 mt-4">
+                        <div className="border-b border-gray-50 pb-4">
+                            <h4 className="text-[11px] font-extrabold text-[#6B7280] uppercase tracking-[0.15em] flex items-center mb-4">
+                                {group === 'offset' ? <FaBoxOpen className="mr-3 text-[#006B4D] text-sm"/> : <FaTags className="mr-3 text-[#006B4D] text-sm"/>} 
+                                {currentGroupData.title}
+                            </h4>
+                            
+                            <ul className="space-y-1 ml-1 pl-2 border-l border-[#006B4D]/10">
+                                {currentGroupData.items.map((item) => (
+                                    <li key={item.name}>
+                                        <Link
+                                            to={`/products/${group}/category/${encodeURIComponent(item.name)}`}
+                                            className={`group w-full text-left px-4 py-2.5 rounded-lg text-xs flex items-center justify-between transition-all duration-200 font-bold border-l-2 ${
+                                                category === item.name 
+                                                ? 'bg-[#E6F0ED] text-[#006B4D] border-[#006B4D] pl-4' 
+                                                : 'text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#006B4D] border-transparent'
+                                            }`}
+                                        >
+                                            <span className="whitespace-normal leading-tight pr-2 block w-full">{item.name}</span> 
+                                            
+                                            {category === item.name && (
+                                                <FaChevronRight className="text-[8px] shrink-0" />
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -222,7 +212,7 @@ const AllProductsScreen = () => {
             {/* CONTENT (Rộng 75%) */}
             <div className="w-full lg:w-3/4">
                 
-                {activeCategory.name !== 'Tất cả' && (
+                {category && (
                     <CategoryDetail content={currentContent} />
                 )}
 
@@ -235,7 +225,7 @@ const AllProductsScreen = () => {
                         <h2 className="text-lg text-[#111827] flex flex-wrap items-center gap-2">
                             <span className="font-bold text-[#6B7280] uppercase tracking-wider text-sm hidden sm:inline">Hiển thị:</span> 
                             <span className="font-extrabold text-[#006B4D] text-lg sm:text-xl">
-                                {activeCategory.name}
+                                {category || 'Tất Cả Sản Phẩm'}
                             </span>
                         </h2>
                     </div>
@@ -258,13 +248,13 @@ const AllProductsScreen = () => {
                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
                         <div className="text-6xl mb-4 text-[#E6F0ED] mx-auto w-fit">📦</div>
                         <p className="text-[#6B7280] text-lg font-bold">Chưa tìm thấy mẫu nào trong mục này.</p>
-                        <p className="text-sm text-gray-400 mt-2 px-4">Đang tìm từ khóa: <span className="italic">{activeCategory.keywords.join(', ')}</span></p>
-                        <button 
-                            onClick={() => setActiveCategory({ name: 'Tất cả', keywords: [] })} 
-                            className="mt-8 px-8 py-3 bg-[#006B4D] text-white rounded-xl font-bold hover:bg-[#00553d] transition-colors shadow-sm"
+                        <p className="text-sm text-gray-400 mt-2 px-4">Đang lọc danh mục: <span className="italic">{category}</span></p>
+                        <Link 
+                            to={`/products/${group}`}
+                            className="mt-8 px-8 py-3 bg-[#006B4D] text-white rounded-xl font-bold hover:bg-[#00553d] transition-colors shadow-sm inline-block"
                         >
                             Quay lại xem tất cả
-                        </button>
+                        </Link>
                     </div>
                 ) : (
                     <>
@@ -297,11 +287,9 @@ const AllProductsScreen = () => {
 
                                         <div className="flex items-end justify-between mt-3 pt-3 border-t border-gray-50">
                                             <div>
-                                                <p className="text-[10px] text-[#6B7280] uppercase font-bold tracking-wider mb-0.5">Giá tham khảo</p>
-                                                <p className="text-red-500 font-extrabold text-sm sm:text-base tracking-tight">
-                                                    {product.priceTable && product.priceTable.length > 0 
-                                                        ? `${product.priceTable[0].price.toLocaleString()}đ` 
-                                                        : 'Liên hệ'}
+                                                <p className="text-[10px] text-[#6B7280] uppercase font-bold tracking-wider mb-0.5">Báo giá</p>
+                                                <p className="text-[#006B4D] font-semibold text-xs sm:text-sm leading-tight">
+                                                    Vui lòng liên hệ
                                                 </p>
                                             </div>
                                             <Link to={`/product/${product._id}`} className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#F9FAFB] border border-gray-100 flex items-center justify-center text-[#006B4D] group-hover:bg-[#006B4D] group-hover:text-white transition-colors">
@@ -313,11 +301,13 @@ const AllProductsScreen = () => {
                             ))}
                         </div>
 
-                        {activeCategory.name === 'Tất cả' && (
-                            <div className="mt-12 flex justify-center">
-                                <Paginate pages={pages} page={page} />
-                            </div>
-                        )}
+                        <div className="mt-12 flex justify-center">
+                            <Paginate 
+                                pages={pages} 
+                                page={page} 
+                                basePath={category ? `/products/${group}/category/${encodeURIComponent(category)}` : `/products/${group}`} 
+                            />
+                        </div>
                     </>
                 )}
             </div>

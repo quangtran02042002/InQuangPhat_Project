@@ -12,6 +12,7 @@ const newsRoutes = require('./routes/newsRoutes');
 const machineRoutes = require('./routes/machineRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const materialRoutes = require('./routes/materialRoutes');
+const financeUploadRoutes = require('./routes/financeUploadRoutes');
 
 // --- SỬA DÒNG NÀY (Đổi import thành require) ---
 const customerRoutes = require('./routes/customerRoutes');
@@ -28,6 +29,8 @@ const productionOrderRoutes = require('./routes/productionOrderRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const adminQuoteRoutes = require('./routes/adminQuoteRoutes');
 const finishingPriceRoutes = require('./routes/finishingPriceRoutes');
+const financeRoutes = require('./routes/financeRoutes');
+const quotationRoutes = require('./routes/quotationRoutes');
 
 
 dotenv.config();
@@ -41,6 +44,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/upload/finance', financeUploadRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/v1', machineRoutes);
@@ -60,6 +64,9 @@ app.use('/api/production-orders', productionOrderRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/admin-quotes', adminQuoteRoutes);
 app.use('/api/finishing-prices', finishingPriceRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/quotations', quotationRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('API In Quang Phát đang chạy...');

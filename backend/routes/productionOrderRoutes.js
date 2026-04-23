@@ -8,18 +8,18 @@ const {
   updateProductionOrderProgress,
   deleteProductionOrder,
 } = require('../controllers/productionOrderController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .get(protect, getProductionOrders)
-  .post(protect, admin, createProductionOrder);
+  .get(protect, admin, authorize('director', 'production'), getProductionOrders)
+  .post(protect, admin, authorize('director', 'production'), createProductionOrder);
 
 router.route('/:id')
-  .get(protect, getProductionOrderById)
-  .put(protect, admin, updateProductionOrder)
-  .delete(protect, admin, deleteProductionOrder);
+  .get(protect, admin, authorize('director', 'production'), getProductionOrderById)
+  .put(protect, admin, authorize('director', 'production'), updateProductionOrder)
+  .delete(protect, admin, authorize('director', 'production'), deleteProductionOrder);
 
 router.route('/:id/progress')
-  .patch(protect, updateProductionOrderProgress);
+  .patch(protect, admin, authorize('director', 'production'), updateProductionOrderProgress);
 
 module.exports = router;

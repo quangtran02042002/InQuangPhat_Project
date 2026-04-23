@@ -8,20 +8,20 @@ const {
   updateUserProfile,
   registerUser,   // <--- THÊM
 } = require('../controllers/userController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 router.post('/login', authUser);
 
 // Route quản lý User (Chỉ Admin mới được vào)
 router.route('/')
 .post(registerUser)
-  .get(protect, admin, getUsers);
+  .get(protect, admin, authorize('director'), getUsers);
 
 router.route('/profile')
   .get(protect, getUserProfile)
   .put(protect, updateUserProfile);
 
 router.route('/:id')
-  .delete(protect, admin, deleteUser);
+  .delete(protect, admin, authorize('director'), deleteUser);
 
 module.exports = router;

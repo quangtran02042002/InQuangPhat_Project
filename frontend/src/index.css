@@ -1,29 +1,144 @@
+/* ── GOOGLE FONTS ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* --- CSS CHO RICH TEXT EDITOR --- */
+
+/* ── BASE ────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    color: #111827;
+    background-color: #F9FAFB;
+  }
+
+  a {
+    text-decoration: none !important;
+  }
+
+  a:hover {
+    text-decoration: none !important;
+  }
+}
+
+/* ── SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #006B4D;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #004D38;
+}
+
+/* ── SCROLL REVEAL UTILITIES ────────────────────────────── */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-28px);
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+  }
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(28px);
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+  }
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Stagger delays */
+  .delay-100 { transition-delay: 0.1s; }
+  .delay-200 { transition-delay: 0.2s; }
+  .delay-300 { transition-delay: 0.3s; }
+  .delay-400 { transition-delay: 0.4s; }
+  .delay-500 { transition-delay: 0.5s; }
+
+  /* Text gradient */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #006B4D 0%, #2a9f6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glass-white {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Custom scrollbar for admin panels */
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+}
+
+/* ── RICH TEXT EDITOR ──────────────────────────────────── */
 .ql-editor-display {
-  line-height: 1.6;
+  line-height: 1.7;
   color: #374151;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .ql-editor-display h1 {
   font-size: 1.5rem;
-  font-weight: bold;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #1e3a8a;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #111827;
 }
 .ql-editor-display h2 {
   font-size: 1.25rem;
-  font-weight: bold;
-  margin-top: 1rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   color: #1e40af;
 }
 .ql-editor-display p {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
-/* Hiện dấu chấm tròn và số cho danh sách */
 .ql-editor-display ul {
   list-style-type: disc;
   padding-left: 1.5rem;
@@ -34,22 +149,10 @@
   padding-left: 1.5rem;
   margin-bottom: 1rem;
 }
-.ql-editor-display strong {
-  font-weight: 700;
-}
-.ql-editor-display em {
-  font-style: italic;
-}
-a {
-  text-decoration: none !important;
-}
+.ql-editor-display strong { font-weight: 700; }
+.ql-editor-display em { font-style: italic; }
 
-/* (Tuỳ chọn) Khi di chuột vào mới hiện gạch chân cho dễ nhận biết */
-a:hover {
-  text-decoration: none !important; /* Hoặc để 'underline' nếu muốn hiện khi hover */
-}
-
-/* ---- CSS FIX: Bảng trong bài viết (chống bị .prose override) ---- */
+/* ── PROSE TABLE OVERRIDES ──────────────────────────────── */
 .prose table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -59,12 +162,10 @@ a:hover {
   box-shadow: none !important;
   display: table !important;
 }
-
 .prose thead tr {
   background: linear-gradient(90deg, #005a3f 0%, #008a5a 100%) !important;
   border-bottom: none !important;
 }
-
 .prose thead th {
   color: #ffffff !important;
   font-weight: 700 !important;
@@ -76,33 +177,28 @@ a:hover {
   background: transparent !important;
   border: none !important;
 }
-
-.prose tbody tr {
-  border-bottom: 1px solid #e2f0ea !important;
-}
-.prose tbody tr:last-child {
-  border-bottom: none !important;
-  background-color: #f0fdfb !important;
-}
-.prose tbody tr:nth-child(even) {
-  background-color: #f8fdfb !important;
-}
-.prose tbody tr:nth-child(odd) {
-  background-color: #ffffff !important;
-}
-
+.prose tbody tr { border-bottom: 1px solid #e2f0ea !important; }
+.prose tbody tr:last-child { border-bottom: none !important; background-color: #f0fdfb !important; }
+.prose tbody tr:nth-child(even) { background-color: #f8fdfb !important; }
+.prose tbody tr:nth-child(odd) { background-color: #ffffff !important; }
 .prose tbody td {
   padding: 13px 20px !important;
   color: #374151 !important;
   border: none !important;
   line-height: 1.55 !important;
 }
-.prose tbody td:first-child {
-  font-weight: 700 !important;
-  color: #006B4D !important;
-}
+.prose tbody td:first-child { font-weight: 700 !important; color: #006B4D !important; }
+.prose div > table { border-radius: 0 !important; }
 
-/* Wrapper div quanh table */
-.prose div > table {
-  border-radius: 0 !important;
+/* ── HERO SLIDER OVERRIDES ──────────────────────────────── */
+.hero-slider .slick-slider { margin-bottom: 0 !important; }
+.hero-slider .slick-dots { bottom: 28px !important; z-index: 20; }
+.hero-slider .slick-dots li button:before {
+  font-size: 10px !important;
+  color: rgba(255,255,255,0.6) !important;
+  opacity: 1 !important;
+}
+.hero-slider .slick-dots li.slick-active button:before {
+  color: white !important;
+  font-size: 14px !important;
 }

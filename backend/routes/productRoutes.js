@@ -7,15 +7,15 @@ const {
   createProduct,
   updateProduct 
 } = require('../controllers/productController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
   .get(getProducts)
-  .post(protect, admin, createProduct); // <--- POST: Tạo mới (Chỉ Admin)
+  .post(protect, admin, authorize('director'), createProduct); // <--- POST: Tạo mới (Chỉ Admin)
 
 router.route('/:id')
   .get(getProductById)
-  .delete(protect, admin, deleteProduct)
-  .put(protect, admin, updateProduct); // <--- PUT: Cập nhật (Chỉ Admin)
+  .delete(protect, admin, authorize('director'), deleteProduct)
+  .put(protect, admin, authorize('director'), updateProduct); // <--- PUT: Cập nhật (Chỉ Admin)
 
 module.exports = router;

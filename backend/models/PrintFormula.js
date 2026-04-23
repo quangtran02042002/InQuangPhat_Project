@@ -47,13 +47,22 @@ const attachmentSchema = new mongoose.Schema({
 // --- Main Schema ---
 const printFormulaSchema = new mongoose.Schema(
   {
-    formulaCode: { type: String, unique: true }, // Tự sinh: OFF-2026-001
+    formulaCode: { type: String, unique: true }, // Tự sinh: PTM-2026-001
+
+    // ── NHÓM MẪU & PHIÊN BẢN ──────────────────────────
+    sampleGroup:  { type: String, index: true },  // Mã nhóm mẫu, chung giữa các phiên bản: PTM-2026-001
+    version:      { type: Number, default: 1 },   // Số phiên bản (không giới hạn: 1,2,3,10,...)
+
     name:        { type: String, required: true, trim: true },
     printType:   { type: String, enum: ['offset', 'silk'], required: true },
     customer:    { type: String, trim: true },
     product:     { type: String, trim: true },
     status:      { type: String, enum: ['draft', 'approved', 'archived'], default: 'draft' },
     createdBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    // ── THÔNG TIN DUYỆT MẪU ───────────────────────────
+    approvedAt:  { type: Date },
+    approvedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
     // --- Cấu trúc cho In Offset ---
     offsetComponents: [offsetComponentSchema],
@@ -74,14 +83,26 @@ const printFormulaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// --- Auto-generate formulaCode trước khi lưu ---
+// --- Auto-generate codes trước khi lưu ---
 printFormulaSchema.pre('save', async function () {
-  if (!this.formulaCode) {
-    const prefix = this.printType === 'offset' ? 'OFF' : 'SILK';
-    const year   = new Date().getFullYear();
-    const count  = await mongoose.model('PrintFormula').countDocuments({ printType: this.printType });
+  const Model = mongoose.model('PrintFormula');
+  const year  = new Date().getFullYear();
+
+  // 1. Nếu là bản MỚI HOÀN TOÀN (chưa có sampleGroup)
+  if (this.isNew && !this.sampleGroup) {
+    const prefix = `PTM-${year}`;
+    const count  = await Model.countDocuments({ sampleGroup: { $regex: `^${prefix}` } });
     const seq    = String(count + 1).padStart(3, '0');
-    this.formulaCode = `${prefix}-${year}-${seq}`;
+    this.sampleGroup = `${prefix}-${seq}`;
+    this.version     = 1;
+  }
+
+  // 2. Nếu chưa có formulaCode (mọi bản)
+  if (!this.formulaCode) {
+    const typePrefix = this.printType === 'offset' ? 'OFF' : 'SILK';
+    const count = await Model.countDocuments({ printType: this.printType });
+    const seq   = String(count + 1).padStart(3, '0');
+    this.formulaCode = `${typePrefix}-${year}-${seq}`;
   }
 });
 

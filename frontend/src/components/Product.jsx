@@ -1,53 +1,71 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar } from 'react-icons/fa';
+import { FaArrowRight, FaEye } from 'react-icons/fa';
 
 const Product = ({ product }) => {
-  // Lấy giá thấp nhất để hiển thị (vì chúng ta dùng bảng giá theo số lượng)
   const displayPrice = product.priceTable && product.priceTable.length > 0
     ? product.priceTable[0].price.toLocaleString('vi-VN')
     : 'Liên hệ';
 
+  const imageUrl = product.images && product.images.length > 0
+    ? product.images[0].url
+    : '/images/slide2.jpg';
+
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
+    <div className="bg-white rounded-2xl shadow-ambient hover:shadow-elevation transition-all duration-400 border border-gray-100 overflow-hidden group hover:-translate-y-1">
+
+      {/* Image container */}
       <Link to={`/product/${product._id}`}>
-        <div className="relative overflow-hidden h-64 w-full">
-          {/* Hiển thị ảnh đầu tiên trong mảng images */}
+        <div className="relative overflow-hidden h-60 w-full bg-surface-low">
           <img
-            // Nếu có mảng images và có ít nhất 1 ảnh -> Lấy ảnh đầu tiên (images[0].url)
-            // Nếu không -> Fallback về placeholder
-            src={product.images && product.images.length > 0 ? product.images[0].url : '/images/sample.jpg'}
+            src={imageUrl}
             alt={product.name}
-            className="..."
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
+
+          {/* HOT Badge */}
           {product.isFeatured && (
-            <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">HOT</span>
+            <div className="absolute top-3 left-3">
+              <span className="bg-gradient-to-r from-rose-500 to-red-500 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wide shadow-md">
+                🔥 HOT
+              </span>
+            </div>
           )}
+
+          {/* Quick-view overlay */}
+          <div className="absolute inset-0 bg-brand-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <span className="bg-white text-brand-700 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 shadow-lg">
+              <FaEye /> Xem chi tiết
+            </span>
+          </div>
         </div>
       </Link>
 
-      <div className="p-4">
-        <div className="text-xs text-gray-500 mb-1 uppercase tracking-wide">{product.category}</div>
+      {/* Card content */}
+      <div className="p-5">
+        {/* Category */}
+        <div className="text-[10px] font-bold text-brand-600 uppercase tracking-widest mb-2 bg-brand-50 px-2 py-0.5 rounded-full inline-block">
+          {product.category}
+        </div>
+
+        {/* Name */}
         <Link to={`/product/${product._id}`}>
-          <h3 className="text-lg font-bold text-gray-800 hover:text-[#006B4D] truncate mb-2">
+          <h3 className="text-base font-bold text-gray-800 hover:text-brand-600 line-clamp-2 mb-3 leading-snug transition-colors duration-200">
             {product.name}
           </h3>
         </Link>
 
-        <div className="flex items-center mb-3">
-          {[...Array(5)].map((_, i) => (
-            <FaStar key={i} className="text-yellow-400 text-xs" />
-          ))}
-          <span className="text-xs text-gray-400 ml-1">(0 đánh giá)</span>
-        </div>
-
-        <div className="flex justify-between items-end">
+        {/* Contact CTA */}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
           <div>
-            <span className="text-xs text-gray-500">Giá từ:</span>
-            <div className="text-xl font-bold text-[#006B4D]">{displayPrice}₫</div>
+            <span className="text-[10px] text-gray-400 block mb-0.5">Báo giá</span>
+            <div className="text-sm font-semibold text-brand-600">Vui lòng liên hệ</div>
           </div>
-          <Link to={`/product/${product._id}`} className="bg-gray-100 hover:bg-[#006B4D] hover:text-white text-gray-800 p-2 rounded-lg transition-colors text-sm font-medium">
-            Xem chi tiết
+          <Link
+            to={`/product/${product._id}`}
+            className="flex items-center gap-1.5 bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300"
+          >
+            Chi tiết <FaArrowRight className="text-[10px]" />
           </Link>
         </div>
       </div>

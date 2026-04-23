@@ -28,7 +28,7 @@ const QuoteListScreen = () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
                 const { data } = await axios.get('/api/quotes', config);
-                setQuotes(data);
+                setQuotes(Array.isArray(data) ? data : data.quotes || []);
                 setLoading(false);
             } catch (error) {
                 toast.error('Lỗi tải danh sách báo giá');
