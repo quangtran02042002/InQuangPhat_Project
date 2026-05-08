@@ -13,14 +13,14 @@ const AboutScreen = () => {
 
   const timeline = [
     {
-      year: '2012',
+      year: '2011',
       title: 'Thành lập Xưởng',
-      desc: 'Khởi đầu với 02 máy in Offset 1 màu và đội ngũ 5 nhân sự tâm huyết tại Huế.',
+      desc: 'Khởi đầu với 02 máy in Offset và đội ngũ nhân sự tâm huyết tại Huế.',
     },
     {
       year: '2015',
       title: 'Mở rộng quy mô',
-      desc: 'Chuyển sang nhà xưởng 500m², đầu tư hệ thống máy in Komori 4 màu nhập khẩu từ Nhật Bản.',
+      desc: 'Chuyển sang nhà xưởng 500m², đầu tư hệ thống máy in Shinohara 4 màu nhập khẩu từ Nhật Bản.',
     },
     {
       year: '2019',
@@ -35,7 +35,7 @@ const AboutScreen = () => {
   ];
 
   const highlights = [
-    'Công nghệ in Offset 6 màu — sắc nét, chuẩn màu quốc tế',
+    'Công nghệ in Offset 4 màu — sắc nét, chuẩn màu quốc tế',
     'Quy trình khép kín: Thiết kế → In → Gia công → Giao hàng',
     'Miễn phí thiết kế — Giá tận xưởng, không qua trung gian',
     'Cam kết tiến độ & Chất lượng tuyệt đối mọi đơn hàng',
@@ -62,7 +62,7 @@ const AboutScreen = () => {
             <span className="text-gradient-brand">chúng tôi</span>
           </h1>
           <p className="reveal delay-200 text-gray-500 text-lg leading-relaxed">
-            Hơn 12 năm nỗ lực không ngừng nghỉ để trở thành biểu tượng niềm tin trong ngành in ấn bao bì & may mặc tại Việt Nam.
+            Hơn 15 năm nỗ lực không ngừng nghỉ để trở thành biểu tượng niềm tin trong ngành in ấn bao bì & may mặc tại Việt Nam.
           </p>
         </div>
       </div>
@@ -83,7 +83,7 @@ const AboutScreen = () => {
             </div>
 
             <p className="reveal delay-100 text-gray-500 mb-4 leading-relaxed">
-              Được thành lập từ những năm đầu 2010, <strong className="text-gray-800 font-bold">In Quang Phát</strong> khởi đầu là một xưởng in nhỏ với khát khao mang lại những sản phẩm bao bì "Made in Vietnam" chất lượng quốc tế.
+              Được thành lập từ năm 2011, <strong className="text-gray-800 font-bold">In Quang Phát</strong> khởi đầu là một xưởng in nhỏ với khát khao mang lại những sản phẩm bao bì "Made in Vietnam" chất lượng quốc tế.
             </p>
             <p className="reveal delay-200 text-gray-500 mb-7 leading-relaxed">
               Chúng tôi không chỉ in lên giấy — chúng tôi in lên đó <strong className="text-gray-800 font-bold">uy tín thương hiệu</strong> của khách hàng. Sứ mệnh của chúng tôi là nâng tầm giá trị sản phẩm Việt thông qua bao bì chuyên nghiệp và in ấn đẳng cấp.
@@ -127,7 +127,7 @@ const AboutScreen = () => {
               { icon: <FaUsers />, value: '3000+', label: 'Khách hàng' },
               { icon: <FaPrint />, value: '5M+', label: 'Sản phẩm/năm' },
               { icon: <FaAward />, value: '100%', label: 'Hài lòng' },
-              { icon: <FaHistory />, value: '12+', label: 'Năm kinh nghiệm' },
+              { icon: <FaHistory />, value: '15+', label: 'Năm kinh nghiệm' },
             ].map((stat, i) => (
               <div key={i} className="reveal text-center text-white" style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="text-brand-200 text-3xl mb-2 flex justify-center">{stat.icon}</div>

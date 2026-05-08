@@ -53,8 +53,8 @@ const Header = () => {
   return (
     <header
       className={`sticky top-0 z-50 font-display transition-all duration-300 ${scrolled
-          ? 'glass-white shadow-elevation border-b border-white/60'
-          : 'bg-white shadow-sm'
+        ? 'glass-white shadow-elevation border-b border-white/60'
+        : 'bg-white shadow-sm'
         }`}
     >
       <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-8 py-3">
@@ -196,7 +196,7 @@ const Header = () => {
                       <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors text-sm">
                         <FaUserCircle className="text-base" /> Hồ sơ cá nhân
                       </Link>
-                      {userInfo.isAdmin && (
+                      {(userInfo.isAdmin || ['director', 'accountant', 'production'].includes(userInfo.role)) && (
                         <Link to="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 text-accent font-bold hover:bg-red-50 transition-colors border-t border-b border-gray-100 text-sm">
                           <FaCog className="text-base" /> Trang Quản Trị
                         </Link>

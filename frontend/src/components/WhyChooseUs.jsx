@@ -36,7 +36,7 @@ const WhyChooseUs = () => {
     {
       icon: <FaCheckCircle size={28} />,
       title: 'Công nghệ hiện đại',
-      desc: 'Máy in Offset 6 màu đời mới, in lụa Oval tự động — hình ảnh sắc nét, chuẩn màu quốc tế.',
+      desc: 'Máy in Offset 4 màu Shinohara, in lụa Oval tự động — hình ảnh sắc nét, chuẩn màu quốc tế.',
       gradient: 'from-rose-50 to-orange-50',
       iconBg: 'bg-rose-100',
       iconColor: 'text-rose-600',

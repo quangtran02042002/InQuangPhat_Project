@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaBell, FaBars } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { FaBell, FaBars, FaSignOutAlt, FaUserCircle, FaChevronDown } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -10,7 +10,10 @@ const AdminHeader = ({ title, onMenuClick }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const prevUnreadCountRef = useRef(0); // Để biết có thông báo MỚI không
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const userDropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -81,10 +84,19 @@ const AdminHeader = ({ title, onMenuClick }) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownRef]);
+  }, [dropdownRef, userDropdownRef]);
+
+  const logoutHandler = () => {
+    localStorage.removeItem('userInfo');
+    navigate('/login');
+    setShowUserDropdown(false);
+  };
 
   // Helper chọn icon theo loại
   const getIcon = (type) => {
@@ -193,14 +205,49 @@ const AdminHeader = ({ title, onMenuClick }) => {
         <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
 
         {/* THÔNG TIN USER & AVATAR */}
-        <div className="flex items-center gap-3">
-             <div className="text-right hidden md:block">
-                 <div className="text-sm font-extrabold text-[#111827]">{userInfo?.name}</div>
-                 <div className="text-xs font-bold text-[#6B7280]">Admin</div>
-             </div>
-             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#E6F0ED] flex items-center justify-center text-[#006B4D] font-extrabold text-sm border-2 border-white shadow-sm cursor-pointer hover:bg-[#006B4D] hover:text-white transition-colors">
-                 {userInfo?.name?.charAt(0).toUpperCase() || 'A'}
-             </div>
+        <div className="relative" ref={userDropdownRef}>
+            <div 
+                className="flex items-center gap-3 cursor-pointer group px-2 py-1 rounded-xl hover:bg-gray-50 transition-colors"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+            >
+                <div className="text-right hidden md:block">
+                    <div className="text-sm font-extrabold text-[#111827] group-hover:text-[#006B4D] transition-colors">{userInfo?.name}</div>
+                    <div className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
+                        {userInfo?.role === 'director' ? 'Giám đốc' : 
+                         userInfo?.role === 'accountant' ? 'Kế toán' : 
+                         userInfo?.role === 'production' ? 'Sản xuất' : 'Nhân viên'}
+                    </div>
+                </div>
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#E6F0ED] flex items-center justify-center text-[#006B4D] font-extrabold text-sm border-2 border-white shadow-sm group-hover:bg-[#006B4D] group-hover:text-white transition-all">
+                    {userInfo?.name?.charAt(0).toUpperCase() || 'A'}
+                </div>
+                <FaChevronDown className={`text-[10px] text-gray-400 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+            </div>
+
+            {/* DROPDOWN USER */}
+            {showUserDropdown && (
+                <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-50 origin-top-right animate-fade-in-down">
+                    <div className="px-5 py-4 border-b border-gray-50 bg-[#F9FAFB] md:hidden">
+                        <div className="text-sm font-extrabold text-[#111827]">{userInfo?.name}</div>
+                        <div className="text-[10px] text-gray-500 font-bold uppercase">{userInfo?.role}</div>
+                    </div>
+                    <div className="p-2">
+                        <Link 
+                            to="/profile" 
+                            className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:bg-[#E6F0ED] hover:text-[#006B4D] rounded-xl transition-colors"
+                            onClick={() => setShowUserDropdown(false)}
+                        >
+                            <FaUserCircle className="text-base opacity-70" /> Hồ sơ cá nhân
+                        </Link>
+                        <button 
+                            onClick={logoutHandler}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors mt-1"
+                        >
+                            <FaSignOutAlt className="text-base opacity-70" /> Đăng xuất
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
 
       </div>

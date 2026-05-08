@@ -22,6 +22,7 @@ const QuotationScreen = () => {
 
   const handleCancelEdit = () => {
     setEditData(null);
+    setShowList(true); // Navigate back to list, not to blank create form
   };
 
   return (

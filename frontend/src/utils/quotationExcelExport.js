@@ -49,10 +49,10 @@ export async function exportQuotationExcel(quotation) {
   ws.columns = [
     { width: 6 },   // A: STT
     { width: 18 },  // B: Mã hàng
-    { width: 22 },  // C: Kĩ thuật in
-    { width: 12 },  // D: Số lượng
-    { width: 16 },  // E: Đơn giá
-    { width: 18 },  // F: Thành tiền
+    { width: 40 },  // C: Hình ảnh
+    { width: 22 },  // D: Kĩ thuật in
+    { width: 12 },  // E: Số lượng
+    { width: 16 },  // F: Đơn giá
     { width: 20 },  // G: Ghi chú
   ];
 
@@ -130,22 +130,22 @@ export async function exportQuotationExcel(quotation) {
   // ══════════════════════════════════════════════════════════
   // THÔNG TIN KHÁCH HÀNG
   // ══════════════════════════════════════════════════════════
-  ws.mergeCells(`A${row}:B${row}`);
+  ws.mergeCells(`A${row}:C${row}`);
   ws.getCell(`A${row}`).value = 'Kính gửi:';
   ws.getCell(`A${row}`).font = { name: 'Times New Roman', size: 11, italic: true };
-  ws.mergeCells(`C${row}:G${row}`);
-  ws.getCell(`C${row}`).value = quotation.customerName || 'Quý Khách';
-  ws.getCell(`C${row}`).font = { name: 'Times New Roman', size: 12, bold: true, color: { argb: BRAND.black } };
+  ws.mergeCells(`D${row}:H${row}`);
+  ws.getCell(`D${row}`).value = quotation.customerName || 'Quý Khách';
+  ws.getCell(`D${row}`).font = { name: 'Times New Roman', size: 12, bold: true, color: { argb: BRAND.black } };
   ws.getRow(row).height = 24;
   row++;
 
   const quoteDate = quotation.quoteDate ? new Date(quotation.quoteDate) : new Date();
-  ws.mergeCells(`A${row}:B${row}`);
+  ws.mergeCells(`A${row}:C${row}`);
   ws.getCell(`A${row}`).value = 'Ngày báo giá:';
   ws.getCell(`A${row}`).font = { name: 'Times New Roman', size: 11, italic: true };
-  ws.mergeCells(`C${row}:G${row}`);
-  ws.getCell(`C${row}`).value = quoteDate.toLocaleDateString('vi-VN');
-  ws.getCell(`C${row}`).font = { name: 'Times New Roman', size: 11, bold: true };
+  ws.mergeCells(`D${row}:H${row}`);
+  ws.getCell(`D${row}`).value = quoteDate.toLocaleDateString('vi-VN');
+  ws.getCell(`D${row}`).font = { name: 'Times New Roman', size: 11, bold: true };
   ws.getRow(row).height = 22;
   row++;
 
@@ -169,7 +169,7 @@ export async function exportQuotationExcel(quotation) {
   // BẢNG DỮ LIỆU
   // ══════════════════════════════════════════════════════════
   const headerRow = row;
-  const headers = ['STT', 'Mã hàng (Style)', 'Kĩ thuật in', 'Số lượng', 'Đơn giá (VNĐ)', 'Thành tiền (VNĐ)', 'Ghi chú'];
+  const headers = ['STT', 'Mã hàng (Style)', 'Hình ảnh', 'Kĩ thuật in', 'Số lượng', 'Đơn giá (VNĐ)', 'Ghi chú'];
 
   // Header cells with dark background
   const thinBorder = {
@@ -192,17 +192,29 @@ export async function exportQuotationExcel(quotation) {
 
   // Data rows
   const items = quotation.items || [];
+  const imageEmbedTasks = []; // Collect image fetch tasks
+
+  // Column C spans from col index 2.0 to 3.0 (width=40 chars)
+  // We split it into equal horizontal slots for each image
+  const IMG_COL_START = 2;   // 0-based col index of column C
+  const IMG_COL_END = 3;   // exclusive end (column D start)
+  const IMG_PAD = 0.05; // small padding inside each slot
+  const ROW_HEIGHT_PER_IMG = 100; // px height for rows with images
+
   items.forEach((item, i) => {
     const thanhTien = (item.quantity || 0) * (item.unitPrice || 0);
     const isEven = i % 2 === 0;
+    const images = item.images && item.images.length > 0 ? item.images : [];
+    const imgCount = images.length;
+    const currentRow = row; // Capture row index for async image embedding
 
     const rowData = [
       i + 1,
       item.style || '',
+      '',                 // C: Hình ảnh (will be embedded below)
       item.printTechnique || '',
       item.quantity || 0,
       item.unitPrice || 0,
-      thanhTien,
       item.note || '',
     ];
 
@@ -212,15 +224,15 @@ export async function exportQuotationExcel(quotation) {
       cell.font = { name: 'Times New Roman', size: 10.5 };
       cell.border = thinBorder;
 
-      // Alignment
       if (j === 0) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (j === 3 || j === 4 || j === 5) {
+      } else if (j === 2) {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (j === 4 || j === 5) {
         cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        // Number formatting for currency
-        if (j === 4 || j === 5) {
+        if (j === 5) {
           cell.numFmt = '#,##0';
-          cell.font = { name: 'Times New Roman', size: 10.5, bold: j === 5 };
+          cell.font = { name: 'Times New Roman', size: 10.5, bold: true };
         } else {
           cell.numFmt = '#,##0';
         }
@@ -228,15 +240,44 @@ export async function exportQuotationExcel(quotation) {
         cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
       }
 
-      // Alternate row shading
       if (isEven) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.grayLight } };
       }
     });
 
-    ws.getRow(row).height = 26;
+    // Row height: taller when images exist
+    ws.getRow(row).height = imgCount > 0 ? ROW_HEIGHT_PER_IMG : 26;
+
+    // Queue all images for this item
+    images.forEach((imgUrl, imgIdx) => {
+      // Divide column C into equal horizontal slots for each image
+      const slotWidth = (IMG_COL_END - IMG_COL_START) / imgCount;
+      const colLeft = IMG_COL_START + imgIdx * slotWidth + IMG_PAD;
+      const colRight = IMG_COL_START + (imgIdx + 1) * slotWidth - IMG_PAD;
+      const rowTop = currentRow - 1 + IMG_PAD;
+      const rowBottom = currentRow - 1 + 1 - IMG_PAD;
+
+      imageEmbedTasks.push(
+        fetch(imgUrl)
+          .then((res) => res.arrayBuffer())
+          .then((buf) => {
+            const ext = imgUrl.match(/\.(png|gif|bmp)$/i) ? 'png' : 'jpeg';
+            const imageId = workbook.addImage({ buffer: buf, extension: ext });
+            ws.addImage(imageId, {
+              tl: { col: colLeft, row: rowTop },
+              br: { col: colRight, row: rowBottom },
+              editAs: 'oneCell',
+            });
+          })
+          .catch(() => { /* skip failed image */ })
+      );
+    });
+
     row++;
   });
+
+  // Wait for all images to be fetched & embedded
+  await Promise.all(imageEmbedTasks);
 
   // ══════════════════════════════════════════════════════════
   // DÒNG TỔNG CỘNG
@@ -248,7 +289,6 @@ export async function exportQuotationExcel(quotation) {
   totalLabelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };
   totalLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
   totalLabelCell.border = thinBorder;
-  // Apply border to all merged cells
   for (let c = 2; c <= 5; c++) {
     ws.getCell(row, c).border = thinBorder;
     ws.getCell(row, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };

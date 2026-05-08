@@ -78,7 +78,7 @@ const OrderProcess = () => {
               {/* Overlay content */}
               <div className="absolute bottom-8 left-8 right-8">
                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-white">
-                  <div className="text-2xl font-extrabold mb-1">Uy tín 12+ năm</div>
+                  <div className="text-2xl font-extrabold mb-1">Uy tín 15+ năm</div>
                   <div className="text-sm text-gray-200">Hơn 3000 khách hàng đã tin tưởng hợp tác</div>
                 </div>
               </div>

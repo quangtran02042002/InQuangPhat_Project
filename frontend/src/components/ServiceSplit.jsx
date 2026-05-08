@@ -53,7 +53,7 @@ const ServiceSplit = () => {
                 <h3 className="text-2xl font-extrabold text-white">In Offset & Bao Bì</h3>
               </div>
               <p className="text-brand-100 text-sm mb-5 leading-relaxed">
-                Hộp cứng, túi giấy, tem nhãn, catalogue. Công nghệ in 6 màu Komori cho màu sắc sắc nét nhất.
+                Hộp cứng, túi giấy, tem nhãn, catalogue. Công nghệ in 4 màu Shinohara cho màu sắc sắc nét nhất.
               </p>
               <Link
                 to="/products/offset"

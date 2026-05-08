@@ -15,7 +15,8 @@ const LoginScreen = () => {
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
     if (userInfo) {
-      navigate(userInfo.isAdmin ? '/admin/dashboard' : '/');
+      const isAdminOrStaff = userInfo.isAdmin || ['director', 'accountant', 'production'].includes(userInfo.role);
+      navigate(isAdminOrStaff ? '/admin/dashboard' : '/');
     }
   }, [navigate]);
 
@@ -48,7 +49,8 @@ const LoginScreen = () => {
 
       // 3. Chuyển hướng sang trang
       // (Dùng window.location.href để load lại trang, cập nhật Header)
-      window.location.href = data.isAdmin ? '/admin/dashboard' : '/'; 
+      const isAdminOrStaff = data.isAdmin || ['director', 'accountant', 'production'].includes(data.role);
+      window.location.href = isAdminOrStaff ? '/admin/dashboard' : '/'; 
       
     } catch (err) {
       // Nếu sai mật khẩu hoặc lỗi server

@@ -19,6 +19,8 @@ const QuotationList = ({ onEdit }) => {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [viewDetail, setViewDetail] = useState(null);
 
   const fetchData = async () => {
@@ -49,7 +51,10 @@ const QuotationList = ({ onEdit }) => {
     const s = keyword.toLowerCase();
     const matchKw = !s || q.customerName?.toLowerCase().includes(s) || q.quotationCode?.toLowerCase().includes(s);
     const matchSt = filterStatus === 'all' || q.status === filterStatus;
-    return matchKw && matchSt;
+    const qDate = new Date(q.quoteDate);
+    const matchFrom = !dateFrom || qDate >= new Date(dateFrom);
+    const matchTo   = !dateTo   || qDate <= new Date(dateTo + 'T23:59:59');
+    return matchKw && matchSt && matchFrom && matchTo;
   });
 
   const Badge = ({ status }) => {
@@ -76,27 +81,54 @@ const QuotationList = ({ onEdit }) => {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col lg:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full lg:w-1/2">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="Tìm theo tên khách, mã báo giá..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-10 py-3 text-sm outline-none focus:border-[#006B4D] focus:bg-white transition shadow-sm" />
-          {keyword && <button onClick={() => setKeyword('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><FaTimes /></button>}
-        </div>
-        <div className="flex gap-3 items-center w-full lg:w-auto">
-          <div className="relative flex-1 lg:flex-none">
-            <FaFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-              className="w-full lg:w-auto pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#006B4D] bg-white text-sm font-bold appearance-none cursor-pointer shadow-sm">
-              <option value="all">Tất cả</option>
-              <option value="draft">Nháp</option>
-              <option value="sent">Đã gửi</option>
-              <option value="accepted">Đã duyệt</option>
-              <option value="rejected">Từ chối</option>
-            </select>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3">
+        {/* Row 1: Search + Status + Count */}
+        <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
+          <div className="relative w-full lg:w-1/2">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="Tìm theo tên khách, mã báo giá..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-12 pr-10 py-3 text-sm outline-none focus:border-[#006B4D] focus:bg-white transition shadow-sm" />
+            {keyword && <button onClick={() => setKeyword('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><FaTimes /></button>}
           </div>
-          <div className="bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-extrabold text-sm border border-[#006B4D]/10 shrink-0">
-            {filtered.length} <span className="text-xs font-bold ml-1">BÁO GIÁ</span>
+          <div className="flex gap-3 items-center w-full lg:w-auto">
+            <div className="relative flex-1 lg:flex-none">
+              <FaFilter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+                className="w-full lg:w-auto pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#006B4D] bg-white text-sm font-bold appearance-none cursor-pointer shadow-sm">
+                <option value="all">Tất cả</option>
+                <option value="draft">Nháp</option>
+                <option value="sent">Đã gửi</option>
+                <option value="accepted">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+              </select>
+            </div>
+            <div className="bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-extrabold text-sm border border-[#006B4D]/10 shrink-0">
+              {filtered.length} <span className="text-xs font-bold ml-1">BÁO GIÁ</span>
+            </div>
+          </div>
+        </div>
+        {/* Row 2: Date range filter */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 shrink-0">
+            <FaCalendarAlt className="text-[#006B4D]" /> Lọc theo ngày:
+          </div>
+          <div className="flex gap-2 flex-1 flex-wrap">
+            <div className="relative flex-1 min-w-[140px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">TỪ</span>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:border-[#006B4D] bg-gray-50 focus:bg-white transition" />
+            </div>
+            <div className="relative flex-1 min-w-[140px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">ĐẾN</span>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:border-[#006B4D] bg-gray-50 focus:bg-white transition" />
+            </div>
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+                className="px-3 py-2.5 rounded-xl bg-red-50 text-red-500 border border-red-200 text-xs font-bold hover:bg-red-100 transition flex items-center gap-1">
+                <FaTimes size={10} /> Xoá lọc
+              </button>
+            )}
           </div>
         </div>
       </div>

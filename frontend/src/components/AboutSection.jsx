@@ -7,13 +7,13 @@ const AboutSection = () => {
   const sectionRef = useScrollReveal();
 
   const stats = [
-    { value: '12+', label: 'Năm kinh nghiệm' },
+    { value: '15+', label: 'Năm kinh nghiệm' },
     { value: '3000+', label: 'Khách hàng tin cậy' },
     { value: '5M+', label: 'Sản phẩm/năm' },
   ];
 
   const highlights = [
-    'Công nghệ in Offset 6 màu — sắc nét, chuẩn màu quốc tế',
+    'Công nghệ in Offset 4 màu — sắc nét, chuẩn màu quốc tế',
     'Quy trình khép kín: Thiết kế → In → Gia công → Giao hàng',
     'Miễn phí thiết kế — Giá tận xưởng, không qua trung gian',
   ];
@@ -50,7 +50,7 @@ const AboutSection = () => {
 
               {/* Experience badge */}
               <div className="absolute -top-4 -left-4 bg-brand-600 text-white rounded-2xl px-4 py-3 shadow-floating">
-                <div className="text-2xl font-extrabold leading-none">12+</div>
+                <div className="text-2xl font-extrabold leading-none">15+</div>
                 <div className="text-[10px] text-brand-200 uppercase tracking-wider">Năm kinh nghiệm</div>
               </div>
             </div>
