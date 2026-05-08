@@ -39,9 +39,9 @@ const Sidebar = () => {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
     } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });
-    } else if (path.includes('/admin/product') || path.includes('/admin/machine') || path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory')) {
+    } else if (path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory')) {
       setExpanded({ overview: false, business: false, production: true, content: false, partners: false });
-    } else if (path.includes('/admin/news') || path.includes('/admin/user')) {
+    } else if (path.includes('/admin/news') || path.includes('/admin/user') || path.includes('/admin/product') || path.includes('/admin/machine')) {
       setExpanded({ overview: false, business: false, production: false, content: true, partners: false });
     } else if (path.includes('/admin/supplier') || path.includes('/admin/paper-prices') || path.includes('/admin/ink-prices') || path.includes('/admin/material-prices')) {
       setExpanded({ overview: false, business: false, production: false, content: false, partners: true });
