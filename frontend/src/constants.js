@@ -1,5 +1,4 @@
-// frontend/src/constants.js
-export const BASE_URL = ''; // Để trống nếu dùng proxy trong vite.config.js
+export const BASE_URL = 'https://inquangphat-project.onrender.com';
 export const PRODUCTS_URL = '/api/products';
 export const USERS_URL = '/api/users';
 export const ORDERS_URL = '/api/orders';
