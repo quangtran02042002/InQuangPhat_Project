@@ -17,6 +17,7 @@ const authUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      role: user.role,
       token: generateToken(user._id), // Trả về "thẻ từ"
     });
   } else {
@@ -70,6 +71,7 @@ const getUserProfile = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      role: user.role,
     });
   } else {
     res.status(404);
@@ -101,6 +103,7 @@ const updateUserProfile = async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
+      role: updatedUser.role,
       token: generateToken(updatedUser._id),
     });
   } else {
@@ -136,6 +139,7 @@ const registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      role: user.role,
       token: generateToken(user._id),
     });
   } else {

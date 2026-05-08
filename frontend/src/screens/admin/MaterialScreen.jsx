@@ -35,6 +35,7 @@ const MaterialScreen = () => {
     // ---------- SHARED STATE ----------
     const [materials, setMaterials] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
     // ---------- INVENTORY TAB STATE ----------
     const [formData, setFormData] = useState({
@@ -49,42 +50,52 @@ const MaterialScreen = () => {
     // ---------- DISPATCH TAB STATE ----------
     const [dispatches, setDispatches] = useState([]);
     const [dispatchLoading, setDispatchLoading] = useState(false);
+    
+    // Multiple Items state
+    const [dispatchItems, setDispatchItems] = useState([]);
+    const [currentItem, setCurrentItem] = useState({ materialId: '', quantity: '' });
+    const [dispatchSearchTerm, setDispatchSearchTerm] = useState('');
+    const [showDispatchDropdown, setShowDispatchDropdown] = useState(false);
+
     const [dispatchForm, setDispatchForm] = useState({
-        materialId: '',
         type: 'xuat',
-        quantity: '',
         recipient: '',
         note: '',
     });
     const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
     const [filterType, setFilterType] = useState('all'); // 'all' | 'nhap' | 'xuat'
     const [filterMaterial, setFilterMaterial] = useState('');
+    const [dispatchKeyword, setDispatchKeyword] = useState('');
+    const [expandedDispatchId, setExpandedDispatchId] = useState(null);
 
     // ============================================================
     // FETCH
     // ============================================================
     const fetchMaterials = useCallback(async () => {
         try {
-            const { data } = await axios.get('/api/materials');
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const { data } = await axios.get('/api/materials', config);
             setMaterials(data);
         } catch {
             toast.error('Lỗi tải danh sách vật tư');
         }
-    }, []);
+    }, [userInfo.token]);
 
     const fetchDispatches = useCallback(async () => {
         setDispatchLoading(true);
         try {
-            const params = {};
-            if (filterMaterial) params.material = filterMaterial;
-            const { data } = await axios.get('/api/materials/dispatches', { params });
+            const config = { 
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+                params: filterMaterial ? { material: filterMaterial } : {}
+            };
+            const { data } = await axios.get('/api/materials/dispatches', config);
             setDispatches(data);
         } catch {
             toast.error('Lỗi tải lịch sử cấp phát');
         } finally {
             setDispatchLoading(false);
         }
-    }, [filterMaterial]);
+    }, [filterMaterial, userInfo.token]);
 
     useEffect(() => { fetchMaterials(); }, [fetchMaterials]);
     useEffect(() => {
@@ -97,7 +108,8 @@ const MaterialScreen = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('/api/materials', formData);
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.post('/api/materials', formData, config);
             toast.success('Đã thêm vật tư mới');
             setFormData({ name: '', unit: '', quantity: 0, minStock: 10, note: '' });
             setIsAddFormOpen(false);
@@ -111,7 +123,8 @@ const MaterialScreen = () => {
         const newQty = editQuantity[id];
         if (newQty === undefined || Number(newQty) === currentQty) return;
         try {
-            await axios.put(`/api/materials/${id}`, { quantity: Number(newQty) });
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.put(`/api/materials/${id}`, { quantity: Number(newQty) }, config);
             toast.success('Cập nhật tồn kho thành công');
             fetchMaterials();
         } catch {
@@ -121,7 +134,8 @@ const MaterialScreen = () => {
 
     const deleteHandler = async () => {
         try {
-            await axios.delete(`/api/materials/${deleteId}`);
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.delete(`/api/materials/${deleteId}`, config);
             setMaterials(materials.filter((x) => x._id !== deleteId));
             setIsModalOpen(false);
             toast.success('Đã xóa vật tư');
@@ -141,35 +155,72 @@ const MaterialScreen = () => {
     // ============================================================
     // DISPATCH HANDLERS
     // ============================================================
-    const handleDispatchSubmit = async (e) => {
-        e.preventDefault();
-        if (!dispatchForm.materialId) {
+    const handleAddItem = () => {
+        if (!currentItem.materialId) {
             toast.warning('Vui lòng chọn vật tư');
             return;
         }
-        if (!dispatchForm.quantity || Number(dispatchForm.quantity) <= 0) {
+        if (!currentItem.quantity || Number(currentItem.quantity) <= 0) {
             toast.warning('Số lượng phải lớn hơn 0');
+            return;
+        }
+
+        const material = materials.find(m => m._id === currentItem.materialId);
+        if (!material) return;
+
+        const existing = dispatchItems.find(item => item.materialId === currentItem.materialId);
+        if (existing) {
+            toast.warning('Vật tư này đã có trong phiếu. Vui lòng xóa đi để thêm lại nếu cần đổi số lượng.');
+            return;
+        }
+
+        if (dispatchForm.type === 'xuat' && Number(currentItem.quantity) > material.quantity) {
+            toast.warning(`Không đủ tồn kho! Chỉ còn ${material.quantity} ${material.unit}`);
+            return;
+        }
+
+        setDispatchItems([...dispatchItems, {
+            materialId: currentItem.materialId,
+            name: material.name,
+            unit: material.unit,
+            stock: material.quantity,
+            quantity: Number(currentItem.quantity)
+        }]);
+
+        setCurrentItem({ materialId: '', quantity: '' });
+        setDispatchSearchTerm('');
+    };
+
+    const handleRemoveItem = (materialId) => {
+        setDispatchItems(dispatchItems.filter(item => item.materialId !== materialId));
+    };
+
+    const handleDispatchSubmit = async (e) => {
+        e.preventDefault();
+        if (dispatchItems.length === 0) {
+            toast.warning('Vui lòng thêm ít nhất 1 mặt hàng vào phiếu');
             return;
         }
         setDispatchSubmitting(true);
         try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
             const { data } = await axios.post('/api/materials/dispatches', {
-                materialId: dispatchForm.materialId,
+                items: dispatchItems,
                 type: dispatchForm.type,
-                quantity: Number(dispatchForm.quantity),
                 recipient: dispatchForm.recipient,
                 note: dispatchForm.note,
-                createdBy: 'Admin',
-            });
+                createdBy: userInfo.name,
+            }, config);
 
             const typeLabel = dispatchForm.type === 'nhap' ? 'Nhập kho' : 'Xuất kho';
-            toast.success(`✅ ${typeLabel} thành công! Tồn kho còn: ${formatQty(data.updatedQuantity)}`);
+            toast.success(data.message || `✅ ${typeLabel} thành công!`);
 
             if (data.isLow) {
-                toast.warning(`⚠️ Cảnh báo: Vật tư đã xuống dưới ngưỡng an toàn!`, { autoClose: 6000 });
+                toast.warning(`⚠️ Cảnh báo: Có mặt hàng đã xuống dưới ngưỡng an toàn!`, { autoClose: 6000 });
             }
 
-            setDispatchForm({ materialId: '', type: 'xuat', quantity: '', recipient: '', note: '' });
+            setDispatchForm({ type: 'xuat', recipient: '', note: '' });
+            setDispatchItems([]);
             await fetchMaterials();
             await fetchDispatches();
         } catch (err) {
@@ -179,15 +230,34 @@ const MaterialScreen = () => {
         }
     };
 
-    const filteredDispatches = dispatches.filter((d) => filterType === 'all' || d.type === filterType);
+    const filteredDispatches = dispatches.filter((d) => {
+        if (filterType !== 'all' && d.type !== filterType) return false;
+        if (!dispatchKeyword) return true;
+        const kw = dispatchKeyword.toLowerCase();
+        const inRecipient = d.recipient?.toLowerCase().includes(kw);
+        const inNote = d.note?.toLowerCase().includes(kw);
+        const inItems = d.items?.some(i => i.materialName?.toLowerCase().includes(kw));
+        return inRecipient || inNote || inItems;
+    });
 
-    const totalNhap = dispatches.filter((d) => d.type === 'nhap').reduce((s, d) => s + d.quantity, 0);
-    const totalXuat = dispatches.filter((d) => d.type === 'xuat').reduce((s, d) => s + d.quantity, 0);
+    const totalNhap = dispatches.filter((d) => d.type === 'nhap').reduce((s, d) => {
+        if (d.items && d.items.length > 0) {
+            return s + d.items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+        return s + (d.quantity || 0);
+    }, 0);
+    const totalXuat = dispatches.filter((d) => d.type === 'xuat').reduce((s, d) => {
+        if (d.items && d.items.length > 0) {
+            return s + d.items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+        return s + (d.quantity || 0);
+    }, 0);
 
     // ============================================================
     // SELECTED MATERIAL INFO (for dispatch form)
     // ============================================================
-    const selectedMaterial = materials.find((m) => m._id === dispatchForm.materialId);
+    const selectedMaterial = materials.find((m) => m._id === currentItem.materialId);
+    const dispatchDropdownOptions = materials.filter(m => m.name.toLowerCase().includes(dispatchSearchTerm.toLowerCase()));
 
     // ============================================================
     // RENDER
@@ -492,7 +562,7 @@ const MaterialScreen = () => {
                                         </div>
                                         <form onSubmit={handleDispatchSubmit} className="p-5 space-y-4">
 
-                                            {/* LOẠI PHIẾU TOGGLE */}
+                                             {/* LOẠI PHIẾU TOGGLE */}
                                             <div>
                                                 <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">Loại phiếu</label>
                                                 <div className="flex rounded-xl overflow-hidden border border-gray-200">
@@ -513,52 +583,128 @@ const MaterialScreen = () => {
                                                 </div>
                                             </div>
 
-                                            {/* CHỌN VẬT TƯ */}
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
-                                                    Vật tư <span className="text-red-500">*</span>
-                                                </label>
-                                                <select
-                                                    required
-                                                    value={dispatchForm.materialId}
-                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, materialId: e.target.value })}
-                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm bg-white"
-                                                >
-                                                    <option value="">-- Chọn vật tư --</option>
-                                                    {materials.map((m) => (
-                                                        <option key={m._id} value={m._id}>
-                                                            {m.name} (Còn: {m.quantity} {m.unit})
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                {/* Tồn kho preview */}
+                                            {/* KHU VỰC TÌM KIẾM & THÊM MẶT HÀNG */}
+                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+                                                <div className="font-extrabold text-[#111827] text-sm flex items-center gap-2 mb-2">
+                                                    <FaWarehouse className="text-[#006B4D]" /> Chọn vật tư để thêm
+                                                </div>
+                                                
+                                                {/* AUTOCOMPLETE VẬT TƯ */}
+                                                <div className="relative">
+                                                    <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                        Tìm Vật tư <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <div className="relative">
+                                                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                                                        <input
+                                                            type="text"
+                                                            value={dispatchSearchTerm}
+                                                            onChange={(e) => {
+                                                                setDispatchSearchTerm(e.target.value);
+                                                                setShowDispatchDropdown(true);
+                                                                if (!e.target.value) setCurrentItem({ ...currentItem, materialId: '' });
+                                                            }}
+                                                            onFocus={() => setShowDispatchDropdown(true)}
+                                                            className="w-full border border-gray-200 pl-9 pr-3 py-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm bg-white"
+                                                            placeholder="Gõ tên vật tư..."
+                                                        />
+                                                    </div>
+
+                                                    {/* DROPDOWN */}
+                                                    {showDispatchDropdown && dispatchSearchTerm && (
+                                                        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                                            {dispatchDropdownOptions.length === 0 ? (
+                                                                <div className="p-3 text-sm text-gray-500 text-center italic">Không tìm thấy</div>
+                                                            ) : (
+                                                                dispatchDropdownOptions.map(m => (
+                                                                    <div
+                                                                        key={m._id}
+                                                                        onClick={() => {
+                                                                            setCurrentItem({ ...currentItem, materialId: m._id });
+                                                                            setDispatchSearchTerm(m.name);
+                                                                            setShowDispatchDropdown(false);
+                                                                        }}
+                                                                        className="p-3 border-b border-gray-100 hover:bg-[#E6F0ED] cursor-pointer transition-colors"
+                                                                    >
+                                                                        <div className="font-bold text-[#111827]">{m.name}</div>
+                                                                        <div className="text-[10px] text-gray-500">Còn: {m.quantity} {m.unit}</div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Backdrop close dropdown */}
+                                                    {showDispatchDropdown && (
+                                                        <div className="fixed inset-0 z-10" onClick={() => setShowDispatchDropdown(false)}></div>
+                                                    )}
+                                                </div>
+
                                                 {selectedMaterial && (
-                                                    <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${selectedMaterial.quantity <= selectedMaterial.minStock ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#E6F0ED] text-[#006B4D]'}`}>
+                                                    <div className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${selectedMaterial.quantity <= selectedMaterial.minStock ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#E6F0ED] text-[#006B4D]'}`}>
                                                         <FaWarehouse className="shrink-0" />
-                                                        Tồn kho hiện tại: <span className="text-base font-extrabold">{formatQty(selectedMaterial.quantity)}</span> {selectedMaterial.unit}
-                                                        {selectedMaterial.quantity <= selectedMaterial.minStock && (
-                                                            <span className="ml-auto bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-[10px]">⚠️ Sắp hết</span>
-                                                        )}
+                                                        Kho hiện tại: <span className="text-base font-extrabold">{formatQty(selectedMaterial.quantity)}</span> {selectedMaterial.unit}
                                                     </div>
                                                 )}
+
+                                                <div className="flex items-end gap-3">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
+                                                            Số lượng {selectedMaterial ? `(${selectedMaterial.unit})` : ''} <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="any"
+                                                            value={currentItem.quantity}
+                                                            onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                                                            className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-extrabold text-[#111827] shadow-sm text-center"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddItem}
+                                                        className="h-[46px] px-4 bg-[#111827] text-white rounded-xl font-bold shadow-md hover:bg-black transition flex items-center gap-2 shrink-0"
+                                                    >
+                                                        <FaPlus /> Thêm
+                                                    </button>
+                                                </div>
                                             </div>
 
-                                            {/* SỐ LƯỢNG */}
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
-                                                    Số lượng {selectedMaterial ? `(${selectedMaterial.unit})` : ''} <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="any"
-                                                    required
-                                                    value={dispatchForm.quantity}
-                                                    onChange={(e) => setDispatchForm({ ...dispatchForm, quantity: e.target.value })}
-                                                    className="w-full border border-gray-200 p-3 text-sm rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-extrabold text-[#111827] shadow-sm text-right text-lg"
-                                                    placeholder="0"
-                                                />
-                                            </div>
+                                            {/* DANH SÁCH ĐÃ CHỌN */}
+                                            {dispatchItems.length > 0 && (
+                                                <div className="border border-green-200 bg-green-50/50 rounded-xl overflow-hidden">
+                                                    <div className="bg-green-100/50 px-3 py-2 border-b border-green-200 text-xs font-extrabold text-green-800 flex items-center justify-between">
+                                                        <span>Danh sách phiếu:</span>
+                                                        <span className="bg-white px-2 py-0.5 rounded-full shadow-sm">{dispatchItems.length} mục</span>
+                                                    </div>
+                                                    <ul className="max-h-48 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                                                        {dispatchItems.map((item, idx) => (
+                                                            <li key={item.materialId} className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-green-100 shadow-sm">
+                                                                <div className="flex-1 min-w-0 pr-2">
+                                                                    <div className="font-bold text-[#111827] text-sm truncate">{item.name}</div>
+                                                                    <div className="text-[10px] text-gray-500">
+                                                                        Kho: {item.stock} {item.unit}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 shrink-0">
+                                                                    <div className="font-extrabold text-[#006B4D] text-base bg-[#E6F0ED] px-2 py-1 rounded-lg">
+                                                                        {formatQty(item.quantity)} <span className="text-[10px]">{item.unit}</span>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleRemoveItem(item.materialId)}
+                                                                        className="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg transition"
+                                                                    >
+                                                                        <FaTrash size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
 
                                             {/* NGƯỜI NHẬN */}
                                             <div>
@@ -578,7 +724,7 @@ const MaterialScreen = () => {
                                             {/* GHI CHÚ */}
                                             <div>
                                                 <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-2">
-                                                    <FaStickyNote className="inline mr-1" /> Ghi chú
+                                                    <FaStickyNote className="inline mr-1" /> Ghi chú chung
                                                 </label>
                                                 <textarea
                                                     rows={2}
@@ -592,19 +738,19 @@ const MaterialScreen = () => {
                                             {/* SUBMIT */}
                                             <button
                                                 type="submit"
-                                                disabled={dispatchSubmitting}
+                                                disabled={dispatchSubmitting || dispatchItems.length === 0}
                                                 className={`w-full py-3 rounded-xl font-extrabold text-white shadow-md transition flex items-center justify-center gap-2 active:scale-95 ${
                                                     dispatchForm.type === 'xuat'
                                                         ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
                                                         : 'bg-green-500 hover:bg-green-600 shadow-green-200'
-                                                } disabled:opacity-60`}
+                                                } disabled:opacity-60 disabled:cursor-not-allowed`}
                                             >
                                                 {dispatchSubmitting ? (
                                                     <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                                                 ) : dispatchForm.type === 'xuat' ? (
-                                                    <><FaArrowUp /> Tạo Phiếu Xuất</>
+                                                    <><FaArrowUp /> Tạo Phiếu Xuất ({dispatchItems.length} mục)</>
                                                 ) : (
-                                                    <><FaArrowDown /> Tạo Phiếu Nhập</>
+                                                    <><FaArrowDown /> Tạo Phiếu Nhập ({dispatchItems.length} mục)</>
                                                 )}
                                             </button>
                                         </form>
@@ -660,6 +806,23 @@ const MaterialScreen = () => {
                                         </div>
                                     </div>
 
+                                    {/* Search bar for dispatch history */}
+                                    <div className="relative">
+                                        <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                                        <input
+                                            type="text"
+                                            value={dispatchKeyword}
+                                            onChange={e => setDispatchKeyword(e.target.value)}
+                                            placeholder="Tìm theo người nhận, ghi chú, tên vật tư..."
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-10 py-2.5 text-sm outline-none focus:border-[#006B4D] focus:bg-white transition shadow-sm"
+                                        />
+                                        {dispatchKeyword && (
+                                            <button onClick={() => setDispatchKeyword('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500">
+                                                <FaTimes size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+
                                     {/* Table */}
                                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1">
                                         {dispatchLoading ? (
@@ -677,55 +840,101 @@ const MaterialScreen = () => {
                                                 <table className="min-w-full text-sm leading-normal">
                                                     <thead className="bg-[#F9FAFB] text-[10px] font-bold text-[#6B7280] uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200">
                                                         <tr>
-                                                            <th className="px-4 py-3 text-left">Vật tư</th>
+                                                            <th className="px-4 py-3 text-left">Phiếu số</th>
                                                             <th className="px-4 py-3 text-center">Loại</th>
-                                                            <th className="px-4 py-3 text-center">Số lượng</th>
+                                                            <th className="px-4 py-3 text-center">Tổng Số lượng</th>
                                                             <th className="px-4 py-3 text-left hidden md:table-cell">Người nhận</th>
                                                             <th className="px-4 py-3 text-left hidden lg:table-cell">Ghi chú</th>
                                                             <th className="px-4 py-3 text-left">Thời gian</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {filteredDispatches.map((d, idx) => (
-                                                            <tr key={d._id} className={`hover:bg-gray-50/80 transition-colors ${idx !== filteredDispatches.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                                                <td className="px-4 py-3">
-                                                                    <div className="font-bold text-[#111827]">{d.materialName}</div>
-                                                                    <div className="text-[11px] text-gray-400">Còn sau: {formatQty(d.quantityAfter)} {d.materialUnit}</div>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
-                                                                        d.type === 'nhap'
-                                                                            ? 'bg-green-100 text-green-700 border border-green-200'
-                                                                            : 'bg-red-100 text-red-600 border border-red-200'
-                                                                    }`}>
-                                                                        {d.type === 'nhap' ? <FaArrowDown className="text-[10px]" /> : <FaArrowUp className="text-[10px]" />}
-                                                                        {d.type === 'nhap' ? 'Nhập' : 'Xuất'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    <span className={`font-extrabold text-base ${d.type === 'nhap' ? 'text-green-600' : 'text-red-500'}`}>
-                                                                        {d.type === 'nhap' ? '+' : '-'}{formatQty(d.quantity)}
-                                                                    </span>
-                                                                    <div className="text-[10px] text-gray-400">{d.materialUnit}</div>
-                                                                </td>
-                                                                <td className="px-4 py-3 hidden md:table-cell">
-                                                                    <div className="font-medium text-[#111827] flex items-center gap-1">
-                                                                        {d.recipient ? (
-                                                                            <><FaUser className="text-gray-300 text-xs" /> {d.recipient}</>
-                                                                        ) : (
-                                                                            <span className="text-gray-300 italic">—</span>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs max-w-[160px] truncate">
-                                                                    {d.note || '—'}
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    <div className="text-[#111827] font-medium text-xs">{timeAgo(d.createdAt)}</div>
-                                                                    <div className="text-[10px] text-gray-400">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
+                                                        {filteredDispatches.map((d, idx) => {
+                                                            const hasItems = d.items && d.items.length > 0;
+                                                            const totalQty = hasItems ? d.items.reduce((sum, item) => sum + item.quantity, 0) : (d.quantity || 0);
+                                                            const isExpanded = expandedDispatchId === d._id;
+                                                            const sttAbs = dispatches.length - dispatches.findIndex(x => x._id === d._id);
+
+                                                            return (
+                                                            <React.Fragment key={d._id}>
+                                                                <tr 
+                                                                    className={`hover:bg-gray-50/80 transition-colors cursor-pointer ${!isExpanded && idx !== filteredDispatches.length - 1 ? 'border-b border-gray-100' : ''}`}
+                                                                    onClick={() => setExpandedDispatchId(isExpanded ? null : d._id)}
+                                                                >
+                                                                    <td className="px-4 py-3">
+                                                                        <div className="font-bold text-[#111827]">Phiếu {d.type === 'nhap' ? 'nhập' : 'xuất'} {sttAbs}</div>
+                                                                        {hasItems && <div className="text-[10px] text-gray-400">{d.items.length} mặt hàng (Bấm xem)</div>}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-center align-middle">
+                                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
+                                                                            d.type === 'nhap'
+                                                                                ? 'bg-green-100 text-green-700 border border-green-200'
+                                                                                : 'bg-red-100 text-red-600 border border-red-200'
+                                                                        }`}>
+                                                                            {d.type === 'nhap' ? <FaArrowDown className="text-[10px]" /> : <FaArrowUp className="text-[10px]" />}
+                                                                            {d.type === 'nhap' ? 'Nhập' : 'Xuất'}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-center align-middle">
+                                                                        <span className={`font-extrabold text-base ${d.type === 'nhap' ? 'text-green-600' : 'text-red-500'}`}>
+                                                                            {d.type === 'nhap' ? '+' : '-'}{formatQty(totalQty)}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-4 py-3 hidden md:table-cell align-middle">
+                                                                        <div className="font-medium text-[#111827] flex items-center gap-1">
+                                                                            {d.recipient ? (
+                                                                                <><FaUser className="text-gray-300 text-xs shrink-0" /> {d.recipient}</>
+                                                                            ) : (
+                                                                                <span className="text-gray-300 italic">—</span>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs max-w-[160px] truncate align-middle">
+                                                                        {d.note || '—'}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 align-middle">
+                                                                        <div className="text-[#111827] font-medium text-xs">{timeAgo(d.createdAt)}</div>
+                                                                        <div className="text-[10px] text-gray-400">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</div>
+                                                                    </td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                                                        <td colSpan={6} className="px-4 py-4">
+                                                                            <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                                                                                <h4 className="font-bold text-[#111827] mb-3 text-sm flex items-center gap-2">
+                                                                                    <FaBoxOpen className="text-[#006B4D]" /> Chi tiết phiếu {d.type === 'nhap' ? 'nhập' : 'xuất'} số {sttAbs}
+                                                                                </h4>
+                                                                                <table className="w-full text-xs">
+                                                                                    <thead>
+                                                                                        <tr className="border-b border-gray-100 text-gray-500 text-left">
+                                                                                            <th className="pb-2 font-medium">Vật tư</th>
+                                                                                            <th className="pb-2 font-medium text-right">Số lượng</th>
+                                                                                            <th className="pb-2 font-medium text-right">ĐVT</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        {hasItems ? d.items.map((item, i) => (
+                                                                                            <tr key={i} className="border-b border-gray-50 last:border-0">
+                                                                                                <td className="py-2 font-bold text-[#111827]">{item.materialName}</td>
+                                                                                                <td className="py-2 text-right font-extrabold text-[#006B4D]">{formatQty(item.quantity)}</td>
+                                                                                                <td className="py-2 text-right text-gray-500">{item.materialUnit}</td>
+                                                                                            </tr>
+                                                                                        )) : (
+                                                                                            <tr>
+                                                                                                <td className="py-2 font-bold text-[#111827]">{d.materialName}</td>
+                                                                                                <td className="py-2 text-right font-extrabold text-[#006B4D]">{formatQty(d.quantity)}</td>
+                                                                                                <td className="py-2 text-right text-gray-500">{d.materialUnit}</td>
+                                                                                            </tr>
+                                                                                        )}
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
+                                                            );
+                                                        })}
                                                     </tbody>
                                                 </table>
                                             </div>

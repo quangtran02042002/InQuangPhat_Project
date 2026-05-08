@@ -5,13 +5,24 @@ import {
   FaUsers, FaSignOutAlt, FaChartLine, FaUserCog, FaNewspaper,
   FaCogs, FaTruck, FaHome, FaFlask, FaBars, FaTimes,
   FaChevronDown, FaChevronRight, FaCopy, FaFillDrip, FaLayerGroup,
-  FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt
+  FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt, FaFileInvoiceDollar
 } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Lấy thông tin user để phân quyền
+  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const isAdmin = userInfo.isAdmin === true;
+  const role = userInfo.role || 'user';
+
+  // Xác định quyền hiển thị từng nhóm
+  const canViewBusiness = isAdmin || role === 'accountant';
+  const canViewProduction = isAdmin || role === 'production';
+  const canViewContent = isAdmin; // Giám đốc
+  const canViewPartners = isAdmin || role === 'accountant';
 
   // 5 Nhóm theo yêu cầu
   const [expanded, setExpanded] = useState({
@@ -26,7 +37,7 @@ const Sidebar = () => {
     const path = location.pathname;
     if (path.includes('/admin/dashboard') || path.includes('/admin/profile')) {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
-    } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts')) {
+    } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });
     } else if (path.includes('/admin/product') || path.includes('/admin/machine') || path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory')) {
       setExpanded({ overview: false, business: false, production: true, content: false, partners: false });
@@ -129,11 +140,13 @@ const Sidebar = () => {
           <div className="border-t border-gray-100 my-2"></div>
 
           {/* NHÓM 2: KINH DOANH */}
-          <button onClick={() => toggleGroup('business')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
-            <div className="flex items-center"><FaBriefcase className="mr-2" /> <span>Kinh Doanh & Tài Chính</span></div>
-            {expanded.business ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
-          </button>
-          {expanded.business && (
+          {canViewBusiness && (
+            <>
+              <button onClick={() => toggleGroup('business')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
+                <div className="flex items-center"><FaBriefcase className="mr-2" /> <span>Kinh Doanh & Tài Chính</span></div>
+                {expanded.business ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+              </button>
+              {expanded.business && (
             <div className="space-y-1 mb-4 animate-fade-in-down">
               <Link to="/admin/quotes" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/quotes')}`}>
                 <FaClipboardList className="mr-3 text-gray-400" /> <span className="text-sm">Yêu cầu Báo giá</span>
@@ -141,86 +154,107 @@ const Sidebar = () => {
               <Link to="/admin/print-price-calc" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/print-price-calc')}`}>
                 <FaChartLine className="mr-3 text-gray-400" /> <span className="text-sm">Tính Giá In Báo Giá</span>
               </Link>
+              <Link to="/admin/quotations" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/quotations')}`}>
+                <FaFileInvoiceDollar className="mr-3 text-gray-400" /> <span className="text-sm">Bảng Báo Giá</span>
+              </Link>
               <Link to="/admin/customerlist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/customer')}`}>
                 <FaBuilding className="mr-3 text-gray-400" /> <span className="text-sm">Quản lý Khách hàng</span>
               </Link>
+              <div className="border-t border-gray-100 my-2 mx-1"></div>
+              <Link to="/admin/finance" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/finance')}`}>
+                <FaWallet className="mr-3 text-gray-400" /> <span className="text-sm">Quản lý Dòng tiền</span>
+              </Link>
 
             </div>
           )}
-
-          <div className="border-t border-gray-100 my-2"></div>
-
-          {/* NHÓM 3: SẢN XUẤT & KHO */}
-          <button onClick={() => toggleGroup('production')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
-            <div className="flex items-center"><FaIndustry className="mr-2" /> <span>Sản Xuất & Kho</span></div>
-            {expanded.production ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
-          </button>
-          {expanded.production && (
-            <div className="space-y-1 mb-4 animate-fade-in-down">
-              <Link to="/admin/productlist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/product')}`}>
-                <FaBoxOpen className="mr-3 text-gray-400" /> <span className="text-sm">Sản phẩm Website</span>
-              </Link>
-              <Link to="/admin/machinelist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/machine')}`}>
-                <FaCogs className="mr-3 text-gray-400" /> <span className="text-sm">Năng lực Máy móc</span>
-              </Link>
-              <Link to="/admin/materials" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/materials')}`}>
-                <FaWarehouse className="mr-3 text-gray-400" /> <span className="text-sm">Kho Vật tư (Giấy/Kẽm)</span>
-              </Link>
-              <Link to="/admin/chemicals" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/chemicals')}`}>
-                <FaFlask className="mr-3 text-gray-400" /> <span className="text-sm">Kho Hóa chất & Mực</span>
-              </Link>
-              <Link to="/admin/inventory" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/inventory')}`}>
-                <FaBoxOpen className="mr-3 text-gray-400" /> <span className="text-sm">Xuất Nhập Hàng (BTP)</span>
-              </Link>
-              <Link to="/admin/print-formulas" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/print-formulas')}`}>
-                <FaBookOpen className="mr-3 text-gray-400" /> <span className="text-sm">Công thức In</span>
-              </Link>
-              <Link to="/admin/production-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/production-orders')}`}>
-                <FaFileAlt className="mr-3 text-gray-400" /> <span className="text-sm">Lệnh Sản Xuất</span>
-              </Link>
-            </div>
+          </>
           )}
 
-          <div className="border-t border-gray-100 my-2"></div>
+          {canViewProduction && (
+            <>
+              <div className="border-t border-gray-100 my-2"></div>
 
-          {/* NHÓM 4: HỆ THỐNG & NỘI DUNG */}
-          <button onClick={() => toggleGroup('content')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
-            <div className="flex items-center"><FaGlobe className="mr-2" /> <span>Nội Dung & Cài Đặt</span></div>
-            {expanded.content ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
-          </button>
-          {expanded.content && (
-            <div className="space-y-1 mb-4 animate-fade-in-down">
-              <Link to="/admin/newslist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/news')}`}>
-                <FaNewspaper className="mr-3 text-gray-400" /> <span className="text-sm">Tin tức & Bài viết</span>
-              </Link>
-              <Link to="/admin/users" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/user')}`}>
-                <FaUsers className="mr-3 text-gray-400" /> <span className="text-sm">Tài khoản & Phân quyền</span>
-              </Link>
-            </div>
+              {/* NHÓM 3: SẢN XUẤT & KHO */}
+              <button onClick={() => toggleGroup('production')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
+                <div className="flex items-center"><FaIndustry className="mr-2" /> <span>Sản Xuất & Kho</span></div>
+                {expanded.production ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+              </button>
+              {expanded.production && (
+                <div className="space-y-1 mb-4 animate-fade-in-down">
+                  <Link to="/admin/materials" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/materials')}`}>
+                    <FaWarehouse className="mr-3 text-gray-400" /> <span className="text-sm">Kho Vật tư (Giấy/Kẽm)</span>
+                  </Link>
+                  <Link to="/admin/chemicals" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/chemicals')}`}>
+                    <FaFlask className="mr-3 text-gray-400" /> <span className="text-sm">Kho Hóa chất & Mực</span>
+                  </Link>
+                  <Link to="/admin/inventory" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/inventory')}`}>
+                    <FaBoxOpen className="mr-3 text-gray-400" /> <span className="text-sm">Xuất Nhập Hàng (BTP)</span>
+                  </Link>
+                  <Link to="/admin/print-formulas" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/print-formulas')}`}>
+                    <FaBookOpen className="mr-3 text-gray-400" /> <span className="text-sm">Phát triển Mẫu</span>
+                  </Link>
+                  <Link to="/admin/production-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/production-orders')}`}>
+                    <FaFileAlt className="mr-3 text-gray-400" /> <span className="text-sm">Lệnh Sản Xuất</span>
+                  </Link>
+                </div>
+              )}
+            </>
           )}
 
-          <div className="border-t border-gray-100 my-2"></div>
+          {canViewContent && (
+            <>
+              <div className="border-t border-gray-100 my-2"></div>
 
-          {/* NHÓM 5: ĐỐI TÁC & BẢNG GIÁ */}
-          <button onClick={() => toggleGroup('partners')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
-            <div className="flex items-center"><FaHandshake className="mr-2" /> <span>Đối Tác & Bảng Giá</span></div>
-            {expanded.partners ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
-          </button>
-          {expanded.partners && (
-            <div className="space-y-1 mb-4 animate-fade-in-down">
-              <Link to="/admin/supplierlist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/supplierlist')}`}>
-                <FaTruck className="mr-3 text-gray-400" /> <span className="text-sm">Nhà Cung Cấp</span>
-              </Link>
-              <Link to="/admin/paper-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/paper-prices')}`}>
-                <FaCopy className="mr-3 text-gray-400" /> <span className="text-sm">Bảng giá Giấy</span>
-              </Link>
-              <Link to="/admin/ink-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/ink-prices')}`}>
-                <FaFillDrip className="mr-3 text-gray-400" /> <span className="text-sm">Bảng giá Mực</span>
-              </Link>
-              <Link to="/admin/material-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/material-prices')}`}>
-                <FaLayerGroup className="mr-3 text-gray-400" /> <span className="text-sm">Vật liệu khác</span>
-              </Link>
-            </div>
+              {/* NHÓM 4: HỆ THỐNG & NỘI DUNG */}
+              <button onClick={() => toggleGroup('content')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
+                <div className="flex items-center"><FaGlobe className="mr-2" /> <span>Nội Dung & Cài Đặt</span></div>
+                {expanded.content ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+              </button>
+              {expanded.content && (
+                <div className="space-y-1 mb-4 animate-fade-in-down">
+                  <Link to="/admin/productlist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/product')}`}>
+                    <FaBoxOpen className="mr-3 text-gray-400" /> <span className="text-sm">Sản phẩm Website</span>
+                  </Link>
+                  <Link to="/admin/machinelist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/machine')}`}>
+                    <FaCogs className="mr-3 text-gray-400" /> <span className="text-sm">Năng lực Máy móc</span>
+                  </Link>
+                  <Link to="/admin/newslist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/news')}`}>
+                    <FaNewspaper className="mr-3 text-gray-400" /> <span className="text-sm">Tin tức & Bài viết</span>
+                  </Link>
+                  <Link to="/admin/users" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/user')}`}>
+                    <FaUsers className="mr-3 text-gray-400" /> <span className="text-sm">Tài khoản & Phân quyền</span>
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+
+          {canViewPartners && (
+            <>
+              <div className="border-t border-gray-100 my-2"></div>
+
+              {/* NHÓM 5: ĐỐI TÁC & BẢNG GIÁ */}
+              <button onClick={() => toggleGroup('partners')} className="w-full flex items-center justify-between px-2 py-3 text-[10px] font-bold text-[#9CA3AF] hover:text-[#111827] uppercase tracking-widest transition rounded-xl">
+                <div className="flex items-center"><FaHandshake className="mr-2" /> <span>Đối Tác & Bảng Giá</span></div>
+                {expanded.partners ? <FaChevronDown className="text-xs" /> : <FaChevronRight className="text-xs" />}
+              </button>
+              {expanded.partners && (
+                <div className="space-y-1 mb-4 animate-fade-in-down">
+                  <Link to="/admin/supplierlist" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/supplierlist')}`}>
+                    <FaTruck className="mr-3 text-gray-400" /> <span className="text-sm">Nhà Cung Cấp</span>
+                  </Link>
+                  <Link to="/admin/paper-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/paper-prices')}`}>
+                    <FaCopy className="mr-3 text-gray-400" /> <span className="text-sm">Bảng giá Giấy</span>
+                  </Link>
+                  <Link to="/admin/ink-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/ink-prices')}`}>
+                    <FaFillDrip className="mr-3 text-gray-400" /> <span className="text-sm">Bảng giá Mực</span>
+                  </Link>
+                  <Link to="/admin/material-prices" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/material-prices')}`}>
+                    <FaLayerGroup className="mr-3 text-gray-400" /> <span className="text-sm">Vật liệu khác</span>
+                  </Link>
+                </div>
+              )}
+            </>
           )}
 
         </nav>

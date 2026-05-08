@@ -192,13 +192,21 @@ const UserListScreen = () => {
 
                                                     {/* Role */}
                                                     <td className="px-6 py-4 text-center">
-                                                        {user.isAdmin ? (
+                                                        {user.role === 'director' ? (
                                                             <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-100 uppercase tracking-widest">
-                                                                <FaUserShield className="mr-1.5" /> Quản trị
+                                                                <FaUserShield className="mr-1.5" /> Giám đốc
+                                                            </span>
+                                                        ) : user.role === 'accountant' ? (
+                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-widest">
+                                                                Kế toán
+                                                            </span>
+                                                        ) : user.role === 'production' ? (
+                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-widest">
+                                                                Sản xuất
                                                             </span>
                                                         ) : (
                                                             <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-widest">
-                                                                Nhân viên
+                                                                Khách hàng
                                                             </span>
                                                         )}
                                                     </td>
@@ -242,10 +250,14 @@ const UserListScreen = () => {
                                                     <div>
                                                         <h3 className="font-extrabold text-[#111827] text-base leading-tight">{user.name}</h3>
                                                         <div className="mt-1">
-                                                            {user.isAdmin ? (
-                                                                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase border border-purple-100">Quản trị viên</span>
+                                                            {user.role === 'director' ? (
+                                                                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase border border-purple-100">Giám đốc</span>
+                                                            ) : user.role === 'accountant' ? (
+                                                                <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase border border-blue-100">Kế toán</span>
+                                                            ) : user.role === 'production' ? (
+                                                                <span className="text-[9px] font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded uppercase border border-orange-100">Sản xuất</span>
                                                             ) : (
-                                                                <span className="text-[9px] font-extrabold text-gray-500 bg-gray-50 px-2 py-0.5 rounded uppercase border border-gray-200">Thành viên</span>
+                                                                <span className="text-[9px] font-extrabold text-gray-500 bg-gray-50 px-2 py-0.5 rounded uppercase border border-gray-200">Khách hàng</span>
                                                             )}
                                                         </div>
                                                     </div>

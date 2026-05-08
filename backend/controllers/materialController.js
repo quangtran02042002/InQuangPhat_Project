@@ -146,95 +146,120 @@ const getDispatches = async (req, res) => {
  */
 const createDispatch = async (req, res) => {
     try {
-        const { materialId, type, quantity, recipient, note, createdBy } = req.body;
+        const { type, recipient, note, createdBy, items, materialId, quantity } = req.body;
 
-        if (!materialId || !type || !quantity) {
-            return res.status(400).json({ message: 'Thiếu thông tin bắt buộc (materialId, type, quantity)' });
-        }
         if (!['nhap', 'xuat'].includes(type)) {
             return res.status(400).json({ message: 'Loại phiếu phải là "nhap" hoặc "xuat"' });
         }
-        if (Number(quantity) <= 0) {
-            return res.status(400).json({ message: 'Số lượng phải lớn hơn 0' });
-        }
 
-        const material = await Material.findById(materialId);
-        if (!material) {
-            return res.status(404).json({ message: 'Không tìm thấy vật tư' });
-        }
-
-        // Kiểm tra không được xuất quá tồn kho
-        if (type === 'xuat' && Number(quantity) > material.quantity) {
-            return res.status(400).json({
-                message: `Không đủ tồn kho! Hiện còn ${material.quantity} ${material.unit}, bạn đang xuất ${quantity}.`,
-            });
-        }
-
-        // Cộng / Trừ tồn kho
-        if (type === 'nhap') {
-            material.quantity += Number(quantity);
+        let dispatchList = [];
+        if (items && items.length > 0) {
+            dispatchList = items;
+        } else if (materialId && quantity) {
+            dispatchList = [{ materialId, quantity }];
         } else {
-            material.quantity -= Number(quantity);
+            return res.status(400).json({ message: 'Thiếu thông tin hàng hóa' });
         }
-        await material.save();
 
-        // Tạo bản ghi dispatch
+        // 1. Kiểm tra tính hợp lệ của TẤT CẢ mặt hàng
+        const materialDocs = [];
+        for (const item of dispatchList) {
+            if (Number(item.quantity) <= 0) {
+                return res.status(400).json({ message: 'Số lượng phải lớn hơn 0' });
+            }
+            const material = await Material.findById(item.materialId);
+            if (!material) {
+                return res.status(404).json({ message: `Không tìm thấy vật tư ID: ${item.materialId}` });
+            }
+            if (type === 'xuat' && Number(item.quantity) > material.quantity) {
+                return res.status(400).json({
+                    message: `Không đủ tồn kho! Vật tư "${material.name}" hiện còn ${material.quantity} ${material.unit}, bạn đang xuất ${item.quantity}.`,
+                });
+            }
+            materialDocs.push({ material, quantity: Number(item.quantity) });
+        }
+
+        // 2. Thực hiện cập nhật tồn kho và chuẩn bị dữ liệu phiếu
+        const dispatchItems = [];
+        const lowStockMaterials = [];
+
+        for (const doc of materialDocs) {
+            const { material, quantity } = doc;
+
+            // Cộng / Trừ tồn kho
+            if (type === 'nhap') {
+                material.quantity += quantity;
+            } else {
+                material.quantity -= quantity;
+            }
+            await material.save();
+
+            dispatchItems.push({
+                material: material._id,
+                materialName: material.name,
+                materialUnit: material.unit,
+                quantity: quantity,
+                quantityAfter: material.quantity,
+            });
+
+            // Ghi nhận mặt hàng sắp hết
+            if (material.quantity <= material.minStock && type === 'xuat') {
+                lowStockMaterials.push(material);
+            }
+        }
+
+        // 3. Lưu 1 phiếu (Dispatch) duy nhất chứa tất cả các items
         const dispatch = new MaterialDispatch({
-            material: material._id,
-            materialName: material.name,
-            materialUnit: material.unit,
             type,
-            quantity: Number(quantity),
+            items: dispatchItems,
             recipient: recipient || '',
             note: note || '',
             createdBy: createdBy || 'Admin',
-            quantityAfter: material.quantity,
         });
         const savedDispatch = await dispatch.save();
 
-        // ============ CẢNH BÁO TỒN KHO THẤP ============
-        const isLow = material.quantity <= material.minStock;
+        // 4. Xử lý gửi thông báo BẤT ĐỒNG BỘ (chạy ngầm, không block API)
+        if (lowStockMaterials.length > 0) {
+            (async () => {
+                for (const material of lowStockMaterials) {
+                    try {
+                        // 1. Notification trong hệ thống
+                        await createNotification({
+                            title: '⚠️ Cảnh báo Kho Vật Tư',
+                            message: `[XUẤT KHO] ${material.name} xuống còn ${material.quantity} ${material.unit} (ngưỡng: ${material.minStock})`,
+                            type: 'stock',
+                            link: '/admin/materials',
+                        });
 
-        if (isLow && type === 'xuat') {
-            // 1. Notification trong hệ thống
-            await createNotification({
-                title: '⚠️ Cảnh báo Kho Vật Tư',
-                message: `[XUẤT KHO] ${material.name} xuống còn ${material.quantity} ${material.unit} (ngưỡng: ${material.minStock})`,
-                type: 'stock',
-                link: '/admin/materials',
-            });
+                        // 2. Gửi email alert
+                        await sendAlertEmail({
+                            chemicalName: material.name,
+                            currentQty: material.quantity,
+                            unit: material.unit,
+                            minStock: material.minStock,
+                        });
 
-            // 2. Gửi email alert
-            try {
-                await sendAlertEmail({
-                    chemicalName: material.name,
-                    currentQty: material.quantity,
-                    unit: material.unit,
-                    minStock: material.minStock,
-                });
-            } catch (emailErr) {
-                console.error('[MaterialDispatch] Email alert error:', emailErr.message);
-            }
-
-            // 3. Gửi Telegram alert
-            try {
-                await sendTelegramAlert({
-                    chemicalName: material.name,
-                    currentQty: material.quantity,
-                    unit: material.unit,
-                    minStock: material.minStock,
-                    type,
-                });
-            } catch (tgErr) {
-                console.error('[MaterialDispatch] Telegram alert error:', tgErr.message);
-            }
+                        // 3. Gửi Telegram alert
+                        await sendTelegramAlert({
+                            chemicalName: material.name,
+                            currentQty: material.quantity,
+                            unit: material.unit,
+                            minStock: material.minStock,
+                            type,
+                        });
+                    } catch (e) {
+                        console.error('[MaterialDispatch Alert Error]', e.message);
+                    }
+                }
+            })();
         }
 
         res.status(201).json({
-            dispatch: savedDispatch,
-            updatedQuantity: material.quantity,
-            isLow,
+            dispatches: [savedDispatch], // Trả về mảng cho tương thích frontend cũ (nếu cần)
+            isLow: lowStockMaterials.length > 0,
+            message: `Tạo thành công phiếu ${type === 'nhap' ? 'nhập' : 'xuất'} với ${dispatchItems.length} mặt hàng!`
         });
+
     } catch (error) {
         console.error('[createMaterialDispatch] Lỗi:', error);
         res.status(500).json({ message: 'Lỗi khi tạo phiếu cấp phát vật tư', error: error.message });

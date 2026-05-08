@@ -69,8 +69,11 @@ const PrintableOrder = ({ order }) => {
                 <td className="border border-black p-2">
                   <div className="space-y-1">
                     {job.material && <p><strong>Vật liệu:</strong> {job.material}</p>}
-                    {job.printSize && <p><strong>Khổ:</strong> {job.printSize}</p>}
-                    {job.plateSize && <p><strong>Kẽm/Khuôn:</strong> {job.plateSize}</p>}
+                    {job.printSize && <p><strong>Khổ TP:</strong> {job.printSize}</p>}
+                    {job.printPaperSize && <p><strong>Khổ giấy in:</strong> {job.printPaperSize}</p>}
+                    {job.cutPaperSize && <p><strong>Khổ giấy cắt:</strong> {job.cutPaperSize}</p>}
+                    {job.cutPaperQuantity && <p><strong>S.L cắt:</strong> {job.cutPaperQuantity.toLocaleString()}</p>}
+                    <p><strong>Kẽm/Khuôn:</strong> {job.isPlateReady ? '✓ Đã xuất' : '✗ Chưa xuất'}</p>
                     {job.quantity && <p><strong>S.Lượng:</strong> {job.quantity.toLocaleString()}</p>}
                     {job.printColors && <p><strong>Số màu:</strong> {job.printColors}</p>}
                   </div>

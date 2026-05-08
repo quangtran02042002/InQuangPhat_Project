@@ -29,8 +29,11 @@ const productionOrderSchema = new mongoose.Schema(
         
         // THÔNG SỐ VẬT TƯ
         material: { type: String, default: '' },
-        printSize: { type: String, default: '' }, // Khổ in / Khổ giấy
-        plateSize: { type: String, default: '' }, // Khổ xuất kẽm / Khuôn lụa
+        printSize: { type: String, default: '' }, // Khổ thành phẩm
+        printPaperSize: { type: String, default: '' }, // Khổ giấy in
+        cutPaperSize: { type: String, default: '' }, // Khổ giấy cắt
+        cutPaperQuantity: { type: Number, default: 0 }, // Số lượng giấy cắt
+        isPlateReady: { type: Boolean, default: false }, // Trạng thái kẽm/khuôn
         
         // QUY TRÌNH IN & GIA CÔNG
         printColors: { type: String, default: '' },

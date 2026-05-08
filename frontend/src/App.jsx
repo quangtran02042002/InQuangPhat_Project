@@ -50,6 +50,8 @@ import ProductionOrderScreen from './screens/admin/ProductionOrderScreen';
 import InventoryScreen from './screens/admin/InventoryScreen';
 import PrintPriceCalcScreen from './screens/admin/PrintPriceCalcScreen';
 import FinishingPriceScreen from './screens/admin/FinishingPriceScreen';
+import CashFlowScreen from './screens/admin/CashFlowScreen';
+import QuotationScreen from './screens/admin/QuotationScreen';
 // Admin screens loaded ✓
 
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
@@ -70,10 +72,13 @@ const AppContent = () => {
           {/* PUBLIC ROUTES */}
           <Route path="/" element={<HomeScreen />} />
           <Route path="/search/:keyword" element={<HomeScreen />} />
-          <Route path="/page/:pageNumber" element={<HomeScreen />} />
           <Route path="/search/:keyword/page/:pageNumber" element={<HomeScreen />} />
-          <Route path="/category/:category" element={<HomeScreen />} />
-          <Route path="/category/:category/page/:pageNumber" element={<HomeScreen />} />
+          {/* Product Routing */}
+          <Route path="/products" element={<AllProductsScreen />} />
+          <Route path="/products/:group" element={<AllProductsScreen />} />
+          <Route path="/products/:group/page/:pageNumber" element={<AllProductsScreen />} />
+          <Route path="/products/:group/category/:category" element={<AllProductsScreen />} />
+          <Route path="/products/:group/category/:category/page/:pageNumber" element={<AllProductsScreen />} />
 
           <Route path="/product/:id" element={<ProductScreen />} />
           <Route path="/contact" element={<ContactScreen />} />
@@ -86,7 +91,6 @@ const AppContent = () => {
           <Route path="/infrastructure" element={<InfrastructureScreen />} />
           <Route path="/infrastructure/:id" element={<MachineDetailPublicScreen />} />
 
-          <Route path="/products" element={<AllProductsScreen />} />
           <Route path="/about" element={<AboutScreen />} />
           <Route path="/profile" element={<UserProfileScreen />} />
           {/* ADMIN ROUTES */}
@@ -129,6 +133,8 @@ const AppContent = () => {
             <Route path="/admin/finishing-prices" element={<FinishingPriceScreen />} />
             <Route path="/admin/production-orders" element={<ProductionOrderScreen />} />
             <Route path="/admin/inventory" element={<InventoryScreen />} />
+            <Route path="/admin/finance" element={<CashFlowScreen />} />
+            <Route path="/admin/quotations" element={<QuotationScreen />} />
           </Route>
         </Routes>
       </main>

@@ -18,10 +18,17 @@ const getProducts = asyncHandler(async (req, res) => {
     ? { category: req.query.category }
     : {};
 
-  // 3. Kết hợp điều kiện
-  const count = await Product.countDocuments({ ...keyword, ...category });
+  // 3. Lọc theo Nhóm (Group: offset/garment)
+  const group = req.query.group
+    ? { group: req.query.group }
+    : {};
 
-  const products = await Product.find({ ...keyword, ...category })
+  // 4. Kết hợp điều kiện
+  const query = { ...keyword, ...category, ...group };
+
+  const count = await Product.countDocuments(query);
+
+  const products = await Product.find(query)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 

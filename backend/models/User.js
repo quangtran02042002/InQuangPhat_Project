@@ -6,13 +6,19 @@ const userSchema = mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, required: true, default: false }, // false là user thường, true là Admin
+    isAdmin: { type: Boolean, required: true, default: false },
+    role: {
+      type: String,
+      enum: ['director', 'accountant', 'production', 'user'],
+      default: 'user',
+    },
     phone: { type: String },
   },
   {
-    timestamps: true, // Tự động tạo createdAt, updatedAt
+    timestamps: true,
   }
 );
+
 
 // --- PHẦN SỬA LỖI Ở ĐÂY ---
 // Trước khi lưu User vào DB, hãy mã hóa mật khẩu

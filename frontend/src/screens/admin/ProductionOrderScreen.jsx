@@ -56,7 +56,7 @@ const SILK_PROGRESS_STEPS = [
 
 const EMPTY_JOB = {
   jobName: '', quantity: '', image: '',
-  material: '', printSize: '', plateSize: '', printColors: '',
+  material: '', printSize: '', printPaperSize: '', cutPaperSize: '', cutPaperQuantity: '', isPlateReady: false, printColors: '',
   postProcess: [], notes: '', printFormula: ''
 };
 
@@ -159,7 +159,15 @@ const ViewOrderModal = ({ order, formulas, onClose }) => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 text-sm bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Vật liệu / Giấy</span><strong className="text-gray-800">{job.material || '-'}</strong></div>
                     <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Khổ thành phẩm</span><strong className="text-gray-800">{job.printSize || '-'}</strong></div>
-                    <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Khổ kẽm/khuôn</span><strong className="text-gray-800">{job.plateSize || '-'}</strong></div>
+                    <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Khổ giấy in</span><strong className="text-gray-800">{job.printPaperSize || '-'}</strong></div>
+                    <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Khổ giấy cắt</span><strong className="text-gray-800">{job.cutPaperSize || '-'}</strong></div>
+                    <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Số lượng cắt</span><strong className="text-gray-800">{job.cutPaperQuantity || '-'}</strong></div>
+                    <div>
+                      <span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Kẽm / Khuôn</span>
+                      <strong className={job.isPlateReady ? 'text-green-600' : 'text-red-500'}>
+                        {job.isPlateReady ? '✓ Đã xuất' : '✗ Chưa xuất'}
+                      </strong>
+                    </div>
                     <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Số lượng in rập</span><strong className="text-gray-800">{job.quantity || '-'}</strong></div>
                     <div><span className="text-gray-500 block text-[10px] uppercase font-bold tracking-wide">Số màu</span><strong className="text-gray-800">{job.printColors || '-'}</strong></div>
                     <div>
@@ -394,12 +402,23 @@ const OrderModal = ({ order, formulas, onClose, onSaved }) => {
                     </div>
 
                     <Inp label="Vật liệu / Giấy" value={job.material} onChange={e => changeJob(idx, 'material', e.target.value)} placeholder="Couche 300gsm..." />
-                    <Inp label="Khổ thành phẩm / Khổ giấy" value={job.printSize} onChange={e => changeJob(idx, 'printSize', e.target.value)} placeholder="43x65 cm" />
-                    <Inp label="Khổ Kẽm / Khuôn" value={job.plateSize} onChange={e => changeJob(idx, 'plateSize', e.target.value)} placeholder="50x70 cm" />
-                    <Inp label="Số lượng in rập" value={job.quantity} onChange={e => changeJob(idx, 'quantity', e.target.value)} type="number" placeholder="1000" />
-                    <Inp label="Màu in / Số màu" value={job.printColors} onChange={e => changeJob(idx, 'printColors', e.target.value)} placeholder="CMYK, Pant..." mdColSpan="" />
+                    <Inp label="Khổ thành phẩm" value={job.printSize} onChange={e => changeJob(idx, 'printSize', e.target.value)} placeholder="VD: 15x20 cm" />
+                    <Inp label="Khổ giấy in" value={job.printPaperSize} onChange={e => changeJob(idx, 'printPaperSize', e.target.value)} placeholder="VD: 43x65 cm" />
+                    
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái Kẽm / Khuôn</label>
+                      <button type="button" onClick={() => changeJob(idx, 'isPlateReady', !job.isPlateReady)}
+                        className={`h-[38px] rounded-xl text-xs font-bold border-2 transition ${job.isPlateReady ? 'bg-green-500 text-white border-green-600' : 'bg-gray-100 text-gray-400 border-gray-200 hover:border-gray-300'}`}>
+                        {job.isPlateReady ? '✓ Đã xuất xong' : 'Chưa xuất'}
+                      </button>
+                    </div>
 
-                    <div className="flex flex-col gap-1 md:col-span-3">
+                    <Inp label="Khổ giấy cắt (Đầu vào)" value={job.cutPaperSize} onChange={e => changeJob(idx, 'cutPaperSize', e.target.value)} placeholder="VD: 65x86 cm" />
+                    <Inp label="Số lượng cắt" value={job.cutPaperQuantity} onChange={e => changeJob(idx, 'cutPaperQuantity', e.target.value)} type="number" placeholder="1000" />
+                    <Inp label="Số lượng in rập" value={job.quantity} onChange={e => changeJob(idx, 'quantity', e.target.value)} type="number" placeholder="1000" />
+                    <Inp label="Màu in / Số màu" value={job.printColors} onChange={e => changeJob(idx, 'printColors', e.target.value)} placeholder="CMYK, Pant..." />
+
+                    <div className="flex flex-col gap-1 md:col-span-4">
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Công thức in tham chiếu</label>
                       <select value={job.printFormula} onChange={e => changeJob(idx, 'printFormula', e.target.value)}
                         className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#006B4D] bg-white text-gray-600">
@@ -493,7 +512,7 @@ const ProductionOrderScreen = () => {
 
       const [ordersRes, formulasRes] = await Promise.all([
         axios.get(url, cfg),
-        axios.get('/api/print-formulas?pageSize=1000', cfg)
+        axios.get('/api/print-formulas?status=approved', cfg)
       ]);
 
       setOrders(ordersRes.data.orders || []);

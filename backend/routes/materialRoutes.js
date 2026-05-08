@@ -8,8 +8,10 @@ const {
     getDispatches,
     createDispatch,
 } = require('../controllers/materialController');
+const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 // Cấp phát (dispatch) — PHẢI đặt TRƯỚC /:id để tránh conflict
+router.use(protect, admin, authorize('director', 'production'));
 router.route('/dispatches').get(getDispatches).post(createDispatch);
 
 // Kho tồn kho vật tư

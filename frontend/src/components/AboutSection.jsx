@@ -1,74 +1,121 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowRight } from 'react-icons/fa';
-// 1. IMPORT THƯ VIỆN SCROLL
-import { scroller } from 'react-scroll';
+import { FaArrowRight, FaCheckCircle } from 'react-icons/fa';
+import useScrollReveal from '../hooks/useScrollReveal';
 
 const AboutSection = () => {
-  
-  // 2. HÀM XỬ LÝ CUỘN TRANG NÂNG CAO
-  const scrollToProducts = () => {
-    scroller.scrollTo('danh-muc-san-pham', {
-      duration: 1000, // Thời gian trượt: 1000ms = 1 giây (Càng lớn càng chậm)
-      delay: 0,
-      smooth: 'easeInOutQuart', // Hiệu ứng trượt: Nhanh ở giữa, chậm dần khi tới đích (Rất mượt)
-      offset: -100, // Trừ hao chiều cao của Header để không bị che mất tiêu đề
-    });
-  };
+  const sectionRef = useScrollReveal();
+
+  const stats = [
+    { value: '15+', label: 'Năm kinh nghiệm' },
+    { value: '3000+', label: 'Khách hàng tin cậy' },
+    { value: '5M+', label: 'Sản phẩm/năm' },
+  ];
+
+  const highlights = [
+    'Công nghệ in Offset 4 màu — sắc nét, chuẩn màu quốc tế',
+    'Quy trình khép kín: Thiết kế → In → Gia công → Giao hàng',
+    'Miễn phí thiết kế — Giá tận xưởng, không qua trung gian',
+  ];
 
   return (
-    <div className="py-16 bg-gray-50 overflow-hidden">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center gap-12">
-          
-          {/* ... (GIỮ NGUYÊN PHẦN ẢNH BÊN TRÁI) ... */}
-          <div className="w-full lg:w-1/2 relative">
-             {/* ... Code ảnh giữ nguyên ... */}
-             <img src="/images/about-factory.jpg" alt="Xưởng in" className="relative w-full rounded-xl shadow-lg z-10"/>
-             {/* ... */}
-          </div>
+    <section ref={sectionRef} className="py-20 bg-white overflow-hidden">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex flex-col lg:flex-row items-center gap-14 xl:gap-20">
 
-          {/* CỘT CHỮ (BÊN PHẢI) */}
-          <div className="w-full lg:w-1/2">
-            <h4 className="text-[#006B4D] font-bold text-sm uppercase tracking-wider mb-2">Về chúng tôi</h4>
-            
-            {/* ... (GIỮ NGUYÊN CÁC ĐOẠN VĂN MÔ TẢ) ... */}
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 leading-tight">
-              Đối tác in ấn tin cậy của hơn <span className="text-[#006B4D]">3000+</span> doanh nghiệp
-            </h2>
-            <p className="text-gray-600 mb-4 leading-relaxed text-justify">
-              {/* ... nội dung cũ ... */}
-              In Quang Phát tự hào là đơn vị sở hữu...
-            </p>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-    In Quang Phát tự hào là đơn vị sở hữu hệ thống máy in Offset khổ lớn hiện đại nhất miền Trung, cam kết mang lại giải pháp bao bì toàn diện từ thiết kế đến thành phẩm.
-</p>
+          {/* IMAGE COLUMN */}
+          <div className="w-full lg:w-1/2 relative reveal-left">
+            <div className="relative">
+              {/* Decorative background blobs */}
+              <div className="absolute -top-6 -left-6 w-64 h-64 bg-brand-100 rounded-full opacity-50 blur-3xl -z-10" />
+              <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-brand-200 rounded-full opacity-30 blur-2xl -z-10" />
 
-{/* KHU VỰC 2 NÚT BẤM */}
-<div className="flex flex-wrap gap-4">
-    {/* Nút 1: Xem sản phẩm (Nút Chính - Màu Đậm) */}
+              {/* Main image */}
+              <img
+                src="/images/about-factory.jpg"
+                alt="Đội ngũ In Quang Phát"
+                className="w-full rounded-3xl shadow-elevation object-cover h-[400px] lg:h-[500px]"
+              />
 
-    {/* Nút 2: Về chúng tôi (Nút Phụ - Viền rỗng) */}
-    <Link to="/about" className="border-2 border-[#006B4D] text-[#006B4D] px-6 py-3 rounded-full font-bold hover:bg-[#E6F0ED] transition transform hover:-translate-y-1">
-        Tìm hiểu về Quang Phát
-    </Link>
-</div>
-            {/* ... */}
+              {/* Floating achievement card */}
+              <div className="absolute -bottom-5 -right-5 bg-white rounded-2xl shadow-floating px-5 py-4 flex items-center gap-4 border border-gray-100">
+                <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-extrabold text-sm">✓</span>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Cam kết</div>
+                  <div className="font-extrabold text-gray-800 text-sm">100% hài lòng</div>
+                </div>
+              </div>
 
-            <div className="flex gap-4 mt-8">
-                {/* 3. NÚT BẤM GỌI HÀM SCROLL */}
-                <button 
-                    onClick={scrollToProducts}
-                    className="bg-[#006B4D] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#004D38] hover:shadow-xl transition transform hover:-translate-y-1 flex items-center cursor-pointer"
-                >
-                    Xem mẫu sản phẩm ngay <FaArrowRight className="ml-2 animate-bounce-x"/>
-                </button>
+              {/* Experience badge */}
+              <div className="absolute -top-4 -left-4 bg-brand-600 text-white rounded-2xl px-4 py-3 shadow-floating">
+                <div className="text-2xl font-extrabold leading-none">15+</div>
+                <div className="text-[10px] text-brand-200 uppercase tracking-wider">Năm kinh nghiệm</div>
+              </div>
             </div>
           </div>
 
+          {/* TEXT COLUMN */}
+          <div className="w-full lg:w-1/2">
+            {/* Label */}
+            <div className="reveal delay-100">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-600 uppercase tracking-widest border border-brand-100">
+                Về chúng tôi
+              </span>
+            </div>
+
+            {/* Heading */}
+            <h2 className="reveal delay-200 mt-4 text-3xl md:text-4xl lg:text-[2.6rem] font-extrabold text-gray-900 leading-tight">
+              Đối tác in ấn tin cậy của hơn{' '}
+              <span className="text-gradient-brand">3000+ doanh nghiệp</span>
+            </h2>
+
+            {/* Desc */}
+            <p className="reveal delay-300 mt-5 text-gray-500 leading-relaxed text-base">
+              In Quang Phát tự hào sở hữu hệ thống máy in Offset khổ lớn hiện đại và dây chuyền in lụa Garment tự động, cam kết mang lại giải pháp bao bì & in ấn toàn diện từ thiết kế đến thành phẩm.
+            </p>
+
+            {/* Highlights */}
+            <ul className="reveal delay-300 mt-6 space-y-3">
+              {highlights.map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <FaCheckCircle className="text-brand-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-600 text-sm leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Mini stats */}
+            <div className="reveal delay-400 mt-8 grid grid-cols-3 gap-4">
+              {stats.map((stat, i) => (
+                <div key={i} className="bg-surface-low rounded-2xl p-4 text-center border border-gray-100">
+                  <div className="text-2xl font-extrabold text-brand-600">{stat.value}</div>
+                  <div className="text-[11px] text-gray-500 mt-1 leading-tight">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="reveal delay-500 mt-8 flex flex-wrap gap-4">
+              <Link
+                to="/products"
+                className="group inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-7 py-3.5 rounded-full font-bold shadow-ambient hover:shadow-floating transition-all duration-300 hover:-translate-y-0.5"
+              >
+                Xem mẫu sản phẩm
+                <FaArrowRight className="text-sm group-hover:translate-x-1 transition-transform duration-200" />
+              </Link>
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-2 border-2 border-brand-600 text-brand-600 px-7 py-3.5 rounded-full font-bold hover:bg-brand-50 transition-all duration-300"
+              >
+                Tìm hiểu thêm
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

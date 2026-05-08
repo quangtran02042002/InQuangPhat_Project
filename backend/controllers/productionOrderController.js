@@ -109,6 +109,19 @@ const updateProductionOrder = asyncHandler(async (req, res) => {
     }
     // ----------------------------------------
 
+    // --- CẢNH BÁO XUẤT KHO ---
+    if (req.body.status === 'in_progress' && oldStatus !== 'in_progress') {
+      try {
+        await createNotification({
+          title: '⚠️ Nhắc nhở Xuất kho',
+          message: `Lệnh ${order.orderCode} bắt đầu sản xuất. Vui lòng tạo phiếu xuất vật tư!`,
+          type: 'inventory',
+          link: '/admin/materials'
+        });
+      } catch (err) { console.error(err); }
+    }
+    // ----------------------------------------
+
     res.json(updatedOrder);
   } else {
     res.status(404);
