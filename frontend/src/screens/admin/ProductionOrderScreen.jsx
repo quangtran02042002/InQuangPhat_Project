@@ -615,7 +615,7 @@ const ProductionOrderScreen = () => {
         )}
 
         {/* HEADER */}
-        <div className="bg-white border-b border-gray-100 px-8 py-6 shrink-0 z-0 relative">
+        <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 md:py-6 shrink-0 z-0 relative">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <button className="lg:hidden text-gray-500 hover:text-gray-700 transition" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
@@ -641,10 +641,10 @@ const ProductionOrderScreen = () => {
 
           {/* FILTERS */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
+            <div className="flex flex-wrap sm:flex-nowrap bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar">
               {[{ id: 'all', label: 'Tất cả Bài In' }, { id: 'offset', label: 'Chứa In Offset' }, { id: 'silk', label: 'Chứa In Lụa' }].map(tab => (
                 <button key={tab.id} onClick={() => setPrintType(tab.id)}
-                  className={`flex-1 md:w-32 py-2 text-sm font-bold rounded-lg transition-all ${printType === tab.id ? 'bg-white text-[#006B4D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  className={`flex-1 min-w-[100px] md:w-32 py-2 px-2 text-[11px] sm:text-sm font-bold rounded-lg transition-all whitespace-nowrap ${printType === tab.id ? 'bg-white text-[#006B4D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                   {tab.label}
                 </button>
               ))}
@@ -668,7 +668,7 @@ const ProductionOrderScreen = () => {
         </div>
 
         {/* LIST */}
-        <div className="flex-1 overflow-y-auto p-8 bg-[#F9FAFB]">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#F9FAFB]">
           {loading ? (
             <div className="flex justify-center py-12"><div className="w-8 h-8 rounded-full border-4 border-[#006B4D] border-t-transparent animate-spin"></div></div>
           ) : orders.length === 0 ? (
@@ -697,11 +697,11 @@ const ProductionOrderScreen = () => {
                             {statusText[order.status]}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs font-medium text-gray-500 mb-2">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-gray-500 mb-2">
                           <span>Mã: <strong className="text-gray-800">{order.orderCode}</strong></span>
-                          <span>&bull;</span>
+                          <span className="hidden sm:inline">&bull;</span>
                           <span>Tổng SL: <strong className="text-gray-800 text-sm">{order.totalQuantity.toLocaleString()}</strong></span>
-                          <span>&bull;</span>
+                          <span className="hidden sm:inline">&bull;</span>
                           <span className="text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded font-bold">{(order.printJobs || []).length} Bài in</span>
                         </div>
 
@@ -722,9 +722,9 @@ const ProductionOrderScreen = () => {
                         order.printType === 'offset' ? { type: 'offset', label: 'OFFSET', steps: OFFSET_PROGRESS_STEPS } : null,
                         order.printType === 'silk' ? { type: 'silk', label: 'LỤA', steps: SILK_PROGRESS_STEPS } : null
                       ].filter(Boolean).map(tracker => (
-                        <div key={tracker.type} className="bg-[#F9FAFB] rounded-xl p-2.5 border border-gray-100 flex items-center justify-between gap-1 overflow-x-auto relative">
+                        <div key={tracker.type} className="bg-[#F9FAFB] w-full rounded-xl p-2.5 border border-gray-100 flex items-center justify-between gap-1 overflow-x-auto relative custom-scrollbar">
                           <span className="absolute top-1 left-2 text-[8px] font-black text-gray-300 uppercase tracking-widest">{tracker.label}</span>
-                          <div className="flex items-center mt-2 w-full justify-between">
+                          <div className="flex items-center mt-2 w-max min-w-full justify-between px-2">
                             {tracker.steps.map((step, i) => {
                               const isDone = order[step.id];
                               return (
@@ -756,7 +756,7 @@ const ProductionOrderScreen = () => {
                     </div>
 
                     {/* ACTIONS */}
-                    <div className="flex items-center gap-2 xl:pl-4 xl:border-l xl:border-gray-100 w-full xl:w-auto justify-end">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 xl:pl-4 xl:border-l xl:border-gray-100 w-full xl:w-auto justify-end mt-2 xl:mt-0">
                       <button onClick={() => setViewModal(order)}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition" title="Xem Chi Tiết">
                         <FaEye size={16} />
