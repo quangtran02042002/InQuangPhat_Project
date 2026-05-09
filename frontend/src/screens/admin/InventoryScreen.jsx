@@ -23,6 +23,7 @@ const InventoryScreen = () => {
   const [loading, setLoading] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewSlip, setViewSlip] = useState(null); // giao dịch đang xem phiếu
 
   // ── Form State ──────────────────────────────────────────
@@ -116,14 +117,19 @@ const InventoryScreen = () => {
   const totalItems = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827]">
-      <div className="h-full flex-shrink-0 z-10 hidden lg:block"><Sidebar /></div>
+    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
+      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0`}>
+        <Sidebar />
+      </div>
 
       <div className="flex-1 flex flex-col w-full overflow-hidden">
         <AdminHeader title="Lịch Sử Xuất Nhập (BTP)" />
         {/* HEADER */}
         <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex items-center gap-4 shrink-0">
-          <button className="lg:hidden text-gray-500 hover:text-[#006B4D]"><FaBars size={20} /></button>
+          <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
           <div>
             <h1 className="text-xl md:text-2xl font-extrabold flex items-center gap-2">
               <FaBoxOpen className="text-[#006B4D]" /> Quản Lý Xuất Nhập (BTP)

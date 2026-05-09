@@ -88,7 +88,7 @@ const FinanceDashboardTab = ({ onNavigate }) => {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* STAT CARDS ROW 1 */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Tổng số dư quỹ"
           value={fmt(totalBalance) + 'đ'}
