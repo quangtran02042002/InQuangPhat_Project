@@ -4,8 +4,8 @@ import { FaPhoneAlt } from 'react-icons/fa';
 
 const FloatingContact = () => {
   const CONTACT_INFO = {
-    phone: '0935110639',
-    zalo: '0935110639',
+    phone: '0903597686',
+    zalo: '0903597686',
   };
 
   return (

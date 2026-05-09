@@ -185,8 +185,8 @@ const MachineDetailPublicScreen = () => {
                     <h3 className="text-xl font-extrabold text-[#111827] mb-3 text-center uppercase tracking-wide">Tư vấn kỹ thuật</h3>
                     <p className="text-[#6B7280] text-center mb-8">Liên hệ để nhận thông số chi tiết & báo giá in ấn</p>
                     
-                    <a href="tel:0935110639" className="block w-full bg-[#006B4D] hover:bg-[#00553d] text-white text-center font-bold py-4 rounded-xl transition-colors shadow-sm mb-2 flex items-center justify-center">
-                        <FaPhoneAlt className="mr-3" /> 0935.110.639
+                    <a href="tel:0903597686" className="block w-full bg-[#006B4D] hover:bg-[#00553d] text-white text-center font-bold py-4 rounded-xl transition-colors shadow-sm mb-2 flex items-center justify-center">
+                        <FaPhoneAlt className="mr-3" /> 0903.597.686
                     </a>
                 </div>
 

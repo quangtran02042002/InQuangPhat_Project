@@ -163,11 +163,11 @@ const Header = () => {
 
             {/* HOTLINE */}
             <a
-              href="tel:0935110639"
+              href="tel:0903597686"
               className="hidden xl:flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-full font-bold transition-all duration-300 hover:bg-accent-dark hover:shadow-md whitespace-nowrap text-sm"
             >
               <FaPhoneAlt className="text-xs" />
-              0935.110.639
+              0903.597.686
             </a>
 
             {/* USER MENU */}
@@ -255,8 +255,8 @@ const Header = () => {
             </Link>
 
             <div className="pt-3">
-              <a href="tel:0935110639" className="flex items-center justify-center gap-2 w-full bg-accent text-white py-3.5 rounded-xl font-bold text-sm">
-                <FaPhoneAlt /> 0935.110.639
+              <a href="tel:0903597686" className="flex items-center justify-center gap-2 w-full bg-accent text-white py-3.5 rounded-xl font-bold text-sm">
+                <FaPhoneAlt /> 0903.597.686
               </a>
             </div>
           </div>

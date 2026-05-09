@@ -64,10 +64,10 @@ const CompanyStats = () => {
               Nhận báo giá miễn phí <FaArrowRight />
             </Link>
             <a
-              href="tel:0935110639"
+              href="tel:0903597686"
               className="inline-flex items-center gap-2 border-2 border-gray-200 text-gray-700 hover:border-brand-600 hover:text-brand-600 px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-sm md:text-base transition-all duration-300"
             >
-              📞 0935.110.639
+              📞 0903.597.686
             </a>
           </div>
         </div>

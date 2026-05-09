@@ -43,7 +43,7 @@ const ContactScreen = () => {
       bg: 'bg-rose-50',
       color: 'text-rose-500',
       label: 'Địa chỉ xưởng',
-      value: 'Số 5, Đường Số 4, Cụm CN An Hoà, P.Hương An, Huế',
+      value: 'Số 5, Đường số 4, cụm CN An Hoà, phường Hương An, Huế, Việt Nam',
       sub: '(Có chỗ đỗ ô tô cho khách hàng)',
     },
     {
@@ -142,7 +142,7 @@ const ContactScreen = () => {
             {/* Direct contact buttons */}
             <div className="reveal flex flex-wrap gap-3">
               <a
-                href="https://zalo.me/0935110639"
+                href="https://zalo.me/0903597686"
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-2xl font-bold transition-all duration-300 text-sm shadow-ambient"
@@ -150,10 +150,10 @@ const ContactScreen = () => {
                 <SiZalo size={18} /> Chat Zalo ngay
               </a>
               <a
-                href="tel:0935110639"
+                href="tel:0903597686"
                 className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-600 hover:text-brand-600 text-gray-700 py-3.5 rounded-2xl font-bold transition-all duration-300 text-sm"
               >
-                <FaPhoneAlt size={14} /> 0935.110.639
+                <FaPhoneAlt size={14} /> 0903.597.686
               </a>
             </div>
           </div>
