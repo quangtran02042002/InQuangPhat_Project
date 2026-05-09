@@ -171,7 +171,7 @@ const Header = () => {
             </a>
 
             {/* USER MENU */}
-            <div className="relative z-50">
+            <div className="relative z-[60]">
               {userInfo ? (
                 <div
                   className="relative cursor-pointer py-2"
