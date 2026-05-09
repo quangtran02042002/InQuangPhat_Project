@@ -33,7 +33,7 @@ const Footer = () => {
       {!isAdminRoute && <CompanyStats />}
 
       <div
-        className="text-gray-300 pt-16 pb-8 relative overflow-hidden"
+        className="text-gray-300 pt-10 pb-6 md:pt-16 md:pb-8 relative overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #0d1f17 0%, #111827 100%)' }}
       >
         {/* Decorative background elements */}
@@ -41,17 +41,17 @@ const Footer = () => {
         <div className="absolute bottom-0 right-0 w-64 h-64 bg-brand-900/10 rounded-full translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none" />
 
         <div className="container mx-auto px-4 relative z-10 max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 mb-8 md:mb-12">
 
             {/* Col 1: Brand */}
             <div className="lg:col-span-1">
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-4 md:mb-5">
                 <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-floating flex-shrink-0">
                   <span className="text-white font-extrabold text-sm">IQ</span>
                 </div>
                 <span className="text-white text-xl font-extrabold tracking-tight uppercase">In Quang Phát</span>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed mb-6">
+              <p className="text-sm text-gray-400 leading-relaxed mb-5 md:mb-6">
                 Đơn vị tiên phong trong lĩnh vực in ấn bao bì và áo quần xuất khẩu tại Huế. Cam kết chất lượng — Tiến độ — Giá thành hợp lý.
               </p>
               <div className="flex gap-3">
@@ -74,7 +74,7 @@ const Footer = () => {
 
             {/* Col 2: Navigation */}
             <div>
-              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-5 flex items-center gap-2">
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                 <div className="w-4 h-0.5 bg-brand-500 rounded" />
                 Điều hướng
               </h4>
@@ -96,7 +96,7 @@ const Footer = () => {
 
             {/* Col 3: Products */}
             <div>
-              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-5 flex items-center gap-2">
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                 <div className="w-4 h-0.5 bg-brand-500 rounded" />
                 Sản phẩm nổi bật
               </h4>
@@ -114,7 +114,7 @@ const Footer = () => {
 
             {/* Col 4: Contact */}
             <div>
-              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-5 flex items-center gap-2">
+              <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                 <div className="w-4 h-0.5 bg-brand-500 rounded" />
                 Thông tin liên hệ
               </h4>
