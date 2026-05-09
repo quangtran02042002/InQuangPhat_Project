@@ -11,7 +11,6 @@ import {
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
 
   // Lấy thông tin user để phân quyền
   const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
@@ -60,7 +59,7 @@ const Sidebar = () => {
   };
 
   const closeSidebar = () => {
-    if (isOpen) setIsOpen(false);
+    // Không cần xử lý ở đây vì parent component sẽ đảm nhiệm việc đóng mở
   };
 
   const toggleGroup = (group) => {
@@ -72,21 +71,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-40 bg-[#006B4D] text-white p-4 rounded-full shadow-2xl hover:bg-[#00543c] transition transform hover:scale-105 active:scale-95"
-      >
-        <FaBars className="text-xl" />
-      </button>
-
-      {isOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-[#111827]/50 z-40 backdrop-blur-sm transition-opacity"
-          onClick={closeSidebar}
-        ></div>
-      )}
-
-      <div className={`w-64 bg-white text-[#111827] border-r border-gray-200 flex flex-col flex-shrink-0 h-screen fixed md:sticky top-0 left-0 shadow-lg md:shadow-none z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <div className="w-64 bg-white text-[#111827] border-r border-gray-200 flex flex-col flex-shrink-0 h-screen shadow-lg lg:shadow-none z-50">
 
         <style>{`
           .sidebar-scroll::-webkit-scrollbar { width: 4px; }
@@ -109,9 +94,6 @@ const Sidebar = () => {
             <h2 className="text-xl md:text-2xl font-extrabold tracking-wider text-[#111827]">ADMIN <span className="text-[#006B4D]">PANEL</span></h2>
             <p className="text-[10px] text-[#6B7280] font-bold mt-1 uppercase tracking-[0.2em]">In Quang Phát</p>
           </div>
-          <button onClick={closeSidebar} className="md:hidden text-gray-400 hover:text-red-500 bg-gray-100 p-2 rounded-full transition">
-            <FaTimes size={14} />
-          </button>
         </div>
 
         <nav className="flex-1 p-4 pt-0 overflow-y-auto sidebar-scroll pb-10">
