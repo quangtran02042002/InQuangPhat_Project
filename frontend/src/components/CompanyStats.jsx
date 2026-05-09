@@ -7,7 +7,7 @@ const CompanyStats = () => {
   const sectionRef = useScrollReveal();
 
   const stats = [
-    { icon: <FaUsers size={36} />, value: '3000+', label: 'Khách hàng tin cậy' },
+    { icon: <FaUsers size={36} />, value: '100+', label: 'Khách hàng tin cậy' },
     { icon: <FaPrint size={36} />, value: '5M+', label: 'Sản phẩm/năm' },
     { icon: <FaAward size={36} />, value: '100%', label: 'Hài lòng về chất lượng' },
     { icon: <FaHistory size={36} />, value: '15+', label: 'Năm kinh nghiệm' },

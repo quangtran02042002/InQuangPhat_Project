@@ -124,7 +124,7 @@ const AboutScreen = () => {
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: <FaUsers />, value: '3000+', label: 'Khách hàng' },
+              { icon: <FaUsers />, value: '100+', label: 'Khách hàng' },
               { icon: <FaPrint />, value: '5M+', label: 'Sản phẩm/năm' },
               { icon: <FaAward />, value: '100%', label: 'Hài lòng' },
               { icon: <FaHistory />, value: '15+', label: 'Năm kinh nghiệm' },

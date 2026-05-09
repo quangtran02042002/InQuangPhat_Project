@@ -8,7 +8,7 @@ const AboutSection = () => {
 
   const stats = [
     { value: '15+', label: 'Năm kinh nghiệm' },
-    { value: '3000+', label: 'Khách hàng tin cậy' },
+    { value: '100+', label: 'Khách hàng tin cậy' },
     { value: '5M+', label: 'Sản phẩm/năm' },
   ];
 
@@ -68,7 +68,7 @@ const AboutSection = () => {
             {/* Heading */}
             <h2 className="reveal delay-200 mt-4 text-3xl md:text-4xl lg:text-[2.6rem] font-extrabold text-gray-900 leading-tight">
               Đối tác in ấn tin cậy của hơn{' '}
-              <span className="text-gradient-brand">3000+ doanh nghiệp</span>
+              <span className="text-gradient-brand">100+ doanh nghiệp</span>
             </h2>
 
             {/* Desc */}

@@ -128,7 +128,7 @@ const HeroSlider = () => {
             {/* Trust indicator — bottom right */}
             <div className="absolute bottom-10 right-8 z-20 hidden lg:flex flex-col gap-2 items-end">
               <div className="glass border border-white/20 rounded-2xl px-4 py-3 text-white text-right">
-                <div className="text-2xl font-extrabold leading-none">3000+</div>
+                <div className="text-2xl font-extrabold leading-none">100+</div>
                 <div className="text-xs text-gray-300 mt-0.5">Khách hàng tin cậy</div>
               </div>
             </div>
