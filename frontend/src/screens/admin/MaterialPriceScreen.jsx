@@ -24,6 +24,7 @@ const MaterialPriceScreen = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
     const [editId, setEditId] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -251,14 +252,19 @@ const MaterialPriceScreen = () => {
     }, {});
 
     return (
-        <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827]">
-            <div className="h-full flex-shrink-0 z-10 hidden lg:block"><Sidebar /></div>
+        <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+            {isSidebarOpen && (
+                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+            )}
+            <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0`}>
+                <Sidebar />
+            </div>
 
             <div className="flex-1 flex flex-col w-full overflow-hidden">
                 <AdminHeader title="Bảng Giá Vật Tư THEO KHỔ" />
                 <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 shrink-0 flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <button className="lg:hidden text-gray-500"><FaBars size={20} /></button>
+                        <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
                         <h1 className="text-lg md:text-xl font-bold text-[#111827]">Quản lý Giá Vật Liệu</h1>
                     </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import {
-  FaPlus, FaEdit, FaTrash, FaSearch, FaFileExcel,
+  FaPlus, FaEdit, FaTrash, FaSearch, FaFileExcel, FaBars,
   FaTimes, FaChevronDown, FaChevronUp, FaSave, FaCheckCircle,
   FaArrowRight, FaFileAlt, FaPrint, FaTrashAlt, FaUpload, FaImage, FaEye
 } from 'react-icons/fa';
@@ -494,6 +494,7 @@ const ProductionOrderScreen = () => {
   const [viewModal, setViewModal] = useState(null); // order object
   const [printingOrder, setPrintingOrder] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Filters
   const [printType, setPrintType] = useState('all');
   const [status, setStatus] = useState('all');
@@ -581,8 +582,13 @@ const ProductionOrderScreen = () => {
   const statusText = { pending: 'Chờ xử lý', in_progress: 'Đang chạy', completed: 'Hoàn thành', cancelled: 'Hủy' };
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827]">
-      <div className="h-full flex-shrink-0 z-10 hidden lg:block"><Sidebar /></div>
+    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
+      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0`}>
+        <Sidebar />
+      </div>
       <div className="flex-1 flex flex-col w-full overflow-hidden">
         <AdminHeader title="Quản Lý Lệnh Sản Xuất" />
 
@@ -612,12 +618,13 @@ const ProductionOrderScreen = () => {
         <div className="bg-white border-b border-gray-100 px-8 py-6 shrink-0 z-0 relative">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
+              <button className="lg:hidden text-gray-500 hover:text-gray-700 transition" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
               <div className="w-10 h-10 bg-[#E6F0ED] rounded-xl flex items-center justify-center text-[#006B4D]">
                 <FaFileAlt size={20} />
               </div>
               <div>
-                <h1 className="text-2xl font-black text-[#111827] tracking-tight">Quản Lý Lệnh Sản Xuất</h1>
-                <p className="text-sm text-gray-500 font-medium">Theo dõi thông số và các bài in trong từng đơn hàng</p>
+                <h1 className="text-xl md:text-2xl font-black text-[#111827] tracking-tight">Quản Lý Lệnh Sản Xuất</h1>
+                <p className="hidden md:block text-sm text-gray-500 font-medium">Theo dõi thông số và các bài in trong từng đơn hàng</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">

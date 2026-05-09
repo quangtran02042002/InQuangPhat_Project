@@ -46,6 +46,7 @@ const PaperPriceScreen = () => {
     // === STATE MODAL CẤU HÌNH ===
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [configForm, setConfigForm] = useState({});
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // ==========================================
     // FETCH TẤT CẢ DỮ LIỆU TỪ API CHUẨN
@@ -387,8 +388,13 @@ const PaperPriceScreen = () => {
     };
 
     return (
-        <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827]">
-            <div className="h-full flex-shrink-0 z-10 hidden lg:block"><Sidebar /></div>
+        <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+            {isSidebarOpen && (
+                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+            )}
+            <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0`}>
+                <Sidebar />
+            </div>
 
             <div className="flex-1 flex flex-col w-full overflow-hidden">
                 <AdminHeader title="Bảng Giá Giấy (Gốc)" />
@@ -396,7 +402,7 @@ const PaperPriceScreen = () => {
                 {/* ================= HEADER ================= */}
                 <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 shrink-0 flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <button className="lg:hidden text-gray-500"><FaBars size={20} /></button>
+                        <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
                         <h1 className="text-lg md:text-xl font-bold text-[#111827] whitespace-nowrap">Quản lý Bảng giá</h1>
 
                         <nav className="hidden sm:flex gap-6 text-sm font-medium overflow-x-auto pb-1 -mb-1 ml-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
