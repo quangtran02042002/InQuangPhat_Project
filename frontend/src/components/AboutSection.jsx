@@ -87,10 +87,10 @@ const AboutSection = () => {
             </ul>
 
             {/* Mini stats */}
-            <div className="reveal delay-400 mt-8 grid grid-cols-3 gap-4">
+            <div className="reveal delay-400 mt-8 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               {stats.map((stat, i) => (
-                <div key={i} className="bg-surface-low rounded-2xl p-4 text-center border border-gray-100">
-                  <div className="text-2xl font-extrabold text-brand-600">{stat.value}</div>
+                <div key={i} className={`bg-surface-low rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center border border-gray-100 ${i === 2 ? 'col-span-2 md:col-span-1' : ''}`}>
+                  <div className="text-xl sm:text-2xl font-extrabold text-brand-600">{stat.value}</div>
                   <div className="text-[11px] text-gray-500 mt-1 leading-tight">{stat.label}</div>
                 </div>
               ))}
