@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import {
   FaPlus, FaEdit, FaTrash, FaSearch, FaFileExcel,
   FaFlask, FaTimes, FaChevronDown, FaChevronUp, FaSave,
-  FaEye, FaUpload, FaImage, FaCheck, FaCodeBranch, FaHistory,
+  FaEye, FaUpload, FaImage, FaCheck, FaCodeBranch, FaHistory, FaBars,
 } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import AdminHeader from '../../components/AdminHeader';
@@ -570,6 +570,7 @@ const PrintFormulaScreen = () => {
   const [viewing, setViewing]       = useState(null);   // formula object for read-only view
   const [historyGroup, setHistoryGroup] = useState(null); // sampleGroup string for history modal
   const [isAdmin, setIsAdmin]       = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Thêm state cho pop-up xác nhận và accordion version
   const [confirmAction, setConfirmAction] = useState(null);
@@ -658,8 +659,13 @@ const PrintFormulaScreen = () => {
   const tabIdle = 'bg-white text-gray-600 border-gray-200 hover:border-[#006B4D]/50';
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827]">
-      <div className="h-full flex-shrink-0 z-10 hidden lg:block"><Sidebar /></div>
+    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
+      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex-shrink-0`}>
+        <Sidebar />
+      </div>
       <div className="flex-1 flex flex-col w-full overflow-hidden">
         <AdminHeader title="Phát triển Mẫu In" />
 
@@ -678,7 +684,8 @@ const PrintFormulaScreen = () => {
         <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-extrabold text-[#111827] flex items-center gap-3">
+              <h1 className="text-xl md:text-2xl font-extrabold text-[#111827] flex items-center gap-3">
+                <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
                 <FaFlask className="text-[#006B4D]" /> Phát triển Mẫu In
               </h1>
               <p className="text-sm text-gray-500 mt-1">Quản lý quy trình phát triển mẫu nhiều phiên bản — chỉ chốt khi khách duyệt</p>
@@ -720,7 +727,7 @@ const PrintFormulaScreen = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[1000px]">
                   <thead>
                     <tr className="bg-gray-50 text-gray-500 text-[10px] tracking-wider uppercase font-bold border-b border-gray-200">
                       <th className="px-5 py-4 text-left">Mã mẫu</th>
