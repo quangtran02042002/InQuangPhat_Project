@@ -135,6 +135,15 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
+// @desc    Get random products for homepage carousel
+// @route   GET /api/products/random
+// @access  Public
+const getRandomProducts = asyncHandler(async (req, res) => {
+  const limit = Number(req.query.limit) || 20;
+  const products = await Product.aggregate([{ $sample: { size: limit } }]);
+  res.json(products);
+});
+
 export {
   getProducts,
   getProductById,
@@ -142,4 +151,5 @@ export {
   updateProduct,
   deleteProduct,
   getTopProducts,
+  getRandomProducts,
 };

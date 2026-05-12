@@ -9,8 +9,8 @@ import axios from 'axios';
 // FALLBACK MOCK DATA (used when API is unavailable)
 // ==========================================
 const FALLBACK_PROCESSES = [
-    { id: 'lam_bong', name: 'Cán màng bóng', description: 'Phủ lớp màng polyme bóng, tăng độ sáng bề mặt, chống nước, chống xước.', price: 500, unit: 'đ/tờ in', category: 'surface', color: '#8B5CF6', icon: '✨' },
-    { id: 'lam_mo', name: 'Cán màng mờ', description: 'Phủ lớp màng mờ mịn, tạo cảm giác mềm mại và sang trọng.', price: 500, unit: 'đ/tờ in', category: 'surface', color: '#8B5CF6', icon: '🌫️' },
+    { id: 'lam_bong', name: 'Cán màng bóng', description: 'Phủ lớp màng polyme bóng, tăng độ sáng bề mặt, chống nước, chống xước.', price: 3000, unit: 'đ/m²', category: 'surface', color: '#8B5CF6', icon: '✨', isLamination: true },
+    { id: 'lam_mo', name: 'Cán màng mờ', description: 'Phủ lớp màng mờ mịn, tạo cảm giác mềm mại và sang trọng.', price: 3000, unit: 'đ/m²', category: 'surface', color: '#8B5CF6', icon: '🌫️', isLamination: true },
     { id: 'uv_toan_phan', name: 'Phủ UV toàn phần', description: 'Phủ vecni UV kín bề mặt, tăng độ bóng bẩy và bảo vệ mực in.', price: 800, unit: 'đ/tờ in', category: 'surface', color: '#06B6D4', icon: '💎' },
     { id: 'uv_cuc_bo', name: 'Phủ UV cục bộ', description: 'Phủ UV lên chi tiết riêng (logo, hình ảnh) tạo điểm nhấn nổi bật.', price: 1500000, unit: 'đ/tổng', category: 'surface', color: '#06B6D4', icon: '🔮' },
     { id: 'ep_kim', name: 'Ép kim / Ép nhũ', description: 'Ép lớp nhũ vàng, bạc, đồng lên giấy bằng khuôn nóng - sang trọng tối đa.', price: 2000000, unit: 'đ/tổng', category: 'surface', color: '#F59E0B', icon: '👑' },
@@ -63,21 +63,20 @@ const mapApiToProcess = (apiItem) => ({
     category: apiItem.category,
     color: apiItem.color || '#64748B',
     icon: apiItem.icon || '⚙️',
+    isLamination: apiItem.processId === 'lam_bong' || apiItem.processId === 'lam_mo',
 });
 
 // ==========================================
 // PROCESS CARD COMPONENT
 // ==========================================
-const ProcessCard = React.memo(({ process, isSelected, onToggle }) => {
+const ProcessCard = React.memo(({ process, isSelected, onToggle, isLamination, laminationSides, onSidesChange }) => {
     const baseColor = process.color;
 
     return (
-        <button
-            type="button"
-            onClick={() => onToggle(process.id)}
+        <div
             className={`
                 group relative w-full text-left rounded-2xl border-2 p-4 
-                transition-all duration-300 ease-out cursor-pointer
+                transition-all duration-300 ease-out
                 ${isSelected
                     ? 'shadow-lg scale-[1.02] border-opacity-100'
                     : 'shadow-sm hover:shadow-md border-gray-200 hover:border-gray-300 opacity-60 hover:opacity-80'
@@ -105,58 +104,88 @@ const ProcessCard = React.memo(({ process, isSelected, onToggle }) => {
                 <FaCheck className="text-white text-[10px]" />
             </div>
 
-            {/* Icon + Name Row */}
-            <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110">
-                    {process.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                    <h4
-                        className={`
-                            font-extrabold text-sm leading-snug transition-colors duration-300
-                            ${isSelected ? 'text-gray-900' : 'text-gray-500'}
-                        `}
-                    >
-                        {process.name}
-                    </h4>
-                    <p
-                        className={`
-                            text-[11px] leading-relaxed mt-1 line-clamp-2 transition-colors duration-300
-                            ${isSelected ? 'text-gray-600' : 'text-gray-400'}
-                        `}
-                    >
-                        {process.description}
-                    </p>
+            {/* Clickable area for toggle */}
+            <button
+                type="button"
+                onClick={() => onToggle(process.id)}
+                className="w-full text-left cursor-pointer"
+            >
+                {/* Icon + Name Row */}
+                <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110">
+                        {process.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <h4
+                            className={`
+                                font-extrabold text-sm leading-snug transition-colors duration-300
+                                ${isSelected ? 'text-gray-900' : 'text-gray-500'}
+                            `}
+                        >
+                            {process.name}
+                        </h4>
+                        <p
+                            className={`
+                                text-[11px] leading-relaxed mt-1 line-clamp-2 transition-colors duration-300
+                                ${isSelected ? 'text-gray-600' : 'text-gray-400'}
+                            `}
+                        >
+                            {process.description}
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            {/* Price Badge */}
-            <div className="mt-3 flex items-center justify-between">
-                <span
-                    className={`
-                        inline-flex items-center gap-1 text-xs font-black rounded-lg px-2.5 py-1
-                        transition-all duration-300
-                    `}
-                    style={{
-                        backgroundColor: isSelected ? `${baseColor}20` : '#F3F4F6',
-                        color: isSelected ? baseColor : '#9CA3AF',
-                    }}
-                >
-                    {formatPriceFull(process.price)}đ
-                    <span className="font-medium opacity-70 text-[10px]">/{process.unit.replace('đ/', '')}</span>
-                </span>
+                {/* Price Badge */}
+                <div className="mt-3 flex items-center justify-between">
+                    <span
+                        className={`
+                            inline-flex items-center gap-1 text-xs font-black rounded-lg px-2.5 py-1
+                            transition-all duration-300
+                        `}
+                        style={{
+                            backgroundColor: isSelected ? `${baseColor}20` : '#F3F4F6',
+                            color: isSelected ? baseColor : '#9CA3AF',
+                        }}
+                    >
+                        {formatPriceFull(process.price)}đ
+                        <span className="font-medium opacity-70 text-[10px]">/{process.unit.replace('đ/', '')}</span>
+                    </span>
 
-                {/* Toggle indicator */}
-                <span
-                    className={`
-                        text-[10px] font-bold uppercase tracking-wider transition-all duration-300
-                        ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}
-                    `}
-                    style={{ color: isSelected ? baseColor : '#9CA3AF' }}
-                >
-                    {isSelected ? '✓ Đã chọn' : 'Chọn'}
-                </span>
-            </div>
+                    {/* Toggle indicator */}
+                    <span
+                        className={`
+                            text-[10px] font-bold uppercase tracking-wider transition-all duration-300
+                            ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}
+                        `}
+                        style={{ color: isSelected ? baseColor : '#9CA3AF' }}
+                    >
+                        {isSelected ? '✓ Đã chọn' : 'Chọn'}
+                    </span>
+                </div>
+            </button>
+
+            {/* Lamination: 1/2 sides toggle (shown when selected) */}
+            {isLamination && isSelected && (
+                <div className="mt-3 pt-3 border-t border-purple-200/50">
+                    <span className="text-[10px] font-bold uppercase text-purple-500 tracking-wider block mb-1.5">Số mặt cán</span>
+                    <div className="flex gap-1.5">
+                        {[1, 2].map(n => (
+                            <button
+                                key={n}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); onSidesChange(process.id, n); }}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition border ${
+                                    laminationSides === n
+                                        ? 'bg-purple-600 text-white border-purple-600'
+                                        : 'bg-white text-gray-400 border-gray-200 hover:border-purple-300'
+                                }`}
+                            >
+                                {n} mặt
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Subtle glow effect when selected */}
             {isSelected && (
@@ -167,7 +196,7 @@ const ProcessCard = React.memo(({ process, isSelected, onToggle }) => {
                     }}
                 />
             )}
-        </button>
+        </div>
     );
 });
 
@@ -176,7 +205,7 @@ ProcessCard.displayName = 'ProcessCard';
 // ==========================================
 // MAIN COMPONENT
 // ==========================================
-const PostProcessSelector = ({ onChange, printQuantity = 1000 }) => {
+const PostProcessSelector = ({ onChange, printQuantity = 1000, productArea = 0 }) => {
     const [selectedIds, setSelectedIds] = useState([]);
     const [processes, setProcesses] = useState(FALLBACK_PROCESSES);
     const [loadingApi, setLoadingApi] = useState(true);
@@ -184,6 +213,23 @@ const PostProcessSelector = ({ onChange, printQuantity = 1000 }) => {
     const [expandedCategories, setExpandedCategories] = useState(
         CATEGORIES.map(c => c.id)
     );
+    // Lamination sides: { processId: 1 or 2 }
+    const [lamSides, setLamSides] = useState({});
+
+    const handleSidesChange = useCallback((processId, sides) => {
+        setLamSides(prev => ({ ...prev, [processId]: sides }));
+    }, []);
+
+    // Helper: compute effective per-unit cost for a process
+    const getEffectiveCost = useCallback((p) => {
+        if (p.isLamination || p.id === 'lam_bong' || p.id === 'lam_mo') {
+            // Lamination: price per m² × product area (m²) × sides
+            const areaSqm = productArea / 10000;
+            const sides = lamSides[p.id] || 1;
+            return p.price * areaSqm * sides;
+        }
+        return p.price;
+    }, [productArea, lamSides]);
 
     // ---- FETCH FROM API ----
     useEffect(() => {
@@ -213,35 +259,48 @@ const PostProcessSelector = ({ onChange, printQuantity = 1000 }) => {
         fetchFromApi();
     }, []);
 
+    // Recalculate and notify parent when lamSides or productArea changes
+    const recalculate = useCallback((ids) => {
+        const selectedProcesses = processes.filter(p => ids.includes(p.id));
+        let totalFixedCost = 0;
+        let totalPerUnitCost = 0;
+
+        selectedProcesses.forEach(p => {
+            if (p.unit === 'đ/tổng') {
+                totalFixedCost += p.price;
+            } else {
+                totalPerUnitCost += getEffectiveCost(p);
+            }
+        });
+
+        if (onChange) {
+            onChange({
+                selectedIds: ids,
+                selectedProcesses,
+                totalFixedCost,
+                totalPerUnitCost,
+                totalCostPerItem: totalPerUnitCost + (printQuantity > 0 ? totalFixedCost / printQuantity : 0),
+                grandTotal: totalFixedCost + (totalPerUnitCost * printQuantity),
+            });
+        }
+    }, [processes, getEffectiveCost, onChange, printQuantity]);
+
+    // Recalculate when lamSides or productArea changes
+    useEffect(() => {
+        if (selectedIds.length > 0) {
+            recalculate(selectedIds);
+        }
+    }, [lamSides, productArea]);
+
     const toggleProcess = useCallback((processId) => {
         setSelectedIds(prev => {
             const next = prev.includes(processId)
                 ? prev.filter(id => id !== processId)
                 : [...prev, processId];
-
-            // Calculate totals for parent using current processes state
-            const selectedProcesses = processes.filter(p => next.includes(p.id));
-            const totalFixedCost = selectedProcesses
-                .filter(p => p.unit === 'đ/tổng')
-                .reduce((sum, p) => sum + p.price, 0);
-            const totalPerUnitCost = selectedProcesses
-                .filter(p => p.unit !== 'đ/tổng')
-                .reduce((sum, p) => sum + p.price, 0);
-
-            if (onChange) {
-                onChange({
-                    selectedIds: next,
-                    selectedProcesses,
-                    totalFixedCost,
-                    totalPerUnitCost,
-                    totalCostPerItem: totalPerUnitCost + (printQuantity > 0 ? totalFixedCost / printQuantity : 0),
-                    grandTotal: totalFixedCost + (totalPerUnitCost * printQuantity),
-                });
-            }
-
+            recalculate(next);
             return next;
         });
-    }, [onChange, printQuantity, processes]);
+    }, [recalculate]);
 
     const toggleCategory = useCallback((catId) => {
         setExpandedCategories(prev =>
@@ -254,17 +313,22 @@ const PostProcessSelector = ({ onChange, printQuantity = 1000 }) => {
     // Computed summary
     const summary = useMemo(() => {
         const selected = processes.filter(p => selectedIds.includes(p.id));
-        const fixedTotal = selected
-            .filter(p => p.unit === 'đ/tổng')
-            .reduce((sum, p) => sum + p.price, 0);
-        const perUnit = selected
-            .filter(p => p.unit !== 'đ/tổng')
-            .reduce((sum, p) => sum + p.price, 0);
+        let fixedTotal = 0;
+        let perUnit = 0;
+
+        selected.forEach(p => {
+            if (p.unit === 'đ/tổng') {
+                fixedTotal += p.price;
+            } else {
+                perUnit += getEffectiveCost(p);
+            }
+        });
+
         const costPerItem = perUnit + (printQuantity > 0 ? fixedTotal / printQuantity : 0);
         const grandTotal = fixedTotal + (perUnit * printQuantity);
 
         return { count: selected.length, fixedTotal, perUnit, costPerItem, grandTotal, items: selected };
-    }, [selectedIds, printQuantity, processes]);
+    }, [selectedIds, printQuantity, processes, getEffectiveCost]);
 
     return (
         <div className="space-y-6">
@@ -345,6 +409,9 @@ const PostProcessSelector = ({ onChange, printQuantity = 1000 }) => {
                                             process={process}
                                             isSelected={selectedIds.includes(process.id)}
                                             onToggle={toggleProcess}
+                                            isLamination={process.isLamination || process.id === 'lam_bong' || process.id === 'lam_mo'}
+                                            laminationSides={lamSides[process.id] || 1}
+                                            onSidesChange={handleSidesChange}
                                         />
                                     ))}
                                 </div>

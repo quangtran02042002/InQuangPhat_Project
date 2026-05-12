@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { FaClipboardList, FaCalculator, FaFileWord, FaPrint, FaSave, FaCheck, FaTimes, FaLayerGroup, FaMoneyBillWave, FaPercentage, FaPlus, FaTrash, FaHistory, FaBox, FaEye, FaStar, FaChevronDown, FaTags } from 'react-icons/fa';
+import { FaClipboardList, FaCalculator, FaFileWord, FaPrint, FaSave, FaCheck, FaTimes, FaLayerGroup, FaMoneyBillWave, FaPercentage, FaPlus, FaTrash, FaHistory, FaBox, FaEye, FaStar, FaChevronDown, FaTags, FaSyncAlt } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
@@ -48,31 +48,47 @@ const Inp = ({ label, value, onChange, type = "text", suffix, addon, disabled, p
 );
 
 // ==========================================
-// IMPOSITION SVG COMPONENT
+// IMPOSITION SVG COMPONENT (with Bleed + Gap + Click-to-Rotate)
 // ==========================================
-const ImpositionPreview = ({ printSheetW, printSheetH, flatW, flatH, allowCheatGripper }) => {
-    const GAP = 0.5;
+const ImpositionPreview = ({ printSheetW, printSheetH, flatW, flatH, allowCheatGripper, bleed = 0, gap = 0 }) => {
     const svgPadding = 40;
     const marginSize = allowCheatGripper ? 0 : 1;
+
+    // Effective item size with bleed (bleed on each side)
+    const effectiveW = flatW + 2 * bleed;
+    const effectiveH = flatH + 2 * bleed;
 
     // Ensure W >= H
     const sheetW = Math.max(printSheetW || 0, printSheetH || 0);
     const sheetH = Math.min(printSheetW || 0, printSheetH || 0);
     const usableH = sheetH - marginSize;
 
+    // State for individually rotated items
+    const [rotatedItems, setRotatedItems] = useState({});
+
     const imposition = useMemo(() => {
-        if (!flatW || !flatH || flatW <= 0 || flatH <= 0 || !sheetW || !sheetH || usableH <= 0) return { count: 0, cols: 0, rows: 0, rotated: false };
-        // Normal
-        const cols1 = Math.floor((sheetW + GAP) / (flatW + GAP));
-        const rows1 = Math.floor((usableH + GAP) / (flatH + GAP));
+        if (!effectiveW || !effectiveH || effectiveW <= 0 || effectiveH <= 0 || !sheetW || !sheetH || usableH <= 0) return { count: 0, cols: 0, rows: 0, rotated: false };
+        // Normal orientation
+        const cols1 = Math.floor((sheetW + gap) / (effectiveW + gap));
+        const rows1 = Math.floor((usableH + gap) / (effectiveH + gap));
         const t1 = cols1 * rows1;
-        // Rotated
-        const cols2 = Math.floor((sheetW + GAP) / (flatH + GAP));
-        const rows2 = Math.floor((usableH + GAP) / (flatW + GAP));
+        // Rotated 90°
+        const cols2 = Math.floor((sheetW + gap) / (effectiveH + gap));
+        const rows2 = Math.floor((usableH + gap) / (effectiveW + gap));
         const t2 = cols2 * rows2;
-        if (t1 >= t2) return { count: t1, cols: cols1, rows: rows1, rotated: false, itemW: flatW, itemH: flatH };
-        return { count: t2, cols: cols2, rows: rows2, rotated: true, itemW: flatH, itemH: flatW };
-    }, [sheetW, sheetH, usableH, flatW, flatH]);
+        if (t1 >= t2) return { count: t1, cols: cols1, rows: rows1, rotated: false, itemW: effectiveW, itemH: effectiveH };
+        return { count: t2, cols: cols2, rows: rows2, rotated: true, itemW: effectiveH, itemH: effectiveW };
+    }, [sheetW, sheetH, usableH, effectiveW, effectiveH, gap]);
+
+    // Reset rotated items when imposition changes
+    useEffect(() => { setRotatedItems({}); }, [imposition.cols, imposition.rows, imposition.rotated]);
+
+    const handleItemClick = (key, currentW, currentH) => {
+        setRotatedItems(prev => ({
+            ...prev,
+            [key]: prev[key] ? undefined : true
+        }));
+    };
 
     if (!sheetW || !sheetH) return null;
 
@@ -82,20 +98,48 @@ const ImpositionPreview = ({ printSheetW, printSheetH, flatW, flatH, allowCheatG
     const totalW = sW + svgPadding * 2;
     const totalH = sH + svgPadding * 2;
 
-    const rects = [];
+    const elements = [];
     if (imposition.count > 0) {
-        const itemsGroupW = imposition.cols * imposition.itemW + (imposition.cols - 1) * GAP;
-        const itemsGroupH = imposition.rows * imposition.itemH + (imposition.rows - 1) * GAP;
+        const itemsGroupW = imposition.cols * imposition.itemW + (imposition.cols - 1) * gap;
+        const itemsGroupH = imposition.rows * imposition.itemH + (imposition.rows - 1) * gap;
 
-        // Centered on the ENTIRE sheet
         const startX = svgPadding + (sW - itemsGroupW * scale) / 2;
-        const startY = svgPadding + (sH - itemsGroupH * scale) / 2;
+        const startY = svgPadding + (usableH * scale - itemsGroupH * scale) / 2;
 
         for (let r = 0; r < imposition.rows; r++) {
             for (let c = 0; c < imposition.cols; c++) {
-                const x = startX + c * (imposition.itemW + GAP) * scale;
-                const y = startY + r * (imposition.itemH + GAP) * scale;
-                rects.push(<rect key={`${r}-${c}`} x={x} y={y} width={imposition.itemW * scale} height={imposition.itemH * scale} fill="rgba(0,107,77,0.12)" stroke="#006B4D" strokeWidth="1.5" rx="2" />);
+                const key = `${r}-${c}`;
+                const isRotated = !!rotatedItems[key];
+                const cellW = imposition.itemW;
+                const cellH = imposition.itemH;
+                const drawW = isRotated ? cellH : cellW;
+                const drawH = isRotated ? cellW : cellH;
+
+                // Only draw if the rotated item still fits in the allocated cell
+                const x = startX + c * (cellW + gap) * scale;
+                const y = startY + r * (cellH + gap) * scale;
+
+                const bleedScaled = bleed * scale;
+                const innerW = (drawW - 2 * bleed) * scale;
+                const innerH = (drawH - 2 * bleed) * scale;
+
+                elements.push(
+                    <g key={key} onClick={() => handleItemClick(key)} style={{ cursor: 'pointer' }}>
+                        {/* Bleed area (red tint) */}
+                        {bleed > 0 && (
+                            <rect x={x} y={y} width={drawW * scale} height={drawH * scale}
+                                fill="rgba(239,68,68,0.10)" stroke="#EF4444" strokeWidth="0.8" strokeDasharray="3,2" rx="1" />
+                        )}
+                        {/* Product area (green) */}
+                        <rect x={x + bleedScaled} y={y + bleedScaled} width={innerW} height={innerH}
+                            fill="rgba(0,107,77,0.12)" stroke="#006B4D" strokeWidth="1.5" rx="2" />
+                        {/* Rotation indicator */}
+                        {isRotated && (
+                            <text x={x + drawW * scale / 2} y={y + drawH * scale / 2 + 3}
+                                textAnchor="middle" fontSize="8" fill="#F97316" fontWeight="bold">↻</text>
+                        )}
+                    </g>
+                );
             }
         }
     }
@@ -116,15 +160,18 @@ const ImpositionPreview = ({ printSheetW, printSheetH, flatW, flatH, allowCheatG
                 <text x={svgPadding - 8} y={svgPadding + sH / 2} textAnchor="middle" fontSize="11" fill="#6B7280" fontWeight="bold" transform={`rotate(-90, ${svgPadding - 8}, ${svgPadding + sH / 2})`}>{sheetH} cm</text>
 
                 {/* Items */}
-                {rects}
+                {elements}
             </svg>
-            <div className="mt-3 flex items-center gap-4 text-xs font-bold">
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-bold">
                 <span className="text-[#006B4D] bg-[#E6F0ED] px-3 py-1 rounded-lg">Xếp được: {imposition.count} SP/tờ</span>
                 {imposition.rotated && <span className="text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">Xoay 90°</span>}
-                {flatW > 0 && <span className="text-gray-500">Khổ trải: {flatW.toFixed(1)} × {flatH.toFixed(1)} cm</span>}
+                {flatW > 0 && <span className="text-gray-500">SP: {flatW.toFixed(1)}×{flatH.toFixed(1)} cm</span>}
+                {bleed > 0 && <span className="text-red-500 bg-red-50 px-2 py-1 rounded-lg">Bleed: {bleed} cm</span>}
+                {gap > 0 && <span className="text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">Gap: {gap} cm</span>}
             </div>
-            <div className="mt-2 text-[10px] text-gray-400">
+            <div className="mt-2 text-[10px] text-gray-400 text-center">
                 {!allowCheatGripper ? '* Đã trừ 1cm Nhíp kẽm dưới đáy cạnh ngắn.' : '* Chế độ không trừ nhíp kẽm (Ăn gian).'}
+                <br />* Bấm vào 1 sản phẩm bất kỳ để xoay ngang/dọc.
             </div>
         </div>
     );
@@ -163,6 +210,10 @@ const PrintPriceCalcScreen = () => {
     const [boxType, setBoxType] = useState('custom');
     const [allowCheatGripper, setAllowCheatGripper] = useState(false);
 
+    // ---- BLEED & GAP ----
+    const [bleed, setBleed] = useState(0);
+    const [gap, setGap] = useState(0);
+
     // ---- CUT ----
     const [autoCut, setAutoCut] = useState(true);
     const [sheetsPerBigPaper, setSheetsPerBigPaper] = useState(4);
@@ -172,10 +223,7 @@ const PrintPriceCalcScreen = () => {
     const [numPlates, setNumPlates] = useState(4);
     const platePrice = 375000;
 
-    // ---- POST PROCESS (Legacy - kept for backward compat) ----
-    const [hasLamination, setHasLamination] = useState(false);
-    const [laminationSides, setLaminationSides] = useState(1);
-    const lamPricePerSqm = 3000;
+    // ---- POST PROCESS (Legacy die-cut/UV/foil kept for backward compat) ----
     const [hasDieCut, setHasDieCut] = useState(false);
     const [dieCutPrice, setDieCutPrice] = useState(0);
     const dieLaborCost = 100;
@@ -234,16 +282,19 @@ const PrintPriceCalcScreen = () => {
         try { const res = await axios.get('/api/admin-quotes', authConfig); setSavedQuotes(res.data || []); } catch (e) { console.error(e); }
     };
 
-    // ---- CUT ALGORITHM ----
+    // ---- CUT ALGORITHM (updated with bleed + gap) ----
     const calculateCuts = (cW, cH, chW, chH, applyGripper = false) => {
         if (!chW || !chH || chW <= 0 || chH <= 0 || !cW || !cH) return 0;
         const sheetW = applyGripper ? Math.max(cW, cH) : cW;
         const sheetH = applyGripper ? Math.min(cW, cH) : cH;
         const usableH = applyGripper ? (sheetH - (allowCheatGripper ? 0 : 1)) : sheetH;
-        const GAP = applyGripper ? 0.5 : 0;
+        // When applying gripper (imposition), use bleed + gap
+        const effW = applyGripper ? chW + 2 * bleed : chW;
+        const effH = applyGripper ? chH + 2 * bleed : chH;
+        const G = applyGripper ? gap : 0;
         return Math.max(
-            Math.floor((sheetW + GAP) / (chW + GAP)) * Math.floor((usableH + GAP) / (chH + GAP)),
-            Math.floor((sheetW + GAP) / (chH + GAP)) * Math.floor((usableH + GAP) / (chW + GAP))
+            Math.floor((sheetW + G) / (effW + G)) * Math.floor((usableH + G) / (effH + G)),
+            Math.floor((sheetW + G) / (effH + G)) * Math.floor((usableH + G) / (effW + G))
         );
     };
 
@@ -256,21 +307,18 @@ const PrintPriceCalcScreen = () => {
                 if (ips > 0) setItemsPerSheet(ips);
             }
         }
-    }, [autoCut, paperBigW, paperBigH, printSheetW, printSheetH, flatSize, allowCheatGripper]);
+    }, [autoCut, paperBigW, paperBigH, printSheetW, printSheetH, flatSize, allowCheatGripper, bleed, gap]);
 
     // ---- COST CALCULATIONS ----
     const totalItemsPerBigPaper = sheetsPerBigPaper * itemsPerSheet;
     const paperCostPerItem = totalItemsPerBigPaper > 0 ? (paperBigPrice / totalItemsPerBigPaper) : 0;
     const printCostPerItem = printQuantity > 0 ? ((numPlates * platePrice) / printQuantity) : 0;
-    const sheetAreaSqm = (printSheetW * printSheetH) / 10000;
-    const lamCostPerSheet = sheetAreaSqm * lamPricePerSqm * laminationSides;
-    const lamCostPerItem = (hasLamination && itemsPerSheet > 0) ? (lamCostPerSheet / itemsPerSheet) : 0;
     const dieCostPerItem = (hasDieCut && printQuantity > 0) ? ((Number(dieCutPrice) / printQuantity) + dieLaborCost) : 0;
     const uvCostPerItem = (hasUV && printQuantity > 0) ? (Number(uvPrice) / printQuantity) : 0;
     const foilCostPerItem = (hasFoil && printQuantity > 0) ? (Number(foilPrice) / printQuantity) : 0;
-    // New: Post-process costs from the selector component
+    // Post-process costs from the selector component (includes lamination)
     const postProcessCostPerItem = postProcessData.totalCostPerItem || 0;
-    const totalCostPerItem = paperCostPerItem + printCostPerItem + lamCostPerItem + dieCostPerItem + uvCostPerItem + foilCostPerItem + postProcessCostPerItem;
+    const totalCostPerItem = paperCostPerItem + printCostPerItem + dieCostPerItem + uvCostPerItem + foilCostPerItem + postProcessCostPerItem;
     const suggestedPrice = totalCostPerItem * (1 + (Number(margin) || 0) / 100);
     const totalQuotePrice = suggestedPrice * printQuantity;
 
@@ -278,7 +326,7 @@ const PrintPriceCalcScreen = () => {
     const addToBuffer = () => {
         if (!productName.trim()) return toast.warning('Vui lòng nhập tên sản phẩm');
         const postProcessNames = postProcessData.selectedProcesses.map(p => p.name).join(', ');
-        const specs = `Khổ in: ${printSheetW}x${printSheetH}cm. ${hasLamination ? `Cán màng ${laminationSides}m.` : ''} ${hasDieCut ? 'Bế.' : ''} ${hasUV ? 'UV.' : ''} ${hasFoil ? 'Ép kim.' : ''} ${postProcessNames ? `GC: ${postProcessNames}.` : ''}`.trim();
+        const specs = `Khổ in: ${printSheetW}x${printSheetH}cm. ${hasDieCut ? 'Bế.' : ''} ${hasUV ? 'UV.' : ''} ${hasFoil ? 'Ép kim.' : ''} ${postProcessNames ? `GC: ${postProcessNames}.` : ''}`.trim();
         const item = {
             id: Date.now(),
             productName,
@@ -286,7 +334,7 @@ const PrintPriceCalcScreen = () => {
             specs,
             unitPrice: Math.round(suggestedPrice),
             totalPrice: Math.round(totalQuotePrice),
-            costBreakdown: { paperCost: Math.round(paperCostPerItem), printCost: Math.round(printCostPerItem), lamCost: Math.round(lamCostPerItem), dieCost: Math.round(dieCostPerItem), uvCost: Math.round(uvCostPerItem), foilCost: Math.round(foilCostPerItem), postProcessCost: Math.round(postProcessCostPerItem), totalCost: Math.round(totalCostPerItem), margin: Number(margin) || 0 },
+            costBreakdown: { paperCost: Math.round(paperCostPerItem), printCost: Math.round(printCostPerItem), dieCost: Math.round(dieCostPerItem), uvCost: Math.round(uvCostPerItem), foilCost: Math.round(foilCostPerItem), postProcessCost: Math.round(postProcessCostPerItem), totalCost: Math.round(totalCostPerItem), margin: Number(margin) || 0 },
         };
         setQuoteItems(prev => [...prev, item]);
         toast.success(`Đã lưu hạng mục: ${productName}`);
@@ -604,8 +652,9 @@ const PrintPriceCalcScreen = () => {
                                                     <Inp label="Dài (cm)" value={paperBigH} onChange={e => { setPaperBigH(Number(e.target.value) || 0); setSelectedPaperApiId(''); }} type="number" />
                                                 </div>
                                             </div>
-                                            {/* Khổ In */}
+                                            {/* Khổ Cắt In */}
                                             <div className="space-y-4">
+                                                <h4 className="font-bold text-sm text-[#006B4D] border-b pb-2">Khổ Cắt In (Lên máy)</h4>
                                                 <div className="flex gap-2">
                                                     <Inp label="Rộng (cm)" value={printSheetW} onChange={e => setPrintSheetW(Number(e.target.value) || 0)} type="number" />
                                                     <div className="flex items-end pb-2 text-gray-400 font-black">X</div>
@@ -636,23 +685,12 @@ const PrintPriceCalcScreen = () => {
                                     </Card>
 
                                     <Card title="3. Gia Công Sau In" icon={<FaPrint />}>
-                                        {/* Legacy quick-toggles for Kẽm, Cán màng */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                            {/* Kẽm */}
+                                        {/* Kẽm */}
+                                        <div className="mb-6">
                                             <div className="p-4 rounded-xl border border-blue-100 bg-blue-50/30">
                                                 <h4 className="text-xs font-black uppercase text-blue-600 tracking-wider mb-3 flex items-center gap-1"><FaPrint /> Công in máy</h4>
                                                 <Inp label="Số lượng Kẽm (Tối đa 4)" value={numPlates} onChange={e => { let v = Number(e.target.value) || 0; if (v > 4) v = 4; if (v < 0) v = 0; setNumPlates(v); }} type="number" suffix="kẽm" />
                                                 <p className="text-[10px] text-gray-500 mt-2">* Mặc định 375k/kẽm bao công in.</p>
-                                            </div>
-                                            {/* Cán Màng */}
-                                            <div className="p-4 rounded-xl border border-purple-100 bg-purple-50/30">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <label htmlFor="chkLam" className="text-xs font-black uppercase text-purple-600 tracking-wider cursor-pointer select-none">Cán màng</label>
-                                                    <input id="chkLam" type="checkbox" className="w-4 h-4 text-purple-600 cursor-pointer" checked={hasLamination} onChange={e => setHasLamination(e.target.checked)} />
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {[1, 2].map(n => <button key={n} type="button" disabled={!hasLamination} onClick={() => setLaminationSides(n)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition border ${hasLamination && laminationSides === n ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-400 border-gray-200'} ${!hasLamination && 'opacity-50'}`}>{n} mặt</button>)}
-                                                </div>
                                             </div>
                                         </div>
 
@@ -663,10 +701,11 @@ const PrintPriceCalcScreen = () => {
                                             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
                                         </div>
 
-                                        {/* New PostProcessSelector Component */}
+                                        {/* PostProcessSelector Component (includes lamination) */}
                                         <PostProcessSelector
                                             onChange={handlePostProcessChange}
                                             printQuantity={printQuantity}
+                                            productArea={flatSize.w * flatSize.h}
                                         />
                                     </Card>
                                 </div> {/* --- END OF LEFT COLUMN --- */}
@@ -698,13 +737,25 @@ const PrintPriceCalcScreen = () => {
                                                 <input type="checkbox" id="cheatGripper" checked={allowCheatGripper} onChange={e => setAllowCheatGripper(e.target.checked)} className="text-[#006B4D] cursor-pointer" />
                                                 <label htmlFor="cheatGripper" className="text-xs font-bold text-gray-500 cursor-pointer">Bỏ qua 1cm Nhíp kẽm (Ăn gian)</label>
                                             </div>
+                                            {/* Bleed & Gap inputs */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] uppercase font-bold text-red-400 tracking-wider">Bleed (mỗi bên, cm)</label>
+                                                    <input type="number" step="0.1" min="0" value={bleed} onChange={e => setBleed(Math.max(0, Number(e.target.value) || 0))} className="w-full border border-red-200 rounded-xl px-3 py-2 text-sm font-bold text-red-600 bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400" placeholder="0" />
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[10px] uppercase font-bold text-blue-400 tracking-wider">Gap (khoảng cách, cm)</label>
+                                                    <input type="number" step="0.1" min="0" value={gap} onChange={e => setGap(Math.max(0, Number(e.target.value) || 0))} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm font-bold text-blue-600 bg-blue-50/30 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400" placeholder="0" />
+                                                </div>
+                                            </div>
                                             {flatSize.w > 0 && (
                                                 <div className="text-xs text-center p-2 bg-[#E6F0ED] rounded-lg font-bold text-[#006B4D]">
                                                     Khổ trải: {flatSize.w.toFixed(1)} × {flatSize.h.toFixed(1)} cm
+                                                    {bleed > 0 && <span className="text-red-500 ml-2">(+bleed: {(flatSize.w + 2*bleed).toFixed(1)} × {(flatSize.h + 2*bleed).toFixed(1)})</span>}
                                                 </div>
                                             )}
                                             <div className="border border-gray-100 rounded-xl p-3 bg-[#FAFBFC] flex-1 min-h-[400px]">
-                                                <ImpositionPreview printSheetW={printSheetW} printSheetH={printSheetH} flatW={flatSize.w} flatH={flatSize.h} allowCheatGripper={allowCheatGripper} />
+                                                <ImpositionPreview printSheetW={printSheetW} printSheetH={printSheetH} flatW={flatSize.w} flatH={flatSize.h} allowCheatGripper={allowCheatGripper} bleed={bleed} gap={gap} />
                                             </div>
                                         </div>
                                     </div>
@@ -722,7 +773,6 @@ const PrintPriceCalcScreen = () => {
                                                 {[
                                                     ['Phí Kẽm & In', printCostPerItem, '#111827'],
                                                     ['Vật tư Giấy', paperCostPerItem, '#2563EB'],
-                                                    [`Cán màng (${laminationSides}m)`, lamCostPerItem, '#9333EA'],
                                                     ['Gia công sau in', postProcessCostPerItem, '#059669'],
                                                 ].map(([label, cost, color]) => (
                                                     <div key={label} className="flex justify-between items-center py-2 border-b border-dashed border-gray-200/50 hover:bg-white rounded px-2 transition">

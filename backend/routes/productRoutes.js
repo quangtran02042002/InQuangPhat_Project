@@ -5,13 +5,17 @@ const {
   getProductById, 
   deleteProduct,
   createProduct,
-  updateProduct 
+  updateProduct,
+  getRandomProducts 
 } = require('../controllers/productController');
 const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
   .get(getProducts)
   .post(protect, admin, authorize('director'), createProduct); // <--- POST: Tạo mới (Chỉ Admin)
+
+// Random products for homepage carousel (MUST be before /:id)
+router.get('/random', getRandomProducts);
 
 router.route('/:id')
   .get(getProductById)

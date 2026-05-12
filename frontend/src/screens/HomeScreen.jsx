@@ -11,6 +11,7 @@ import AboutSection from '../components/AboutSection';
 import { FaArrowLeft, FaFilter, FaSearch, FaBoxOpen, FaTshirt, FaArrowRight, FaLayerGroup } from 'react-icons/fa';
 import ServiceSplit from '../components/ServiceSplit';
 import OrderProcess from '../components/OrderProcess';
+import ProductCarousel from '../components/ProductCarousel';
 import CategoryGrid from '../components/CategoryGrid';
 import CategoryArticle from '../components/CategoryArticle';
 import QuickSidebar from '../components/QuickSidebar'; // Import Sidebar
@@ -148,6 +149,11 @@ const HomeScreen = () => {
           {/* 3. Lĩnh vực (Section Services) */}
           <div id="section-services">
             <ServiceSplit />
+          </div>
+
+          {/* 3.5. Băng chuyền sản phẩm */}
+          <div id="section-products-carousel">
+            <ProductCarousel />
           </div>
 
           {/* 4. Quy trình (Section Process) */}
