@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaStar } from 'react-icons/fa';
 
 const ProductCarousel = () => {
   const [products, setProducts] = useState([]);
@@ -28,13 +28,19 @@ const ProductCarousel = () => {
 
   return (
     <section className="product-carousel-section">
+      {/* Decorative background elements */}
+      <div className="product-carousel-bg-glow product-carousel-bg-glow--1" />
+      <div className="product-carousel-bg-glow product-carousel-bg-glow--2" />
+
       <div className="product-carousel-header">
         <div className="product-carousel-header-inner">
-          <div className="product-carousel-badge">✦</div>
+          <div className="product-carousel-badge">
+            <FaStar className="product-carousel-badge-icon" />
+          </div>
           <div>
             <h2 className="product-carousel-title">Sản Phẩm Nổi Bật</h2>
             <p className="product-carousel-subtitle">
-              Khám phá các sản phẩm in ấn đa dạng từ In Quang Phát
+              Khám phá các sản phẩm in ấn chất lượng cao từ In Quang Phát
             </p>
           </div>
         </div>
@@ -68,6 +74,8 @@ const ProductCarousel = () => {
                     className="product-carousel-card-img"
                     loading="lazy"
                   />
+                  {/* Shine effect on hover */}
+                  <div className="product-carousel-card-shine" />
                   <div className="product-carousel-card-overlay">
                     <span className="product-carousel-card-cta">
                       Xem chi tiết <FaArrowRight style={{ fontSize: '10px' }} />
@@ -80,6 +88,8 @@ const ProductCarousel = () => {
                   </span>
                   <h3 className="product-carousel-card-name">{product.name}</h3>
                 </div>
+                {/* Bottom accent bar */}
+                <div className="product-carousel-card-accent" />
               </Link>
             );
           })}
