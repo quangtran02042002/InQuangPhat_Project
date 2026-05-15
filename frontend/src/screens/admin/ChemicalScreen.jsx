@@ -926,10 +926,10 @@ const ChemicalScreen = () => {
                                                             <th className="px-4 py-3 text-left">Phiếu số</th>
                                                             <th className="px-4 py-3 text-center">Loại</th>
                                                             <th className="px-4 py-3 text-center">Tổng Số lượng</th>
-                                                            <th className="px-4 py-3 text-center">Trạng thái</th>
                                                             <th className="px-4 py-3 text-left hidden md:table-cell">Người nhận</th>
                                                             <th className="px-4 py-3 text-left hidden lg:table-cell">Ghi chú</th>
                                                             <th className="px-4 py-3 text-left">Thời gian</th>
+                                                            <th className="px-4 py-3 text-center">Trạng thái</th>
                                                             <th className="px-4 py-3 text-center">Thao tác</th>
                                                         </tr>
                                                     </thead>
