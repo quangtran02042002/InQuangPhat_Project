@@ -46,6 +46,9 @@ const createChemical = async (req, res) => {
                 note: 'Tồn kho ban đầu khi tạo danh mục mới',
                 createdBy: 'Admin',
                 quantityAfter: initQty,
+                status: 'approved', // Tồn kho ban đầu luôn được duyệt
+                approvedBy: 'Hệ thống',
+                approvedAt: new Date(),
             });
             await dispatch.save();
         }
@@ -119,7 +122,9 @@ const getDispatches = async (req, res) => {
 
 /**
  * POST /api/chemicals/dispatches
- * Tạo phiếu nhập/xuất, tự động cộng/trừ tồn kho
+ * Tạo phiếu nhập/xuất
+ * - NHẬP KHO: Đã được xác nhận qua modal ở frontend → status 'approved', trừ/cộng kho ngay
+ * - XUẤT KHO: status 'pending', KHÔNG cộng/trừ kho. Chờ người phụ trách phê duyệt.
  */
 const createDispatch = async (req, res) => {
     try {
@@ -138,7 +143,7 @@ const createDispatch = async (req, res) => {
             return res.status(400).json({ message: 'Thiếu thông tin hàng hóa' });
         }
 
-        // 1. Kiểm tra tính hợp lệ của TẤT CẢ mặt hàng trước khi xử lý
+        // Validate tất cả mặt hàng
         const chemicalDocs = [];
         for (const item of dispatchList) {
             if (Number(item.quantity) <= 0) {
@@ -148,99 +153,196 @@ const createDispatch = async (req, res) => {
             if (!chemical) {
                 return res.status(404).json({ message: `Không tìm thấy hóa chất ID: ${item.chemicalId}` });
             }
-            if (type === 'xuat' && Number(item.quantity) > chemical.quantity) {
+            // Kiểm tra tồn kho chỉ với phiếu NHẬP (vì phiếu xuất sẽ kiểm tra lúc duyệt)
+            if (type === 'nhap' && Number(item.quantity) <= 0) {
+                return res.status(400).json({ message: 'Số lượng nhập phải lớn hơn 0' });
+            }
+            chemicalDocs.push({ chemical, quantity: Number(item.quantity) });
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // PHIẾU NHẬP KHO: Đã xác nhận, cộng kho ngay, status = approved
+        // ─────────────────────────────────────────────────────────
+        if (type === 'nhap') {
+            const dispatchItems = [];
+            for (const doc of chemicalDocs) {
+                const { chemical, quantity } = doc;
+                chemical.quantity += quantity;
+                await chemical.save();
+                dispatchItems.push({
+                    chemical: chemical._id,
+                    chemicalName: chemical.name,
+                    chemicalUnit: chemical.unit,
+                    quantity: quantity,
+                    quantityAfter: chemical.quantity,
+                });
+            }
+
+            const dispatch = new ChemicalDispatch({
+                type: 'nhap',
+                items: dispatchItems,
+                recipient: recipient || '',
+                note: note || '',
+                createdBy: createdBy || 'Admin',
+                status: 'approved',
+                approvedBy: createdBy || 'Admin',
+                approvedAt: new Date(),
+            });
+            const savedDispatch = await dispatch.save();
+
+            return res.status(201).json({
+                dispatches: [savedDispatch],
+                isLow: false,
+                message: `✅ Nhập kho thành công ${dispatchItems.length} mặt hàng!`,
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // PHIẾU XUẤT KHO: Lưu với status = pending, CHƯA trừ kho
+        // ─────────────────────────────────────────────────────────
+        const pendingItems = chemicalDocs.map(({ chemical, quantity }) => ({
+            chemical: chemical._id,
+            chemicalName: chemical.name,
+            chemicalUnit: chemical.unit,
+            quantity: quantity,
+            quantityAfter: null, // Chưa biết vì chưa trừ
+        }));
+
+        const dispatch = new ChemicalDispatch({
+            type: 'xuat',
+            items: pendingItems,
+            recipient: recipient || '',
+            note: note || '',
+            createdBy: createdBy || 'Admin',
+            status: 'pending', // Chờ người phụ trách kho duyệt
+        });
+        const savedDispatch = await dispatch.save();
+
+        return res.status(201).json({
+            dispatches: [savedDispatch],
+            isLow: false,
+            message: `📋 Đã tạo phiếu yêu cầu xuất kho cho ${pendingItems.length} mặt hàng! Đang chờ người phụ trách phê duyệt.`,
+        });
+
+    } catch (error) {
+        console.error('[createDispatch] Lỗi:', error);
+        res.status(500).json({ message: 'Lỗi khi tạo phiếu cấp phát', error: error.message });
+    }
+};
+
+/**
+ * PATCH /api/chemicals/dispatches/:id/status
+ * Phê duyệt hoặc hủy một phiếu xuất kho đang pending
+ * - action = 'approve': Kiểm tra tồn kho, nếu đủ thì trừ kho và đổi status → 'approved'
+ * - action = 'cancel': Xóa phiếu khỏi database
+ */
+const updateDispatchStatus = async (req, res) => {
+    try {
+        const { action } = req.body; // 'approve' | 'cancel'
+        const approvedBy = req.user?.name || req.body.approvedBy || 'Admin';
+
+        if (!['approve', 'cancel'].includes(action)) {
+            return res.status(400).json({ message: 'Hành động không hợp lệ. Chỉ chấp nhận "approve" hoặc "cancel".' });
+        }
+
+        const dispatch = await ChemicalDispatch.findById(req.params.id);
+        if (!dispatch) {
+            return res.status(404).json({ message: 'Không tìm thấy phiếu' });
+        }
+
+        if (dispatch.status !== 'pending') {
+            return res.status(400).json({ message: `Phiếu đã ở trạng thái "${dispatch.status}", không thể thay đổi.` });
+        }
+
+        // ── HỦY: Xóa phiếu khỏi database ──
+        if (action === 'cancel') {
+            await dispatch.deleteOne();
+            return res.json({ message: 'Đã hủy và xóa phiếu xuất kho.' });
+        }
+
+        // ── DUYỆT: Kiểm tra tồn kho, sau đó trừ kho ──
+        if (dispatch.type !== 'xuat') {
+            return res.status(400).json({ message: 'Chỉ phiếu xuất kho mới cần phê duyệt.' });
+        }
+
+        // Bước 1: Kiểm tra TOÀN BỘ tồn kho trước khi thực hiện bất cứ thay đổi nào
+        const chemicalDocs = [];
+        for (const item of dispatch.items) {
+            const chemical = await Chemical.findById(item.chemical);
+            if (!chemical) {
+                return res.status(404).json({
+                    message: `Không tìm thấy hóa chất "${item.chemicalName}" trong kho (có thể đã bị xóa).`
+                });
+            }
+            if (Number(item.quantity) > chemical.quantity) {
                 return res.status(400).json({
-                    message: `Không đủ tồn kho! Hóa chất "${chemical.name}" hiện còn ${chemical.quantity} ${chemical.unit}, bạn đang xuất ${item.quantity}.`
+                    message: `⚠️ Không đủ tồn kho để duyệt! "${chemical.name}" hiện còn ${chemical.quantity} ${chemical.unit}, phiếu yêu cầu ${item.quantity} ${chemical.unit}.`
                 });
             }
             chemicalDocs.push({ chemical, quantity: Number(item.quantity) });
         }
 
-        // 2. Thực hiện cập nhật tồn kho và chuẩn bị dữ liệu phiếu
-        const dispatchItems = [];
+        // Bước 2: Tất cả hợp lệ → Thực hiện trừ kho
         const lowStockChemicals = [];
-
-        for (const doc of chemicalDocs) {
-            const { chemical, quantity } = doc;
-
-            // Cộng / Trừ tồn kho
-            if (type === 'nhap') {
-                chemical.quantity += quantity;
-            } else {
-                chemical.quantity -= quantity;
-            }
+        for (let i = 0; i < chemicalDocs.length; i++) {
+            const { chemical, quantity } = chemicalDocs[i];
+            chemical.quantity -= quantity;
             await chemical.save();
 
-            dispatchItems.push({
-                chemical: chemical._id,
-                chemicalName: chemical.name,
-                chemicalUnit: chemical.unit,
-                quantity: quantity,
-                quantityAfter: chemical.quantity,
-            });
+            // Cập nhật lại quantityAfter trong item của phiếu
+            dispatch.items[i].quantityAfter = chemical.quantity;
 
-            // Ghi nhận mặt hàng sắp hết
-            if (chemical.quantity <= chemical.minStock && type === 'xuat') {
+            if (chemical.quantity <= chemical.minStock) {
                 lowStockChemicals.push(chemical);
             }
         }
 
-        // 3. Lưu 1 phiếu (Dispatch) duy nhất chứa tất cả các items
-        const dispatch = new ChemicalDispatch({
-            type,
-            items: dispatchItems,
-            recipient: recipient || '',
-            note: note || '',
-            createdBy: createdBy || 'Admin',
-        });
-        const savedDispatch = await dispatch.save();
+        // Bước 3: Đổi trạng thái phiếu
+        dispatch.status = 'approved';
+        dispatch.approvedBy = approvedBy;
+        dispatch.approvedAt = new Date();
+        await dispatch.save();
 
-        // 4. Xử lý gửi thông báo BẤT ĐỒNG BỘ (chạy ngầm, không block API)
+        // Bước 4: Gửi thông báo cảnh báo sắp hết kho (bất đồng bộ)
         if (lowStockChemicals.length > 0) {
-            // Không dùng await ở đây để API trả về ngay
             (async () => {
                 for (const chemical of lowStockChemicals) {
                     try {
-                        // 1. Notification trong hệ thống
                         await createNotification({
                             title: '⚠️ Cảnh báo Kho Hóa Chất',
                             message: `[XUẤT KHO] ${chemical.name} xuống còn ${chemical.quantity} ${chemical.unit} (ngưỡng: ${chemical.minStock})`,
                             type: 'stock',
                             link: '/admin/chemicals'
                         });
-
-                        // 2. Gửi email alert
                         await sendAlertEmail({
                             chemicalName: chemical.name,
                             currentQty: chemical.quantity,
                             unit: chemical.unit,
                             minStock: chemical.minStock,
                         });
-
-                        // 3. Gửi Telegram alert
                         await sendTelegramAlert({
                             chemicalName: chemical.name,
                             currentQty: chemical.quantity,
                             unit: chemical.unit,
                             minStock: chemical.minStock,
-                            type,
+                            type: 'xuat',
                         });
                     } catch (e) {
-                        console.error('[ChemicalDispatch Alert Error]', e.message);
+                        console.error('[ApproveDispatch Alert Error]', e.message);
                     }
                 }
             })();
         }
 
-        res.status(201).json({
-            dispatches: [savedDispatch], // Trả về mảng cho tương thích frontend cũ (nếu cần)
+        res.json({
+            dispatch,
             isLow: lowStockChemicals.length > 0,
-            message: `Tạo thành công phiếu ${type === 'nhap' ? 'nhập' : 'xuất'} với ${dispatchItems.length} mặt hàng!`
+            message: `✅ Đã duyệt phiếu xuất kho thành công! ${lowStockChemicals.length > 0 ? '⚠️ Có mặt hàng xuống dưới ngưỡng an toàn.' : ''}`,
         });
 
     } catch (error) {
-        console.error('[createDispatch] Lỗi:', error);
-        res.status(500).json({ message: 'Lỗi khi tạo phiếu cấp phát', error: error.message });
+        console.error('[updateDispatchStatus] Lỗi:', error);
+        res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái phiếu', error: error.message });
     }
 };
 
@@ -251,4 +353,5 @@ module.exports = {
     deleteChemical,
     getDispatches,
     createDispatch,
+    updateDispatchStatus,
 };

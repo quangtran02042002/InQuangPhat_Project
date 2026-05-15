@@ -5,6 +5,7 @@ import {
     FaFlask, FaTrash, FaPlus, FaExclamationTriangle, FaWarehouse,
     FaSearch, FaTimes, FaClipboardList, FaArrowDown, FaArrowUp,
     FaUser, FaStickyNote, FaBoxOpen, FaSync, FaFilter,
+    FaCheck, FaBan, FaHourglassHalf, FaCheckCircle,
 } from 'react-icons/fa';
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -67,6 +68,10 @@ const ChemicalScreen = () => {
     const [filterChemical, setFilterChemical] = useState('');
     const [dispatchKeyword, setDispatchKeyword] = useState('');
     const [expandedDispatchId, setExpandedDispatchId] = useState(null);
+
+    // ---------- CONFIRM NHẬP KHO MODAL ----------
+    const [confirmNhapModal, setConfirmNhapModal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(null); // dispatch _id đang xử lý
 
     // ============================================================
     // FETCH
@@ -201,6 +206,23 @@ const ChemicalScreen = () => {
             toast.warning('Vui lòng thêm ít nhất 1 mặt hàng vào phiếu');
             return;
         }
+        // Phiếu NHẬP: mở modal xác nhận trước
+        if (dispatchForm.type === 'nhap') {
+            setConfirmNhapModal(true);
+            return;
+        }
+        // Phiếu XUẤT: submit ngay (chỉ tạo phiếu pending, chưa trừ kho)
+        await submitDispatchToAPI();
+    };
+
+    // Xác nhận nhập kho qua modal
+    const confirmNhapSubmit = async () => {
+        setConfirmNhapModal(false);
+        await submitDispatchToAPI();
+    };
+
+    // Hàm gọi API tạo phiếu
+    const submitDispatchToAPI = async () => {
         setDispatchSubmitting(true);
         try {
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -212,8 +234,7 @@ const ChemicalScreen = () => {
                 createdBy: userInfo.name,
             }, config);
 
-            const typeLabel = dispatchForm.type === 'nhap' ? 'Nhập kho' : 'Xuất kho';
-            toast.success(data.message || `✅ ${typeLabel} thành công!`);
+            toast.success(data.message || `✅ Tạo phiếu thành công!`);
 
             if (data.isLow) {
                 toast.warning(`⚠️ Cảnh báo: Có mặt hàng đã xuống dưới ngưỡng an toàn!`, { autoClose: 6000 });
@@ -229,6 +250,50 @@ const ChemicalScreen = () => {
             setDispatchSubmitting(false);
         }
     };
+
+    // Duyệt phiếu xuất kho
+    const handleApproveDispatch = async (dispatchId) => {
+        setActionLoading(dispatchId);
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const { data } = await axios.patch(
+                `/api/chemicals/dispatches/${dispatchId}/status`,
+                { action: 'approve', approvedBy: userInfo.name },
+                config
+            );
+            toast.success(data.message || '✅ Đã duyệt phiếu xuất kho!');
+            if (data.isLow) {
+                toast.warning('⚠️ Có mặt hàng xuống dưới ngưỡng an toàn!', { autoClose: 6000 });
+            }
+            await fetchChemicals();
+            await fetchDispatches();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Lỗi khi duyệt phiếu');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    // Hủy (xóa) phiếu xuất kho đang pending
+    const handleCancelDispatch = async (dispatchId) => {
+        if (!window.confirm('Bạn có chắc muốn hủy và xóa phiếu yêu cầu này không?')) return;
+        setActionLoading(dispatchId);
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.patch(
+                `/api/chemicals/dispatches/${dispatchId}/status`,
+                { action: 'cancel', approvedBy: userInfo.name },
+                config
+            );
+            toast.success('Đã hủy và xóa phiếu yêu cầu xuất kho.');
+            await fetchDispatches();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Lỗi khi hủy phiếu');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
 
     const filteredDispatches = dispatches.filter((d) => {
         if (filterType !== 'all' && d.type !== filterType) return false;
@@ -742,24 +807,35 @@ const ChemicalScreen = () => {
                                                 />
                                             </div>
 
+                                            {/* GHI CHÚ CHO PHIẾU XUẤT */}
+                                            {dispatchForm.type === 'xuat' && (
+                                                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                                                    <FaHourglassHalf className="text-amber-500 shrink-0 mt-0.5 text-sm" />
+                                                    <p className="text-amber-700 text-[11px] font-semibold leading-relaxed">
+                                                        Phiếu xuất sẽ ở trạng thái <strong>Chờ duyệt</strong>. Người phụ trách kho cần phê duyệt trước khi tồn kho được trừ.
+                                                    </p>
+                                                </div>
+                                            )}
+
                                             {/* SUBMIT */}
                                             <button
                                                 type="submit"
                                                 disabled={dispatchSubmitting || dispatchItems.length === 0}
                                                 className={`w-full py-3 rounded-xl font-extrabold text-white shadow-md transition flex items-center justify-center gap-2 active:scale-95 ${
                                                     dispatchForm.type === 'xuat'
-                                                        ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
+                                                        ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'
                                                         : 'bg-green-500 hover:bg-green-600 shadow-green-200'
                                                 } disabled:opacity-60 disabled:cursor-not-allowed`}
                                             >
                                                 {dispatchSubmitting ? (
                                                     <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                                                 ) : dispatchForm.type === 'xuat' ? (
-                                                    <><FaArrowUp /> Tạo Phiếu Xuất ({dispatchItems.length} mục)</>
+                                                    <><FaHourglassHalf /> Gửi Yêu Cầu Xuất ({dispatchItems.length} mục)</>
                                                 ) : (
                                                     <><FaArrowDown /> Tạo Phiếu Nhập ({dispatchItems.length} mục)</>
                                                 )}
                                             </button>
+
                                         </form>
                                     </div>
                                 </div>
@@ -850,9 +926,11 @@ const ChemicalScreen = () => {
                                                             <th className="px-4 py-3 text-left">Phiếu số</th>
                                                             <th className="px-4 py-3 text-center">Loại</th>
                                                             <th className="px-4 py-3 text-center">Tổng Số lượng</th>
+                                                            <th className="px-4 py-3 text-center">Trạng thái</th>
                                                             <th className="px-4 py-3 text-left hidden md:table-cell">Người nhận</th>
                                                             <th className="px-4 py-3 text-left hidden lg:table-cell">Ghi chú</th>
                                                             <th className="px-4 py-3 text-left">Thời gian</th>
+                                                            <th className="px-4 py-3 text-center">Thao tác</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -903,10 +981,53 @@ const ChemicalScreen = () => {
                                                                         <div className="text-[#111827] font-medium text-xs">{timeAgo(d.createdAt)}</div>
                                                                         <div className="text-[10px] text-gray-400">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</div>
                                                                     </td>
+                                                                    {/* CỘT TRẠNG THÁI */}
+                                                                    <td className="px-4 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
+                                                                        {(() => {
+                                                                            const st = d.status || (d.type === 'nhap' ? 'approved' : 'approved');
+                                                                            if (st === 'pending') return (
+                                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200">
+                                                                                    <FaHourglassHalf className="text-[10px]" /> Chờ duyệt
+                                                                                </span>
+                                                                            );
+                                                                            if (st === 'approved') return (
+                                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-green-100 text-green-700 border border-green-200">
+                                                                                    <FaCheckCircle className="text-[10px]" /> Đã duyệt
+                                                                                </span>
+                                                                            );
+                                                                            return null;
+                                                                        })()}
+                                                                    </td>
+                                                                    {/* CỘT THAO TÁC */}
+                                                                    <td className="px-4 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
+                                                                        {(d.status === 'pending' || (!d.status && d.type === 'xuat')) && (
+                                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                                <button
+                                                                                    onClick={() => handleApproveDispatch(d._id)}
+                                                                                    disabled={actionLoading === d._id}
+                                                                                    title="Duyệt phiếu"
+                                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-50 text-green-600 hover:bg-green-500 hover:text-white transition disabled:opacity-50"
+                                                                                >
+                                                                                    {actionLoading === d._id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <FaCheck size={11} />}
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleCancelDispatch(d._id)}
+                                                                                    disabled={actionLoading === d._id}
+                                                                                    title="Hủy phiếu"
+                                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                                                >
+                                                                                    <FaBan size={11} />
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                        {(d.status === 'approved' || (d.type === 'nhap' && !d.status)) && (
+                                                                            <span className="text-gray-300 text-xs">—</span>
+                                                                        )}
+                                                                    </td>
                                                                 </tr>
                                                                 {isExpanded && (
                                                                     <tr className="bg-gray-50 border-b border-gray-200">
-                                                                        <td colSpan={6} className="px-4 py-4">
+                                                                        <td colSpan={8} className="px-4 py-4">
                                                                             <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
                                                                                 <h4 className="font-bold text-[#111827] mb-3 text-sm flex items-center gap-2">
                                                                                     <FaBoxOpen className="text-[#006B4D]" /> Chi tiết phiếu {d.type === 'nhap' ? 'nhập' : 'xuất'} số {sttAbs}
@@ -954,6 +1075,7 @@ const ChemicalScreen = () => {
                 )}
             </div>
 
+            {/* MODAL XÁC NHẬN XÓA HÓA CHẤT */}
             <ConfirmModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -961,6 +1083,52 @@ const ChemicalScreen = () => {
                 title="Xóa hóa chất"
                 message="Hóa chất này sẽ bị xóa khỏi danh mục kho. Bạn chắc chắn chứ?"
             />
+
+            {/* MODAL XÁC NHẬN NHẬP KHO */}
+            {confirmNhapModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md mx-4 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 bg-green-50 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shrink-0">
+                                <FaArrowDown size={18} />
+                            </div>
+                            <div>
+                                <h3 className="font-extrabold text-[#111827] text-lg">Xác nhận Nhập Kho</h3>
+                                <p className="text-green-700 text-xs font-medium mt-0.5">Thao tác này sẽ cộng số lượng vào tồn kho ngay lập tức.</p>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-3">
+                            <p className="text-sm text-gray-600 font-medium">
+                                Bạn sắp tạo phiếu nhập kho cho <strong className="text-[#111827]">{dispatchItems.length} mặt hàng</strong>
+                                {dispatchForm.recipient && <> từ <strong className="text-[#111827]">"{dispatchForm.recipient}"</strong></>}.
+                            </p>
+                            <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 border border-gray-100">
+                                {dispatchItems.map((item) => (
+                                    <div key={item.chemicalId} className="flex justify-between items-center text-sm">
+                                        <span className="font-semibold text-gray-700">{item.name}</span>
+                                        <span className="font-extrabold text-green-600">+{formatQty(item.quantity)} <span className="text-xs text-gray-400">{item.unit}</span></span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-xs text-gray-500 italic">Bạn có chắc chắn muốn nhập kho không?</p>
+                        </div>
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+                            <button
+                                onClick={() => setConfirmNhapModal(false)}
+                                className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-100 transition"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={confirmNhapSubmit}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-extrabold transition shadow-lg shadow-green-200"
+                            >
+                                <FaCheck /> Xác nhận Nhập Kho
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

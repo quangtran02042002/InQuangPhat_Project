@@ -27,7 +27,18 @@ const chemicalDispatchSchema = mongoose.Schema(
         recipient: { type: String, default: '' },
         note: { type: String, default: '' },
         createdBy: { type: String, default: 'Admin' },
-        
+
+        // --- TRẠNG THÁI PHÊ DUYỆT ---
+        // Phiếu nhập kho: mặc định 'approved' ngay khi tạo (xác nhận qua modal)
+        // Phiếu xuất kho: mặc định 'pending', cần người phụ trách duyệt
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'cancelled'],
+            default: 'pending',
+        },
+        approvedBy: { type: String, default: '' },
+        approvedAt: { type: Date },
+
         // --- CÁC TRƯỜNG CŨ (giữ lại để tương thích ngược với dữ liệu cũ) ---
         chemical: { type: mongoose.Schema.Types.ObjectId, ref: 'Chemical' },
         chemicalName: { type: String },
