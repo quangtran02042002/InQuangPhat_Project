@@ -143,17 +143,14 @@ const HomeScreen = () => {
           {/* 2. Giới thiệu (Section Intro) */}
           <div id="section-intro">
             <AboutSection />
+            {/* 2.5 Băng chuyền sản phẩm (Đã dời lên đây) */}
+            <ProductCarousel />
             <WhyChooseUs />
           </div>
 
           {/* 3. Lĩnh vực (Section Services) */}
           <div id="section-services">
             <ServiceSplit />
-          </div>
-
-          {/* 3.5. Băng chuyền sản phẩm */}
-          <div id="section-products-carousel">
-            <ProductCarousel />
           </div>
 
           {/* 4. Quy trình (Section Process) */}
