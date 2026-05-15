@@ -206,16 +206,27 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
 
   useImagePaste({
     onImageUploaded: (url) => {
-      if (form.printType === 'silk') {
-        const targetIdx = form.silkFrames.findIndex(f => !f.image);
-        changeSilkFrame(targetIdx !== -1 ? targetIdx : 0, 'image', url);
-      }
+      setForm(f => ({ ...f, images: [{ url }] }));
     },
-    enabled: form.printType === 'silk'
+    enabled: true
   });
 
   const toggleSection = (k) => setSection(s => ({ ...s, [k]: !s[k] }));
   const handleChange  = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const uploadGeneralImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('images', file);
+    setUploading(true);
+    try {
+      const ui = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const { data } = await axios.post('/api/upload', fd, { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${ui.token}` } });
+      setForm(f => ({ ...f, images: [{ url: data[0] }] }));
+      toast.success('Tải ảnh thành công');
+    } catch { toast.error('Lỗi tải ảnh'); } finally { setUploading(false); }
+  };
 
   const addOffsetComp    = () => setForm(f => ({ ...f, offsetComponents: [...f.offsetComponents, { ...EMPTY_OFFSET_COMP }] }));
   const rmOffsetComp     = (idx) => setForm(f => ({ ...f, offsetComponents: f.offsetComponents.filter((_, i) => i !== idx) }));
@@ -229,19 +240,7 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
   const rmSilkFrame     = (idx) => setForm(f => ({ ...f, silkFrames: f.silkFrames.filter((_, i) => i !== idx) }));
   const changeSilkFrame = (idx, field, val) => { const arr = [...form.silkFrames]; arr[idx] = { ...arr[idx], [field]: val }; setForm(f => ({ ...f, silkFrames: arr })); };
 
-  const uploadFrameImage = async (e, idx) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.append('images', file);
-    setUploading(true);
-    try {
-      const ui = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const { data } = await axios.post('/api/upload', fd, { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${ui.token}` } });
-      changeSilkFrame(idx, 'image', data[0]);
-      toast.success('Tải ảnh thành công');
-    } catch { toast.error('Lỗi tải ảnh'); } finally { setUploading(false); }
-  };
+
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
@@ -310,6 +309,27 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
               </div>
               <Inp label="Khách hàng" name="customer" value={form.customer} onChange={handleChange} />
               <Inp label="Sản phẩm áp dụng" name="product" value={form.product} onChange={handleChange} />
+              
+              {/* Ảnh tổng thể */}
+              <div className="md:col-span-2 mt-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Hình ảnh tổng thể sản phẩm</label>
+                <div className="flex gap-4 items-start">
+                  {form.images && form.images.length > 0 && form.images[0].url && (
+                    <div className="relative group shrink-0">
+                      <img src={form.images[0].url} alt="Product" className="w-24 h-24 object-cover rounded-xl border border-gray-200 shadow-sm" />
+                      {!isApproved && (
+                        <button type="button" onClick={() => setForm(f => ({ ...f, images: [] }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-md"><FaTimes size={10} /></button>
+                      )}
+                    </div>
+                  )}
+                  {!isApproved && (!form.images || form.images.length === 0 || !form.images[0].url) && (
+                    <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition">
+                      {uploading ? <span className="text-[10px] text-gray-400">Đang tải...</span> : <><FaUpload className="text-gray-400 mb-1" /><span className="text-[10px] text-gray-500 font-bold text-center">Tải ảnh<br/>(Ctrl+V)</span></>}
+                      <input type="file" accept="image/*" className="hidden" onChange={uploadGeneralImage} disabled={uploading} />
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
           </Section>
 
@@ -379,25 +399,18 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
               </div>
               <div className="space-y-4 text-sm">
                 <div className="hidden lg:grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider px-2">
-                  <div className="col-span-2">Tên khung</div><div className="col-span-2">Lưới/Căng</div>
-                  <div className="col-span-3">Hóa chất pha mực</div><div className="col-span-1">Gạt</div>
-                  <div className="col-span-1">In (hit)</div><div className="col-span-2">Ảnh demo</div>
+                  <div className="col-span-3">Tên khung</div><div className="col-span-2">Lưới/Căng</div>
+                  <div className="col-span-4">Hóa chất pha mực</div><div className="col-span-1 text-center">Gạt</div>
+                  <div className="col-span-1 text-center">In (hit)</div>
                   <div className="col-span-1 text-center">Xóa</div>
                 </div>
                 {form.silkFrames.map((frame, idx) => (
                   <div key={idx} className="flex flex-col lg:grid lg:grid-cols-12 gap-2 items-start lg:items-center bg-gray-50 p-4 lg:p-2 border border-gray-100 rounded-xl">
-                    <div className="w-full lg:col-span-2"><input value={frame.frameName} onChange={e => changeSilkFrame(idx, 'frameName', e.target.value)} placeholder="Tên khung" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" /></div>
+                    <div className="w-full lg:col-span-3"><input value={frame.frameName} onChange={e => changeSilkFrame(idx, 'frameName', e.target.value)} placeholder="Tên khung" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" /></div>
                     <div className="w-full lg:col-span-2"><input value={frame.meshDetails} onChange={e => changeSilkFrame(idx, 'meshDetails', e.target.value)} placeholder="VD: 120T" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" /></div>
-                    <div className="w-full lg:col-span-3"><textarea value={frame.inkFormula} onChange={e => changeSilkFrame(idx, 'inkFormula', e.target.value)} placeholder="20% bóng, 80% trắng..." rows={1} disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border resize-none" /></div>
+                    <div className="w-full lg:col-span-4"><textarea value={frame.inkFormula} onChange={e => changeSilkFrame(idx, 'inkFormula', e.target.value)} placeholder="20% bóng, 80% trắng..." rows={1} disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border resize-none" /></div>
                     <div className="w-full lg:col-span-1"><input value={frame.squeegeeStrokes} onChange={e => changeSilkFrame(idx, 'squeegeeStrokes', e.target.value)} placeholder="số gạt" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" /></div>
                     <div className="w-full lg:col-span-1"><input value={frame.printHits} onChange={e => changeSilkFrame(idx, 'printHits', e.target.value)} placeholder="SL" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" /></div>
-                    <div className="w-full lg:col-span-2 flex flex-col items-center">
-                      <label className={`w-full flex items-center justify-center gap-2 border-2 border-dashed rounded-lg py-1.5 ${isApproved ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'} transition ${frame.image ? 'border-[#006B4D] bg-[#E6F0ED]' : 'border-gray-300'}`}>
-                        {frame.image ? <span className="text-[10px] text-[#006B4D] font-bold">Đã tải ảnh</span> : <><FaUpload className="text-gray-400" /><span className="text-[10px] text-gray-500 font-bold">Upload</span></>}
-                        <input type="file" accept="image/*" className="hidden" onChange={e => uploadFrameImage(e, idx)} disabled={uploading || isApproved} />
-                      </label>
-                      {frame.image && <a href={frame.image} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 underline mt-1 flex items-center gap-1"><FaEye size={10} /> Xem ảnh</a>}
-                    </div>
                     <div className="w-full lg:col-span-1 flex justify-center">
                       {!isApproved && form.silkFrames.length > 1 && (
                         <button type="button" onClick={() => rmSilkFrame(idx)} className="text-red-400 hover:text-red-600 border border-red-200 rounded-lg p-2 w-full flex justify-center"><FaTrash size={14} /></button>
@@ -478,6 +491,12 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
             <Info label="Phiên bản"  value={`v${formula.version}`} />
           </div>
 
+          {formula.images && formula.images.length > 0 && formula.images[0].url && (
+            <DetailBlock title="Hình ảnh tổng thể sản phẩm">
+              <img src={formula.images[0].url} alt="Sản phẩm" className="max-w-xs rounded-xl border border-gray-200 shadow-sm" />
+            </DetailBlock>
+          )}
+
           {formula.printType === 'offset' && formula.offsetComponents?.length > 0 && (
             <div className="space-y-4">
               {formula.offsetComponents.map((comp, idx) => (
@@ -518,7 +537,7 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
                     <table className="w-full text-sm">
                       <thead className="bg-[#006B4D] text-white text-xs">
-                        <tr><th className="px-4 py-3">Khung</th><th className="px-4 py-3">Lưới</th><th className="px-4 py-3">Công thức hóa chất</th><th className="px-4 py-3 text-center">Lần gạt</th><th className="px-4 py-3 text-center">Lần in</th><th className="px-4 py-3 text-center">Ảnh</th></tr>
+                        <tr><th className="px-4 py-3">Khung</th><th className="px-4 py-3">Lưới</th><th className="px-4 py-3">Công thức hóa chất</th><th className="px-4 py-3 text-center">Lần gạt</th><th className="px-4 py-3 text-center">Lần in</th></tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {formula.silkFrames.map((f, i) => (
@@ -528,7 +547,6 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
                             <td className="px-4 py-3 text-xs whitespace-pre-wrap">{f.inkFormula}</td>
                             <td className="px-4 py-3 text-center font-semibold">{f.squeegeeStrokes}</td>
                             <td className="px-4 py-3 text-center font-bold text-blue-600">{f.printHits}</td>
-                            <td className="px-4 py-3 text-center">{f.image ? <a href={f.image} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700"><FaImage size={16} /></a> : <span className="text-gray-300">-</span>}</td>
                           </tr>
                         ))}
                       </tbody>

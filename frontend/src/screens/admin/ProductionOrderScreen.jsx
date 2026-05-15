@@ -572,6 +572,18 @@ const ProductionOrderScreen = () => {
     }
   };
 
+  const changeOrderStatus = async (id, newStatus) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      await axios.put(`/api/production-orders/${id}`, { status: newStatus }, { headers: { Authorization: `Bearer ${userInfo.token}` } });
+      toast.success('Đã cập nhật trạng thái lệnh');
+      setOrders(orders.map(o => o._id === id ? { ...o, status: newStatus } : o));
+    } catch (err) {
+      toast.error('Lỗi cập nhật trạng thái');
+      fetchData();
+    }
+  };
+
   // UI Helpers
   const statusColor = {
     pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -693,9 +705,16 @@ const ProductionOrderScreen = () => {
                       <div className="w-full">
                         <div className="flex items-center gap-3 mb-1">
                           <h3 className="font-extrabold text-lg text-gray-900 leading-tight">{order.orderName}</h3>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide ${statusColor[order.status]}`}>
-                            {statusText[order.status]}
-                          </span>
+                          <select 
+                            value={order.status}
+                            onChange={(e) => changeOrderStatus(order._id, e.target.value)}
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide cursor-pointer focus:outline-none appearance-none hover:opacity-80 transition ${statusColor[order.status]}`}
+                          >
+                            <option value="pending" className="bg-white text-gray-800">Chờ xử lý</option>
+                            <option value="in_progress" className="bg-white text-gray-800">Đang chạy</option>
+                            <option value="completed" className="bg-white text-gray-800">Hoàn thành</option>
+                            <option value="cancelled" className="bg-white text-gray-800">Hủy</option>
+                          </select>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-gray-500 mb-2">
                           <span>Mã: <strong className="text-gray-800">{order.orderCode}</strong></span>
