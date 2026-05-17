@@ -31,11 +31,12 @@ const VersionBadge = ({ version }) => (
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const OFFSET_POST_PROCESS = [
-  'Cán màng mờ', 'Cán màng bóng', 'Cán màng nhung',
-  'Ép kim vàng', 'Ép kim bạc', 'Ép kim holo',
-  'Dập nổi', 'Dập chìm', 'Phủ UV cục bộ', 'Phủ UV toàn bộ',
-  'Bế (Die-cut)', 'Dán hộp', 'Đóng ghim', 'Đóng gáy keo', 'Khâu chỉ',
-  'Xếp tờ', 'Đóng gói'
+  'Cán màng bóng', 'Cán màng mờ', 'Phủ UV toàn phần', 'Phủ UV cục bộ',
+  'Ép kim / Ép nhũ', 'Thúc nổi / Dập chìm', 'Cán gân',
+  'Cấn bế (Die-cutting)', 'Gấp dán hộp', 'Dán cửa sổ',
+  'Bồi giấy (Mounting)', 'Phay rãnh (V-grooving)', 'Bọc hộp (Wrapping)', 'Gia công khay định hình',
+  'Đóng kim / Bấm gáy', 'Đóng gáy keo nhiệt', 'Khâu chỉ gáy keo', 'Đóng gáy lò xo',
+  'Cắt xén (Trimming)', 'Khoan lỗ / Đóng mắt cáo', 'Đục lỗ răng cưa', 'Đóng số nhảy'
 ];
 
 const EMPTY_INK         = { colorName: '', colorCode: '', inkBrand: '', mixRatio: '', note: '' };
