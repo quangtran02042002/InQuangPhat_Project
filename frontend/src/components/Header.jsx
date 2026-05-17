@@ -114,7 +114,7 @@ const Header = () => {
                 </div>
 
                 {/* Dropdown Panel */}
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-80 bg-white rounded-2xl shadow-elevation border border-gray-100 transition-all duration-200 origin-top ${dropdownOpen ? 'opacity-100 visible scale-100 mt-2' : 'opacity-0 invisible scale-95 mt-4'}`}>
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 w-[360px] bg-white rounded-2xl shadow-elevation border border-gray-100 transition-all duration-200 origin-top whitespace-normal ${dropdownOpen ? 'opacity-100 visible scale-100 mt-2' : 'opacity-0 invisible scale-95 mt-4'}`}>
                   <div className="p-2">
                     <Link to="/products/offset" className="flex items-center gap-4 p-3 rounded-xl hover:bg-surface-low transition-colors group/item">
                       <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center text-brand-600 group-hover/item:bg-brand-600 group-hover/item:text-white transition-colors flex-shrink-0">
