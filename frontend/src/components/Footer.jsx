@@ -101,11 +101,18 @@ const Footer = () => {
                 Sản phẩm nổi bật
               </h4>
               <ul className="space-y-3">
-                {['Hộp giấy cao cấp', 'Túi giấy quà tặng', 'Tem nhãn & Sticker', 'Catalogue', 'In áo Waterbased', 'In áo Offset'].map((item, i) => (
+                {[
+                  { name: 'Hộp giấy cao cấp', path: `/products/offset/category/${encodeURIComponent('Hộp Cứng, Hộp Quà')}` },
+                  { name: 'Túi giấy quà tặng', path: `/products/offset/category/${encodeURIComponent('In Túi Xách Giấy')}` },
+                  { name: 'Tem nhãn & Sticker', path: `/products/offset/category/${encodeURIComponent('In Decal, Tem Nhãn')}` },
+                  { name: 'Catalogue', path: `/products/offset/category/${encodeURIComponent('Sách / Catalogue')}` },
+                  { name: 'In áo Waterbased', path: `/products/garment/category/${encodeURIComponent('Waterbased (Mực Nước)')}` },
+                  { name: 'In áo Offset', path: `/products/garment/category/${encodeURIComponent('In Áo Offset')}` },
+                ].map((item, i) => (
                   <li key={i}>
-                    <Link to="/products" className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors duration-200 group">
+                    <Link to={item.path} className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors duration-200 group">
                       <FaChevronRight className="text-[8px] text-brand-500 group-hover:translate-x-1 transition-transform duration-200" />
-                      {item}
+                      {item.name}
                     </Link>
                   </li>
                 ))}
