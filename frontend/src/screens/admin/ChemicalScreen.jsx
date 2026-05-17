@@ -984,7 +984,7 @@ const ChemicalScreen = () => {
                                                                     {/* CỘT TRẠNG THÁI */}
                                                                     <td className="px-2 md:px-3 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
                                                                         {(() => {
-                                                                            const st = d.status || (d.type === 'nhap' ? 'approved' : 'approved');
+                                                                            const st = d.type === 'nhap' ? 'approved' : (d.status || 'approved');
                                                                             if (st === 'pending') return (
                                                                                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200">
                                                                                     <FaHourglassHalf className="text-[10px]" /> Chờ duyệt
@@ -1000,7 +1000,7 @@ const ChemicalScreen = () => {
                                                                     </td>
                                                                     {/* CỘT THAO TÁC */}
                                                                     <td className="px-2 md:px-3 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
-                                                                        {(d.status === 'pending' || (!d.status && d.type === 'xuat')) && (
+                                                                        {d.type === 'xuat' && (d.status === 'pending' || !d.status) && (
                                                                             <div className="flex items-center justify-center gap-1.5">
                                                                                 <button
                                                                                     onClick={() => handleApproveDispatch(d._id)}
