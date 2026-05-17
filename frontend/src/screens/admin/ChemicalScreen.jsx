@@ -409,7 +409,7 @@ const ChemicalScreen = () => {
                 {/* ====================================================== */}
                 {activeTab === 'inventory' && (
                     <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-                        <div className="max-w-7xl mx-auto">
+                        <div className="w-full">
 
                             {/* Title Section */}
                             <div className="flex items-center justify-between gap-4 mb-6 md:mb-8">
@@ -576,7 +576,7 @@ const ChemicalScreen = () => {
                 {/* ====================================================== */}
                 {activeTab === 'dispatch' && (
                     <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-                        <div className="max-w-7xl mx-auto">
+                        <div className="w-full">
 
                             {/* Title */}
                             <div className="flex items-center gap-4 mb-6">
@@ -622,10 +622,10 @@ const ChemicalScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
                                 {/* CỘT TRÁI: FORM TẠO PHIẾU */}
-                                <div className="lg:col-span-1">
+                                <div className="xl:col-span-4">
                                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                                         <div className="p-5 border-b border-gray-100 bg-[#F9FAFB]">
                                             <h3 className="font-extrabold text-[#111827] flex items-center gap-2">
@@ -841,7 +841,7 @@ const ChemicalScreen = () => {
                                 </div>
 
                                 {/* CỘT PHẢI: LỊCH SỬ CẤP PHÁT */}
-                                <div className="lg:col-span-2 flex flex-col gap-4">
+                                <div className="xl:col-span-8 flex flex-col gap-4">
 
                                     {/* Filter bar */}
                                     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -923,14 +923,14 @@ const ChemicalScreen = () => {
                                                 <table className="min-w-full text-sm leading-normal">
                                                     <thead className="bg-[#F9FAFB] text-[10px] font-bold text-[#6B7280] uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200">
                                                         <tr>
-                                                            <th className="px-4 py-3 text-left">Phiếu số</th>
-                                                            <th className="px-4 py-3 text-center">Loại</th>
-                                                            <th className="px-4 py-3 text-center">Tổng Số lượng</th>
-                                                            <th className="px-4 py-3 text-left hidden md:table-cell">Người nhận</th>
-                                                            <th className="px-4 py-3 text-left hidden lg:table-cell">Ghi chú</th>
-                                                            <th className="px-4 py-3 text-left">Thời gian</th>
-                                                            <th className="px-4 py-3 text-center">Trạng thái</th>
-                                                            <th className="px-4 py-3 text-center">Thao tác</th>
+                                                            <th className="px-2 md:px-3 py-3 text-left">Phiếu số</th>
+                                                            <th className="px-2 md:px-3 py-3 text-center">Loại</th>
+                                                            <th className="px-2 md:px-3 py-3 text-center">Tổng SL</th>
+                                                            <th className="px-2 md:px-3 py-3 text-left hidden md:table-cell">Người nhận</th>
+                                                            <th className="px-2 md:px-3 py-3 text-left hidden xl:table-cell">Ghi chú</th>
+                                                            <th className="px-2 md:px-3 py-3 text-left">Thời gian</th>
+                                                            <th className="px-2 md:px-3 py-3 text-center">Trạng thái</th>
+                                                            <th className="px-2 md:px-3 py-3 text-center">Thao tác</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -946,12 +946,12 @@ const ChemicalScreen = () => {
                                                                     className={`hover:bg-gray-50/80 transition-colors cursor-pointer ${!isExpanded && idx !== filteredDispatches.length - 1 ? 'border-b border-gray-100' : ''}`}
                                                                     onClick={() => setExpandedDispatchId(isExpanded ? null : d._id)}
                                                                 >
-                                                                    <td className="px-4 py-3">
+                                                                    <td className="px-2 md:px-3 py-3">
                                                                         <div className="font-bold text-[#111827]">Phiếu {d.type === 'nhap' ? 'nhập' : 'xuất'} {sttAbs}</div>
-                                                                        {hasItems && <div className="text-[10px] text-gray-400">{d.items.length} mặt hàng (Bấm xem)</div>}
+                                                                        {hasItems && <div className="text-[10px] text-gray-400">{d.items.length} mặt hàng</div>}
                                                                     </td>
-                                                                    <td className="px-4 py-3 text-center align-middle">
-                                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
+                                                                    <td className="px-2 md:px-3 py-3 text-center align-middle">
+                                                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-extrabold ${
                                                                             d.type === 'nhap'
                                                                                 ? 'bg-green-100 text-green-700 border border-green-200'
                                                                                 : 'bg-red-100 text-red-600 border border-red-200'
@@ -960,12 +960,12 @@ const ChemicalScreen = () => {
                                                                             {d.type === 'nhap' ? 'Nhập' : 'Xuất'}
                                                                         </span>
                                                                     </td>
-                                                                    <td className="px-4 py-3 text-center align-middle">
+                                                                    <td className="px-2 md:px-3 py-3 text-center align-middle">
                                                                         <span className={`font-extrabold text-base ${d.type === 'nhap' ? 'text-green-600' : 'text-red-500'}`}>
                                                                             {d.type === 'nhap' ? '+' : '-'}{formatQty(totalQty)}
                                                                         </span>
                                                                     </td>
-                                                                    <td className="px-4 py-3 hidden md:table-cell align-middle">
+                                                                    <td className="px-2 md:px-3 py-3 hidden md:table-cell align-middle">
                                                                         <div className="font-medium text-[#111827] flex items-center gap-1">
                                                                             {d.recipient ? (
                                                                                 <><FaUser className="text-gray-300 text-xs shrink-0" /> {d.recipient}</>
@@ -974,24 +974,24 @@ const ChemicalScreen = () => {
                                                                             )}
                                                                         </div>
                                                                     </td>
-                                                                    <td className="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs max-w-[160px] truncate align-middle">
+                                                                    <td className="px-2 md:px-3 py-3 hidden xl:table-cell text-gray-500 text-xs max-w-[120px] truncate align-middle">
                                                                         {d.note || '—'}
                                                                     </td>
-                                                                    <td className="px-4 py-3 align-middle">
+                                                                    <td className="px-2 md:px-3 py-3 align-middle">
                                                                         <div className="text-[#111827] font-medium text-xs">{timeAgo(d.createdAt)}</div>
                                                                         <div className="text-[10px] text-gray-400">{new Date(d.createdAt).toLocaleDateString('vi-VN')}</div>
                                                                     </td>
                                                                     {/* CỘT TRẠNG THÁI */}
-                                                                    <td className="px-4 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
+                                                                    <td className="px-2 md:px-3 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
                                                                         {(() => {
                                                                             const st = d.status || (d.type === 'nhap' ? 'approved' : 'approved');
                                                                             if (st === 'pending') return (
-                                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200">
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-700 border border-amber-200">
                                                                                     <FaHourglassHalf className="text-[10px]" /> Chờ duyệt
                                                                                 </span>
                                                                             );
                                                                             if (st === 'approved') return (
-                                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-green-100 text-green-700 border border-green-200">
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-extrabold bg-green-100 text-green-700 border border-green-200">
                                                                                     <FaCheckCircle className="text-[10px]" /> Đã duyệt
                                                                                 </span>
                                                                             );
@@ -999,7 +999,7 @@ const ChemicalScreen = () => {
                                                                         })()}
                                                                     </td>
                                                                     {/* CỘT THAO TÁC */}
-                                                                    <td className="px-4 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
+                                                                    <td className="px-2 md:px-3 py-3 text-center align-middle" onClick={e => e.stopPropagation()}>
                                                                         {(d.status === 'pending' || (!d.status && d.type === 'xuat')) && (
                                                                             <div className="flex items-center justify-center gap-1.5">
                                                                                 <button
