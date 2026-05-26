@@ -147,6 +147,70 @@ const registerUser = async (req, res) => {
     throw new Error('Thông tin người dùng không hợp lệ');
   }
 };
+const adminCreateUser = async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  try {
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: 'Email này đã được đăng ký' });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'user',
+      isAdmin: role === 'director' || role === 'accountant' || role === 'production',
+    });
+
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        role: user.role,
+      });
+    } else {
+      res.status(400).json({ message: 'Thông tin người dùng không hợp lệ' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Lỗi server khi tạo user' });
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  const { role } = req.body;
+
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+      if (user._id.toString() === req.user._id.toString()) {
+        return res.status(400).json({ message: 'Bạn không thể tự thay đổi vai trò của chính mình!' });
+      }
+
+      user.role = role;
+      user.isAdmin = role === 'director' || role === 'accountant' || role === 'production';
+
+      const updatedUser = await user.save();
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        role: updatedUser.role,
+      });
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Lỗi server khi cập nhật vai trò' });
+  }
+};
+
 module.exports = {
   authUser,
   getUsers,     // <--- THÊM
@@ -154,4 +218,6 @@ module.exports = {
   getUserProfile,    // <--- THÊM
   updateUserProfile, 
   registerUser,// <--- THÊM
+  adminCreateUser,
+  updateUserRole,
 };

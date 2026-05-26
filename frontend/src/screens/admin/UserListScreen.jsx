@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaTrash, FaCheck, FaTimes, FaUserShield, FaSearch, FaTimes as FaClear, FaEnvelope, FaIdBadge, FaUsers, FaUser, FaBars } from 'react-icons/fa';
+import { FaTrash, FaCheck, FaTimes, FaUserShield, FaSearch, FaTimes as FaClear, FaEnvelope, FaIdBadge, FaUsers, FaUser, FaBars, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 import Sidebar from '../../components/Sidebar';
 import ConfirmModal from '../../components/ConfirmModal';
 import AdminHeader from '../../components/AdminHeader';
+import AddUserModal from '../../components/AddUserModal';
 
 // Helper: Random Avatar Color (Giữ nguyên logic của bạn)
 const getAvatarColor = (name) => {
@@ -30,6 +31,8 @@ const UserListScreen = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [deleteUserId, setDeleteUserId] = useState(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [createUserLoading, setCreateUserLoading] = useState(false);
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -70,6 +73,36 @@ const UserListScreen = () => {
         } catch (error) {
             toast.error(error.response?.data?.message || 'Không thể xóa người dùng này');
             setIsModalOpen(false);
+        }
+    };
+
+    // Hàm gọi API tạo tài khoản từ Admin
+    const adminCreateUserHandler = async (userData) => {
+        setCreateUserLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const { data } = await axios.post('/api/users/admin-create', userData, config);
+            
+            setUsers([data, ...users]);
+            toast.success('Đã tạo tài khoản nhân viên mới thành công');
+            setIsAddModalOpen(false);
+            setCreateUserLoading(false);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Lỗi khi tạo tài khoản');
+            setCreateUserLoading(false);
+        }
+    };
+
+    // Hàm gọi API cập nhật vai trò từ Admin
+    const updateUserRoleHandler = async (id, newRole) => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.put(`/api/users/${id}/role`, { role: newRole }, config);
+            
+            setUsers(users.map(u => u._id === id ? { ...u, role: newRole, isAdmin: newRole !== 'user' } : u));
+            toast.success('Đã cập nhật vai trò tài khoản thành công');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Lỗi khi cập nhật vai trò');
         }
     };
 
@@ -134,8 +167,16 @@ const UserListScreen = () => {
                                 )}
                             </div>
 
-                            <div className="w-full md:w-auto flex items-center justify-center bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-extrabold text-sm shadow-sm shrink-0 border border-[#006B4D]/10">
-                                {filteredUsers.length} <span className="font-bold ml-1 text-xs">TÀI KHOẢN</span>
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="flex items-center justify-center bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-extrabold text-sm shadow-sm shrink-0 border border-[#006B4D]/10">
+                                    {filteredUsers.length} <span className="font-bold ml-1 text-xs">TÀI KHOẢN</span>
+                                </div>
+                                <button
+                                    onClick={() => setIsAddModalOpen(true)}
+                                    className="hidden md:flex items-center justify-center bg-[#006B4D] text-white hover:bg-[#00543c] px-5 py-3 rounded-xl font-bold text-sm shadow-sm shrink-0 transition duration-150 active:scale-95 gap-2"
+                                >
+                                    <FaPlus /> Thêm tài khoản
+                                </button>
                             </div>
                         </div>
 
@@ -191,22 +232,26 @@ const UserListScreen = () => {
                                                     </td>
 
                                                     {/* Role */}
-                                                    <td className="px-6 py-4 text-center">
-                                                        {user.role === 'director' ? (
+                                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                        {user._id !== userInfo._id ? (
+                                                            <select
+                                                                value={user.role}
+                                                                onChange={(e) => updateUserRoleHandler(user._id, e.target.value)}
+                                                                className={`text-[10px] font-extrabold rounded-full px-3 py-1.5 outline-none border cursor-pointer uppercase tracking-widest transition-all ${
+                                                                    user.role === 'director' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                                                    user.role === 'accountant' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                    user.role === 'production' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                                                                    'bg-gray-100 text-gray-500 border-gray-200'
+                                                                }`}
+                                                            >
+                                                                <option value="director">Giám đốc</option>
+                                                                <option value="accountant">Kế toán</option>
+                                                                <option value="production">Sản xuất</option>
+                                                                <option value="user">Khách hàng</option>
+                                                            </select>
+                                                        ) : (
                                                             <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-100 uppercase tracking-widest">
                                                                 <FaUserShield className="mr-1.5" /> Giám đốc
-                                                            </span>
-                                                        ) : user.role === 'accountant' ? (
-                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-widest">
-                                                                Kế toán
-                                                            </span>
-                                                        ) : user.role === 'production' ? (
-                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-widest">
-                                                                Sản xuất
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-widest">
-                                                                Khách hàng
                                                             </span>
                                                         )}
                                                     </td>
@@ -249,15 +294,25 @@ const UserListScreen = () => {
                                                     </div>
                                                     <div>
                                                         <h3 className="font-extrabold text-[#111827] text-base leading-tight">{user.name}</h3>
-                                                        <div className="mt-1">
-                                                            {user.role === 'director' ? (
-                                                                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase border border-purple-100">Giám đốc</span>
-                                                            ) : user.role === 'accountant' ? (
-                                                                <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase border border-blue-100">Kế toán</span>
-                                                            ) : user.role === 'production' ? (
-                                                                <span className="text-[9px] font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded uppercase border border-orange-100">Sản xuất</span>
+                                                        <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+                                                            {user._id !== userInfo._id ? (
+                                                                <select
+                                                                    value={user.role}
+                                                                    onChange={(e) => updateUserRoleHandler(user._id, e.target.value)}
+                                                                    className={`text-[9px] font-extrabold rounded px-2 py-0.5 outline-none border cursor-pointer uppercase tracking-widest transition-all ${
+                                                                        user.role === 'director' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                                                                        user.role === 'accountant' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                        user.role === 'production' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                                                                        'bg-gray-50 text-gray-500 border-gray-200'
+                                                                    }`}
+                                                                >
+                                                                    <option value="director">Giám đốc</option>
+                                                                    <option value="accountant">Kế toán</option>
+                                                                    <option value="production">Sản xuất</option>
+                                                                    <option value="user">Khách hàng</option>
+                                                                </select>
                                                             ) : (
-                                                                <span className="text-[9px] font-extrabold text-gray-500 bg-gray-50 px-2 py-0.5 rounded uppercase border border-gray-200">Khách hàng</span>
+                                                                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase border border-purple-100">Giám đốc</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -289,11 +344,28 @@ const UserListScreen = () => {
             </div>
 
             <ConfirmModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onConfirm={confirmDeleteHandler}
-                title="Xóa tài khoản vĩnh viễn"
-                message="Người dùng này sẽ không thể đăng nhập vào hệ thống quản trị nữa. Bạn có chắc chắn muốn thực hiện hành động này?"
+                 isOpen={isModalOpen}
+                 onClose={() => setIsModalOpen(false)}
+                 onConfirm={confirmDeleteHandler}
+                 title="Xóa tài khoản vĩnh viễn"
+                 message="Người dùng này sẽ không thể đăng nhập vào hệ thống quản trị nữa. Bạn có chắc chắn muốn thực hiện hành động này?"
+             />
+
+            {/* Nút Floating Thêm mới cho Mobile */}
+            <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#006B4D] text-white rounded-full shadow-[0_4px_12px_rgba(0,107,77,0.4)] flex items-center justify-center z-30 hover:bg-[#00543c] transition-all active:scale-95"
+                title="Thêm tài khoản"
+            >
+                <FaPlus size={20} />
+            </button>
+
+            {/* Modal Thêm người dùng */}
+            <AddUserModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSave={adminCreateUserHandler}
+                loading={createUserLoading}
             />
         </div>
     );
