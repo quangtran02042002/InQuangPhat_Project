@@ -104,8 +104,23 @@ const updateQuoteStatus = async (req, res) => {
   }
 };
 
+const deleteQuote = async (req, res) => {
+  try {
+    const quote = await Quote.findById(req.params.id);
+    if (quote) {
+      await quote.deleteOne();
+      res.json({ message: 'Đã xóa yêu cầu báo giá thành công' });
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy yêu cầu báo giá' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi xóa yêu cầu báo giá' });
+  }
+};
+
 module.exports = { 
     createQuote, 
     getQuotes,
     updateQuoteStatus, 
+    deleteQuote,
 };

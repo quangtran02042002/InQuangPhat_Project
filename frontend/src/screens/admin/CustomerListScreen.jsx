@@ -161,6 +161,14 @@ const CustomerListScreen = () => {
                         <div className="flex items-center justify-center bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-bold text-sm shadow-sm shrink-0">
                             {filteredCustomers.length} <span className="font-medium ml-1">KH</span>
                         </div>
+                        
+                        {/* Thêm mới Khách hàng - Desktop */}
+                        <Link 
+                            to="/admin/customer/create" 
+                            className="hidden lg:flex items-center justify-center bg-[#006B4D] text-white hover:bg-[#00543c] px-5 py-3 rounded-xl font-bold text-sm shadow-sm shrink-0 transition duration-150 active:scale-95 gap-2"
+                        >
+                            <FaPlus /> Thêm khách hàng
+                        </Link>
                     </div>
                 </div>
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaCheckDouble, FaEye, FaPhone, FaCalendarAlt, FaSearch, FaFilter, FaTimes, FaClipboardList, FaBoxOpen, FaUser, FaClock, FaBars } from 'react-icons/fa';
+import { FaCheckDouble, FaEye, FaPhone, FaCalendarAlt, FaSearch, FaFilter, FaTimes, FaClipboardList, FaBoxOpen, FaUser, FaClock, FaBars, FaTrash } from 'react-icons/fa';
 
 import Sidebar from '../../components/Sidebar';
 import QuoteDetailModal from '../../components/QuoteDetailModal';
@@ -56,6 +56,19 @@ const QuoteListScreen = () => {
             toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
         } catch (error) {
             toast.error('Lỗi khi cập nhật trạng thái');
+        }
+    };
+
+    // Hàm gọi API xóa yêu cầu báo giá
+    const deleteQuoteHandler = async (id) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa yêu cầu báo giá này không?')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.delete(`/api/quotes/${id}`, config);
+            setQuotes(quotes.filter(q => q._id !== id));
+            toast.success('Đã xóa yêu cầu báo giá thành công');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Lỗi khi xóa yêu cầu báo giá');
         }
     };
 
@@ -237,13 +250,22 @@ const QuoteListScreen = () => {
 
                                                     {/* Hành động */}
                                                     <td className="px-6 py-4 text-center">
-                                                        <button
-                                                            onClick={() => openDetailHandler(quote)}
-                                                            className="inline-flex items-center justify-center p-2.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#006B4D] hover:bg-[#E6F0ED] hover:border-[#006B4D]/20 transition-all shadow-sm active:scale-90"
-                                                            title="Xem chi tiết & Xử lý"
-                                                        >
-                                                            <FaEye size={18} />
-                                                        </button>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => openDetailHandler(quote)}
+                                                                className="inline-flex items-center justify-center p-2.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#006B4D] hover:bg-[#E6F0ED] hover:border-[#006B4D]/20 transition-all shadow-sm active:scale-90"
+                                                                title="Xem chi tiết & Xử lý"
+                                                            >
+                                                                <FaEye size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteQuoteHandler(quote._id)}
+                                                                className="inline-flex items-center justify-center p-2.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm active:scale-90"
+                                                                title="Xóa yêu cầu"
+                                                            >
+                                                                <FaTrash size={18} />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -279,12 +301,21 @@ const QuoteListScreen = () => {
                                                     <div className="text-xs font-medium text-gray-500">Số lượng: <span className="font-extrabold">{quote.quantity ? quote.quantity.toLocaleString() : '?'}</span></div>
                                                 </div>
 
-                                                <button
-                                                    onClick={() => openDetailHandler(quote)}
-                                                    className="w-full bg-[#E6F0ED] text-[#006B4D] font-extrabold py-3 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 border border-[#006B4D]/10"
-                                                >
-                                                    <FaEye /> Xem chi tiết & Phản hồi
-                                                </button>
+                                                <div className="flex gap-2 w-full">
+                                                    <button
+                                                        onClick={() => openDetailHandler(quote)}
+                                                        className="flex-1 bg-[#E6F0ED] text-[#006B4D] font-extrabold py-3 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 border border-[#006B4D]/10 text-sm md:text-base"
+                                                    >
+                                                        <FaEye /> Xem & Phản hồi
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteQuoteHandler(quote._id)}
+                                                        className="bg-red-50 text-red-600 hover:bg-red-100 font-extrabold px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 border border-red-100 text-sm md:text-base"
+                                                        title="Xóa"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

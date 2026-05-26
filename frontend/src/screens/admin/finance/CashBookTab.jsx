@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import {
   useGetCashBooksQuery, useCreateCashBookMutation, useUpdateCashBookMutation,
+  useDeleteCashBookMutation,
   useGetTransactionsQuery, useCreateTransactionMutation, useCancelTransactionMutation,
   useGetCategoriesQuery,
 } from '../../../slices/financeApiSlice';
@@ -51,6 +52,7 @@ const CashBookTab = () => {
 
   const [createBook] = useCreateCashBookMutation();
   const [updateBook] = useUpdateCashBookMutation();
+  const [deleteBook] = useDeleteCashBookMutation();
   const [createTx] = useCreateTransactionMutation();
   const [cancelTx] = useCancelTransactionMutation();
 
@@ -139,25 +141,51 @@ const CashBookTab = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {books.map(book => (
-              <button
+              <div
                 key={book._id}
-                onClick={() => setSelectedBook(book._id === selectedBook?._id ? null : book)}
-                className={`rounded-2xl p-4 text-left border-2 transition-all shadow-sm ${
-                  selectedBook?._id === book._id
-                    ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md'
-                }`}
+                className="relative group"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  {book.type === 'bank' ? <FaUniversity className="text-blue-500" /> : <FaWallet className="text-emerald-500" />}
-                  <span className="text-xs font-bold text-gray-500 uppercase">{book.type}</span>
-                </div>
-                <p className="font-bold text-sm text-gray-800 leading-tight">{book.name}</p>
-                <p className={`text-lg font-extrabold mt-2 ${book.currentBalance >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                  {fmt(book.currentBalance)}đ
-                </p>
-                <p className="text-xs text-gray-400">{book.currency}</p>
-              </button>
+                <button
+                  onClick={() => setSelectedBook(book._id === selectedBook?._id ? null : book)}
+                  className={`w-full rounded-2xl p-4 text-left border-2 transition-all shadow-sm ${
+                    selectedBook?._id === book._id
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {book.type === 'bank' ? <FaUniversity className="text-blue-500" /> : <FaWallet className="text-emerald-500" />}
+                    <span className="text-xs font-bold text-gray-500 uppercase">{book.type}</span>
+                  </div>
+                  <p className="font-bold text-sm text-gray-800 leading-tight pr-6">{book.name}</p>
+                  <p className={`text-lg font-extrabold mt-2 ${book.currentBalance >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                    {fmt(book.currentBalance)}đ
+                  </p>
+                  <p className="text-xs text-gray-400">{book.currency}</p>
+                </button>
+
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Bạn có chắc chắn muốn xóa sổ quỹ "${book.name}" không?`)) {
+                      try {
+                        await deleteBook(book._id).unwrap();
+                        toast.success('Đã xóa sổ quỹ thành công');
+                        refetchBooks();
+                        if (selectedBook?._id === book._id) {
+                          setSelectedBook(null);
+                        }
+                      } catch (err) {
+                        toast.error(err?.data?.message || 'Lỗi khi xóa sổ quỹ');
+                      }
+                    }
+                  }}
+                  className="absolute top-3 right-3 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150"
+                  title="Xóa sổ quỹ"
+                >
+                  <FaTrash className="text-xs" />
+                </button>
+              </div>
             ))}
             {books.length === 0 && (
               <div className="col-span-full text-center py-10 text-gray-400">
