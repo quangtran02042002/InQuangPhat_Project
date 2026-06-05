@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaSearch, FaFilter, FaTimes, FaEdit, FaTrash, FaFileExcel, FaEye, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaTimes, FaEdit, FaTrash, FaFileExcel, FaEye, FaCalendarAlt, FaClock, FaLayerGroup } from 'react-icons/fa';
 import { exportQuotationExcel } from '../../../utils/quotationExcelExport';
 
 const statusMap = {
@@ -56,6 +56,14 @@ const QuotationList = ({ onEdit }) => {
     const matchTo   = !dateTo   || qDate <= new Date(dateTo + 'T23:59:59');
     return matchKw && matchSt && matchFrom && matchTo;
   });
+
+  // Helper: lấy tổng số mức giá của 1 báo giá
+  const getTierCount = (q) => {
+    return (q.items || []).reduce((sum, it) => {
+      const tiers = it.priceTiers || [];
+      return sum + (tiers.length || 1);
+    }, 0);
+  };
 
   const Badge = ({ status }) => {
     const s = statusMap[status] || statusMap.draft;
@@ -149,8 +157,8 @@ const QuotationList = ({ onEdit }) => {
                   <th className="px-5 py-4">Mã BG</th>
                   <th className="px-5 py-4">Khách hàng</th>
                   <th className="px-5 py-4 text-center">Ngày</th>
-                  <th className="px-5 py-4 text-center">Items</th>
-                  <th className="px-5 py-4 text-right">Tổng tiền</th>
+                  <th className="px-5 py-4 text-center">Danh mục</th>
+                  <th className="px-5 py-4 text-center">Mức giá</th>
                   <th className="px-5 py-4 text-center">Trạng thái</th>
                   <th className="px-5 py-4 text-center">Hành động</th>
                 </tr>
@@ -167,7 +175,11 @@ const QuotationList = ({ onEdit }) => {
                       </div>
                     </td>
                     <td className="px-5 py-4 text-center font-bold">{q.items?.length || 0}</td>
-                    <td className="px-5 py-4 text-right font-extrabold text-[#006B4D]">{(q.grandTotal || 0).toLocaleString('vi-VN')} đ</td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg border border-purple-200">
+                        <FaLayerGroup className="inline mr-1 text-[10px]" />{getTierCount(q)}
+                      </span>
+                    </td>
                     <td className="px-5 py-4 text-center"><Badge status={q.status} /></td>
                     <td className="px-5 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -197,12 +209,10 @@ const QuotationList = ({ onEdit }) => {
                 <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                   <span className="flex items-center gap-1"><FaCalendarAlt className="text-[#006B4D]" /> {new Date(q.quoteDate).toLocaleDateString('vi-VN')}</span>
                   <span>{q.items?.length || 0} danh mục</span>
-                </div>
-                <div className="bg-[#F9FAFB] p-3 rounded-xl mb-3 flex justify-between items-center">
-                  <span className="text-xs font-bold text-gray-500">Tổng cộng</span>
-                  <span className="text-lg font-extrabold text-[#006B4D]">{(q.grandTotal || 0).toLocaleString('vi-VN')} đ</span>
+                  <span className="text-purple-600 font-bold"><FaLayerGroup className="inline mr-1" />{getTierCount(q)} mức giá</span>
                 </div>
                 <div className="flex gap-2">
+                  <button onClick={() => setViewDetail(q)} className="flex-1 bg-blue-50 text-blue-600 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm border border-blue-200 transition active:scale-95"><FaEye /> Xem</button>
                   <button onClick={() => onEdit(q)} className="flex-1 bg-[#E6F0ED] text-[#006B4D] font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm transition active:scale-95"><FaEdit /> Sửa</button>
                   <button onClick={() => handleExport(q)} className="px-4 bg-emerald-50 text-emerald-600 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm border border-emerald-200 transition"><FaFileExcel /></button>
                   <button onClick={() => handleDelete(q._id)} className="px-4 bg-red-50 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center text-sm border border-red-200 transition"><FaTrash /></button>
@@ -225,29 +235,50 @@ const QuotationList = ({ onEdit }) => {
               <button onClick={() => setViewDetail(null)} className="p-2 hover:bg-red-50 rounded-xl transition text-gray-400 hover:text-red-500"><FaTimes size={18} /></button>
             </div>
             <div className="p-6 space-y-4">
-              {viewDetail.items?.map((it, i) => (
-                <div key={i} className="bg-[#F9FAFB] p-4 rounded-xl border border-gray-100">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-extrabold text-[#006B4D]">#{i + 1} — {it.style || 'Không mã'}</span>
-                    <span className="font-extrabold text-[#111827]">{((it.quantity || 0) * (it.unitPrice || 0)).toLocaleString('vi-VN')} đ</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
-                    <span>KT In: <b>{it.printTechnique || '—'}</b></span>
-                    <span>SL: <b>{(it.quantity || 0).toLocaleString()}</b></span>
-                    <span>Đơn giá: <b>{(it.unitPrice || 0).toLocaleString()} đ</b></span>
-                  </div>
-                  {it.note && <p className="text-xs text-gray-500 italic">📝 {it.note}</p>}
-                  {it.images?.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {it.images.map((img, j) => <img key={j} src={img} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />)}
+              {viewDetail.items?.map((it, i) => {
+                // Backward compat: xử lý dữ liệu cũ
+                const tiers = (it.priceTiers && it.priceTiers.length > 0)
+                  ? it.priceTiers
+                  : [{ quantity: it.quantity || 0, unitPrice: it.unitPrice || 0 }];
+
+                return (
+                  <div key={i} className="bg-[#F9FAFB] p-4 rounded-xl border border-gray-100">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-extrabold text-[#006B4D]">#{i + 1} — {it.style || 'Không mã'}</span>
+                      <span className="text-xs text-gray-500">KT In: <b>{it.printTechnique || '—'}</b></span>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Bảng các mức giá */}
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-2">
+                      <div className="grid grid-cols-2 gap-0 bg-[#111827] text-white text-[10px] font-bold uppercase tracking-wider">
+                        <div className="px-3 py-1.5 border-r border-gray-700">Số lượng</div>
+                        <div className="px-3 py-1.5">Đơn giá (VNĐ)</div>
+                      </div>
+                      {tiers.map((tier, tIdx) => (
+                        <div key={tIdx} className={`grid grid-cols-2 gap-0 border-b border-gray-100 last:border-b-0 ${tIdx % 2 === 0 ? '' : 'bg-gray-50'}`}>
+                          <div className="px-3 py-2 text-sm font-bold text-[#111827] border-r border-gray-100 text-right">
+                            {(tier.quantity || 0).toLocaleString('vi-VN')}
+                          </div>
+                          <div className="px-3 py-2 text-sm font-bold text-[#006B4D] text-right">
+                            {(tier.unitPrice || 0).toLocaleString('vi-VN')} đ
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {it.note && <p className="text-xs text-gray-500 italic">📝 {it.note}</p>}
+                    {it.images?.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {it.images.map((img, j) => <img key={j} src={img} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="p-6 border-t border-gray-100 flex items-center justify-between bg-[#F9FAFB] rounded-b-2xl">
-              <span className="font-bold text-gray-500">Tổng cộng</span>
-              <span className="text-2xl font-extrabold text-[#006B4D]">{(viewDetail.grandTotal || 0).toLocaleString('vi-VN')} đ</span>
+              <span className="font-bold text-gray-500">Tổng danh mục</span>
+              <span className="text-lg font-extrabold text-[#006B4D]">{viewDetail.items?.length || 0} danh mục</span>
             </div>
           </div>
         </div>

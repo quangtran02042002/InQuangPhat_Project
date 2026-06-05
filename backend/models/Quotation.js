@@ -1,11 +1,20 @@
 const mongoose = require('mongoose');
 
+// Sub-schema cho mỗi mức giá (cặp số lượng - đơn giá)
+const priceTierSchema = new mongoose.Schema({
+  quantity: { type: Number, default: 0 },
+  unitPrice: { type: Number, default: 0 },
+}, { _id: false });
+
 const quotationItemSchema = new mongoose.Schema({
   style: { type: String, default: '' },          // Mã hàng (Style)
   images: [{ type: String }],                     // Array URL hình ảnh (Cloudinary)
   printTechnique: { type: String, default: '' },  // Kĩ thuật in
-  quantity: { type: Number, default: 0 },         // Số lượng
-  unitPrice: { type: Number, default: 0 },        // Đơn giá
+  // Giữ field cũ cho backward compatibility (dữ liệu cũ)
+  quantity: { type: Number, default: 0 },
+  unitPrice: { type: Number, default: 0 },
+  // ✅ MỚI: Array đa mức số lượng - đơn giá
+  priceTiers: [priceTierSchema],
   note: { type: String, default: '' },            // Ghi chú
 }, { _id: true });
 
@@ -14,6 +23,7 @@ const quotationSchema = new mongoose.Schema({
   customerName: { type: String, required: true },
   quoteDate: { type: Date, default: Date.now },
   items: [quotationItemSchema],
+  // Giữ grandTotal cho backward compat nhưng không bắt buộc
   grandTotal: { type: Number, default: 0 },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: {

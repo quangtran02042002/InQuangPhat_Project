@@ -1,10 +1,31 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { FaPlus, FaTrash, FaSave, FaImage, FaTimes, FaPaste, FaFileExcel } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaSave, FaImage, FaTimes, FaPaste, FaFileExcel, FaLayerGroup } from 'react-icons/fa';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { exportQuotationExcel } from '../../../utils/quotationExcelExport';
 
-const EMPTY_ITEM = { style: '', images: [], printTechnique: '', quantity: 0, unitPrice: 0, note: '' };
+const EMPTY_TIER = { quantity: 0, unitPrice: 0 };
+const EMPTY_ITEM = { style: '', images: [], printTechnique: '', priceTiers: [{ ...EMPTY_TIER }], note: '' };
+
+/**
+ * Migrate dữ liệu cũ: nếu item có quantity/unitPrice nhưng chưa có priceTiers,
+ * tự tạo priceTiers từ dữ liệu cũ
+ */
+const migrateItem = (item) => {
+  if (item.priceTiers && item.priceTiers.length > 0) {
+    return { ...item, images: item.images || [] };
+  }
+  // Backward compat: tạo priceTiers từ field cũ
+  const tier = {
+    quantity: item.quantity || 0,
+    unitPrice: item.unitPrice || 0,
+  };
+  return {
+    ...item,
+    images: item.images || [],
+    priceTiers: (tier.quantity || tier.unitPrice) ? [tier] : [{ ...EMPTY_TIER }],
+  };
+};
 
 const QuotationForm = ({ editData, onSaved, onCancel }) => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -15,7 +36,7 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
     editData?.quoteDate ? new Date(editData.quoteDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
   );
   const [items, setItems] = useState(
-    editData?.items?.length > 0 ? editData.items.map(it => ({ ...it, images: it.images || [] })) : [{ ...EMPTY_ITEM }]
+    editData?.items?.length > 0 ? editData.items.map(migrateItem) : [{ ...EMPTY_ITEM, priceTiers: [{ ...EMPTY_TIER }] }]
   );
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState({});
@@ -28,18 +49,46 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, [field]: value } : it));
   };
 
-  const addItem = () => setItems(prev => [...prev, { ...EMPTY_ITEM }]);
+  const addItem = () => setItems(prev => [...prev, { ...EMPTY_ITEM, priceTiers: [{ ...EMPTY_TIER }] }]);
 
   const removeItem = (idx) => {
     if (items.length <= 1) return toast.warning('Cần ít nhất 1 danh mục');
     setItems(prev => prev.filter((_, i) => i !== idx));
   };
 
+  // ── Price Tier handlers ──
+  const updateTier = (itemIdx, tierIdx, field, value) => {
+    setItems(prev => prev.map((it, i) => {
+      if (i !== itemIdx) return it;
+      const newTiers = it.priceTiers.map((t, j) =>
+        j === tierIdx ? { ...t, [field]: value } : t
+      );
+      return { ...it, priceTiers: newTiers };
+    }));
+  };
+
+  const addTier = (itemIdx) => {
+    setItems(prev => prev.map((it, i) =>
+      i === itemIdx ? { ...it, priceTiers: [...it.priceTiers, { ...EMPTY_TIER }] } : it
+    ));
+  };
+
+  const removeTier = (itemIdx, tierIdx) => {
+    setItems(prev => prev.map((it, i) => {
+      if (i !== itemIdx) return it;
+      if (it.priceTiers.length <= 1) {
+        toast.warning('Cần ít nhất 1 mức giá');
+        return it;
+      }
+      return { ...it, priceTiers: it.priceTiers.filter((_, j) => j !== tierIdx) };
+    }));
+  };
+
+  // ── Image handlers ──
   const removeImage = (itemIdx, imgIdx) => {
     setItems(prev => prev.map((it, i) => i === itemIdx ? { ...it, images: it.images.filter((_, j) => j !== imgIdx) } : it));
   };
 
-  // ── Upload images ──
   const uploadFiles = async (itemIdx, files) => {
     if (!files || files.length === 0) return;
     setUploading(prev => ({ ...prev, [itemIdx]: true }));
@@ -58,7 +107,6 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
     setUploading(prev => ({ ...prev, [itemIdx]: false }));
   };
 
-  // ── Ctrl+V paste handler ──
   const handlePaste = useCallback((itemIdx, e) => {
     const clipItems = e.clipboardData?.items;
     if (!clipItems) return;
@@ -74,16 +122,13 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
     }
   }, []);
 
-  // ── Grand total ──
-  const grandTotal = items.reduce((s, it) => s + ((it.quantity || 0) * (it.unitPrice || 0)), 0);
-
   // ── Save ──
   const handleSave = async () => {
     if (!customerName.trim()) return toast.warning('Vui lòng nhập tên khách hàng');
     if (items.every(it => !it.style && !it.printTechnique)) return toast.warning('Cần nhập ít nhất 1 danh mục');
     setSaving(true);
     try {
-      const payload = { customerName, quoteDate, items, grandTotal };
+      const payload = { customerName, quoteDate, items };
       let res;
       if (isEditMode) {
         res = await axios.put(`/api/quotations/${editData._id}`, payload, config);
@@ -100,10 +145,13 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
   };
 
   const handleExportExcel = async () => {
-    const payload = { customerName, quoteDate, items, grandTotal, quotationCode: editData?.quotationCode || 'Mới' };
+    const payload = { customerName, quoteDate, items, quotationCode: editData?.quotationCode || 'Mới' };
     await exportQuotationExcel(payload);
     toast.success('Đã xuất file Excel!');
   };
+
+  // ── Format number ──
+  const fmtNumber = (n) => (n || 0).toLocaleString('vi-VN');
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6">
@@ -154,7 +202,8 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Mã hàng + Kĩ thuật in */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Mã hàng (Style)</label>
                 <input value={item.style} onChange={e => updateItem(idx, 'style', e.target.value)}
@@ -165,22 +214,66 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
                 <input value={item.printTechnique} onChange={e => updateItem(idx, 'printTechnique', e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D] transition" placeholder="VD: Offset 4 màu" />
               </div>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Số lượng</label>
-                <input type="number" value={item.quantity || ''} onChange={e => updateItem(idx, 'quantity', Number(e.target.value) || 0)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D] transition" placeholder="0" />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1">Đơn giá (VNĐ)</label>
-                <input type="number" value={item.unitPrice || ''} onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value) || 0)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D] transition" placeholder="0" />
-              </div>
             </div>
 
-            {/* Thành tiền */}
-            <div className="flex items-center justify-between mb-4 bg-[#F9FAFB] p-3 rounded-xl border border-gray-100">
-              <span className="text-xs font-bold text-gray-500">Thành tiền:</span>
-              <span className="text-base font-extrabold text-[#006B4D]">{((item.quantity || 0) * (item.unitPrice || 0)).toLocaleString('vi-VN')} đ</span>
+            {/* ✅ BẢNG GIÁ THEO SỐ LƯỢNG (đa mức) */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FaLayerGroup className="text-[#006B4D] text-xs" />
+                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Bảng giá theo số lượng</label>
+              </div>
+
+              <div className="bg-[#F9FAFB] rounded-xl border border-gray-100 overflow-hidden">
+                {/* Header row */}
+                <div className="grid grid-cols-[1fr_1fr_40px] gap-0 bg-[#111827] text-white text-[10px] font-bold uppercase tracking-wider">
+                  <div className="px-3 py-2 border-r border-gray-700">Số lượng</div>
+                  <div className="px-3 py-2 border-r border-gray-700">Đơn giá (VNĐ)</div>
+                  <div className="px-3 py-2 text-center"></div>
+                </div>
+
+                {/* Tier rows */}
+                {item.priceTiers.map((tier, tIdx) => (
+                  <div key={tIdx} className={`grid grid-cols-[1fr_1fr_40px] gap-0 border-b border-gray-100 last:border-b-0 ${tIdx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFB]'}`}>
+                    <div className="px-1 py-1 border-r border-gray-100">
+                      <input
+                        type="number"
+                        value={tier.quantity || ''}
+                        onChange={e => updateTier(idx, tIdx, 'quantity', Number(e.target.value) || 0)}
+                        className="w-full bg-transparent px-2 py-1.5 text-sm font-bold text-[#111827] focus:outline-none focus:bg-blue-50 rounded transition text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="px-1 py-1 border-r border-gray-100">
+                      <input
+                        type="number"
+                        value={tier.unitPrice || ''}
+                        onChange={e => updateTier(idx, tIdx, 'unitPrice', Number(e.target.value) || 0)}
+                        className="w-full bg-transparent px-2 py-1.5 text-sm font-bold text-[#006B4D] focus:outline-none focus:bg-blue-50 rounded transition text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="flex items-center justify-center">
+                      {item.priceTiers.length > 1 && (
+                        <button
+                          onClick={() => removeTier(idx, tIdx)}
+                          className="text-gray-300 hover:text-red-500 transition p-1"
+                          title="Xóa mức giá"
+                        >
+                          <FaTimes size={10} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Nút thêm mức giá */}
+                <button
+                  onClick={() => addTier(idx)}
+                  className="w-full py-2 text-xs font-bold text-[#006B4D] hover:bg-[#E6F0ED] transition flex items-center justify-center gap-1 border-t border-gray-100"
+                >
+                  <FaPlus size={8} /> Thêm mức giá
+                </button>
+              </div>
             </div>
 
             {/* Ghi chú */}
@@ -231,8 +324,8 @@ const QuotationForm = ({ editData, onSaved, onCancel }) => {
       {/* TỔNG CỘNG & ACTIONS */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-6 bg-[#111827] text-white p-5 rounded-xl">
-          <span className="text-sm font-bold text-gray-300 uppercase tracking-wider">Tổng cộng ({items.length} danh mục)</span>
-          <span className="text-2xl font-black text-[#00E096]">{grandTotal.toLocaleString('vi-VN')} <span className="text-sm opacity-70">đ</span></span>
+          <span className="text-sm font-bold text-gray-300 uppercase tracking-wider">Tổng cộng</span>
+          <span className="text-lg font-extrabold text-[#00E096]">{items.length} <span className="text-sm opacity-70">danh mục</span></span>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={handleSave} disabled={saving}

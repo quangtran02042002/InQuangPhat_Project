@@ -2,6 +2,7 @@
  * Professional Quotation Excel Export
  * Công ty TNHH In Quang Phát
  * Sử dụng exceljs + file-saver
+ * ✅ Hỗ trợ đa mức giá (priceTiers) — mỗi item có thể có nhiều dòng quantity-price
  */
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -46,15 +47,23 @@ export async function exportQuotationExcel(quotation) {
   });
 
   // ── Column widths ──────────────────────────────────────────
+  // A: STT, B: Mã hàng, C: Hình ảnh, D: Kĩ thuật in, E: Số lượng, F: Đơn giá, G: Ghi chú
   ws.columns = [
     { width: 6 },   // A: STT
     { width: 18 },  // B: Mã hàng
     { width: 40 },  // C: Hình ảnh
     { width: 22 },  // D: Kĩ thuật in
-    { width: 12 },  // E: Số lượng
+    { width: 14 },  // E: Số lượng
     { width: 16 },  // F: Đơn giá
     { width: 20 },  // G: Ghi chú
   ];
+
+  const thinBorder = {
+    top: { style: 'thin', color: { argb: BRAND.borderColor } },
+    left: { style: 'thin', color: { argb: BRAND.borderColor } },
+    bottom: { style: 'thin', color: { argb: BRAND.borderColor } },
+    right: { style: 'thin', color: { argb: BRAND.borderColor } },
+  };
 
   let row = 1;
 
@@ -133,7 +142,7 @@ export async function exportQuotationExcel(quotation) {
   ws.mergeCells(`A${row}:C${row}`);
   ws.getCell(`A${row}`).value = 'Kính gửi:';
   ws.getCell(`A${row}`).font = { name: 'Times New Roman', size: 11, italic: true };
-  ws.mergeCells(`D${row}:H${row}`);
+  ws.mergeCells(`D${row}:G${row}`);
   ws.getCell(`D${row}`).value = quotation.customerName || 'Quý Khách';
   ws.getCell(`D${row}`).font = { name: 'Times New Roman', size: 12, bold: true, color: { argb: BRAND.black } };
   ws.getRow(row).height = 24;
@@ -143,7 +152,7 @@ export async function exportQuotationExcel(quotation) {
   ws.mergeCells(`A${row}:C${row}`);
   ws.getCell(`A${row}`).value = 'Ngày báo giá:';
   ws.getCell(`A${row}`).font = { name: 'Times New Roman', size: 11, italic: true };
-  ws.mergeCells(`D${row}:H${row}`);
+  ws.mergeCells(`D${row}:G${row}`);
   ws.getCell(`D${row}`).value = quoteDate.toLocaleDateString('vi-VN');
   ws.getCell(`D${row}`).font = { name: 'Times New Roman', size: 11, bold: true };
   ws.getRow(row).height = 22;
@@ -166,19 +175,11 @@ export async function exportQuotationExcel(quotation) {
   row++;
 
   // ══════════════════════════════════════════════════════════
-  // BẢNG DỮ LIỆU
+  // BẢNG DỮ LIỆU (hỗ trợ đa mức giá)
   // ══════════════════════════════════════════════════════════
-  const headerRow = row;
   const headers = ['STT', 'Mã hàng (Style)', 'Hình ảnh', 'Kĩ thuật in', 'Số lượng', 'Đơn giá (VNĐ)', 'Ghi chú'];
 
   // Header cells with dark background
-  const thinBorder = {
-    top: { style: 'thin', color: { argb: BRAND.borderColor } },
-    left: { style: 'thin', color: { argb: BRAND.borderColor } },
-    bottom: { style: 'thin', color: { argb: BRAND.borderColor } },
-    right: { style: 'thin', color: { argb: BRAND.borderColor } },
-  };
-
   headers.forEach((text, i) => {
     const cell = ws.getCell(row, i + 1);
     cell.value = text;
@@ -192,70 +193,102 @@ export async function exportQuotationExcel(quotation) {
 
   // Data rows
   const items = quotation.items || [];
-  const imageEmbedTasks = []; // Collect image fetch tasks
+  const imageEmbedTasks = [];
 
-  // Column C spans from col index 2.0 to 3.0 (width=40 chars)
-  // We split it into equal horizontal slots for each image
-  const IMG_COL_START = 2;   // 0-based col index of column C
-  const IMG_COL_END = 3;   // exclusive end (column D start)
-  const IMG_PAD = 0.05; // small padding inside each slot
-  const ROW_HEIGHT_PER_IMG = 100; // px height for rows with images
+  const IMG_COL_START = 2;
+  const IMG_COL_END = 3;
+  const IMG_PAD = 0.05;
+  const ROW_HEIGHT_PER_IMG = 100;
 
   items.forEach((item, i) => {
-    const thanhTien = (item.quantity || 0) * (item.unitPrice || 0);
     const isEven = i % 2 === 0;
     const images = item.images && item.images.length > 0 ? item.images : [];
     const imgCount = images.length;
-    const currentRow = row; // Capture row index for async image embedding
 
-    const rowData = [
-      i + 1,
-      item.style || '',
-      '',                 // C: Hình ảnh (will be embedded below)
-      item.printTechnique || '',
-      item.quantity || 0,
-      item.unitPrice || 0,
-      item.note || '',
-    ];
+    // Lấy priceTiers, backward compat với dữ liệu cũ
+    const tiers = (item.priceTiers && item.priceTiers.length > 0)
+      ? item.priceTiers
+      : [{ quantity: item.quantity || 0, unitPrice: item.unitPrice || 0 }];
 
-    rowData.forEach((val, j) => {
-      const cell = ws.getCell(row, j + 1);
-      cell.value = val;
-      cell.font = { name: 'Times New Roman', size: 10.5 };
-      cell.border = thinBorder;
+    const tierCount = tiers.length;
+    const startRow = row;
 
-      if (j === 0) {
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (j === 2) {
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      } else if (j === 4 || j === 5) {
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        if (j === 5) {
-          cell.numFmt = '#,##0';
-          cell.font = { name: 'Times New Roman', size: 10.5, bold: true };
-        } else {
-          cell.numFmt = '#,##0';
-        }
+    // Ghi mỗi tier thành 1 dòng
+    tiers.forEach((tier, tIdx) => {
+      const currentRow = row;
+
+      // Cột E: Số lượng
+      const qtyCell = ws.getCell(currentRow, 5);
+      qtyCell.value = tier.quantity || 0;
+      qtyCell.numFmt = '#,##0';
+      qtyCell.font = { name: 'Times New Roman', size: 10.5 };
+      qtyCell.alignment = { horizontal: 'right', vertical: 'middle' };
+      qtyCell.border = thinBorder;
+      if (isEven) qtyCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.grayLight } };
+
+      // Cột F: Đơn giá
+      const priceCell = ws.getCell(currentRow, 6);
+      priceCell.value = tier.unitPrice || 0;
+      priceCell.numFmt = '#,##0';
+      priceCell.font = { name: 'Times New Roman', size: 10.5, bold: true };
+      priceCell.alignment = { horizontal: 'right', vertical: 'middle' };
+      priceCell.border = thinBorder;
+      if (isEven) priceCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.grayLight } };
+
+      // Các cột merge (A, B, C, D, G) — chỉ ghi giá trị ở dòng đầu, border ở tất cả
+      const mergeCols = [1, 2, 3, 4, 7]; // A, B, C, D, G
+      mergeCols.forEach(col => {
+        const cell = ws.getCell(currentRow, col);
+        cell.border = thinBorder;
+        cell.font = { name: 'Times New Roman', size: 10.5 };
+        if (isEven) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.grayLight } };
+
+        if (col === 1) cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        else if (col === 3) cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        else cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+      });
+
+      // Row height: dòng đầu có thể cao hơn nếu có ảnh
+      if (tIdx === 0 && imgCount > 0) {
+        ws.getRow(currentRow).height = ROW_HEIGHT_PER_IMG;
       } else {
-        cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        ws.getRow(currentRow).height = 26;
       }
 
-      if (isEven) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.grayLight } };
-      }
+      row++;
     });
 
-    // Row height: taller when images exist
-    ws.getRow(row).height = imgCount > 0 ? ROW_HEIGHT_PER_IMG : 26;
+    const endRow = row - 1;
 
-    // Queue all images for this item
+    // Merge cells cho các cột chung (A, B, C, D, G) nếu có nhiều tier
+    if (tierCount > 1) {
+      // Merge A (STT)
+      ws.mergeCells(`A${startRow}:A${endRow}`);
+      // Merge B (Mã hàng)
+      ws.mergeCells(`B${startRow}:B${endRow}`);
+      // Merge C (Hình ảnh)
+      ws.mergeCells(`C${startRow}:C${endRow}`);
+      // Merge D (Kĩ thuật in)
+      ws.mergeCells(`D${startRow}:D${endRow}`);
+      // Merge G (Ghi chú)
+      ws.mergeCells(`G${startRow}:G${endRow}`);
+    }
+
+    // Ghi giá trị cho các cột merge (chỉ cell đầu tiên)
+    ws.getCell(`A${startRow}`).value = i + 1;
+    ws.getCell(`B${startRow}`).value = item.style || '';
+    ws.getCell(`C${startRow}`).value = ''; // Images embedded below
+    ws.getCell(`D${startRow}`).value = item.printTechnique || '';
+    ws.getCell(`G${startRow}`).value = item.note || '';
+
+    // Queue images (embed vào vùng merge C)
     images.forEach((imgUrl, imgIdx) => {
-      // Divide column C into equal horizontal slots for each image
       const slotWidth = (IMG_COL_END - IMG_COL_START) / imgCount;
       const colLeft = IMG_COL_START + imgIdx * slotWidth + IMG_PAD;
       const colRight = IMG_COL_START + (imgIdx + 1) * slotWidth - IMG_PAD;
-      const rowTop = currentRow - 1 + IMG_PAD;
-      const rowBottom = currentRow - 1 + 1 - IMG_PAD;
+      const rowTop = startRow - 1 + IMG_PAD;
+      // Nếu có nhiều tier, ảnh span toàn bộ vùng merge C
+      const rowBottom = (imgCount > 0 ? startRow : endRow) - 1 + 1 - IMG_PAD;
 
       imageEmbedTasks.push(
         fetch(imgUrl)
@@ -272,42 +305,25 @@ export async function exportQuotationExcel(quotation) {
           .catch(() => { /* skip failed image */ })
       );
     });
-
-    row++;
   });
 
   // Wait for all images to be fetched & embedded
   await Promise.all(imageEmbedTasks);
 
   // ══════════════════════════════════════════════════════════
-  // DÒNG TỔNG CỘNG
+  // DÒNG TỔNG CỘNG (chỉ hiển thị tổng danh mục)
   // ══════════════════════════════════════════════════════════
-  ws.mergeCells(`A${row}:E${row}`);
+  ws.mergeCells(`A${row}:G${row}`);
   const totalLabelCell = ws.getCell(`A${row}`);
-  totalLabelCell.value = 'TỔNG CỘNG';
+  totalLabelCell.value = `TỔNG CỘNG: ${items.length} DANH MỤC`;
   totalLabelCell.font = { name: 'Times New Roman', size: 12, bold: true, color: { argb: BRAND.white } };
   totalLabelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };
-  totalLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
+  totalLabelCell.alignment = { horizontal: 'center', vertical: 'middle' };
   totalLabelCell.border = thinBorder;
-  for (let c = 2; c <= 5; c++) {
+  for (let c = 2; c <= 7; c++) {
     ws.getCell(row, c).border = thinBorder;
     ws.getCell(row, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };
   }
-
-  const grandTotal = quotation.grandTotal || items.reduce((s, it) => s + ((it.quantity || 0) * (it.unitPrice || 0)), 0);
-  const totalValueCell = ws.getCell(`F${row}`);
-  totalValueCell.value = grandTotal;
-  totalValueCell.numFmt = '#,##0';
-  totalValueCell.font = { name: 'Times New Roman', size: 13, bold: true, color: { argb: BRAND.white } };
-  totalValueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };
-  totalValueCell.alignment = { horizontal: 'right', vertical: 'middle' };
-  totalValueCell.border = thinBorder;
-
-  const totalNoteCell = ws.getCell(`G${row}`);
-  totalNoteCell.value = '';
-  totalNoteCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.primaryColor } };
-  totalNoteCell.border = thinBorder;
-
   ws.getRow(row).height = 30;
   row++;
 

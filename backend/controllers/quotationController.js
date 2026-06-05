@@ -5,7 +5,7 @@ const Quotation = require('../models/Quotation');
 // @access  Private/Admin
 const createQuotation = async (req, res) => {
   try {
-    const { customerName, quoteDate, items, grandTotal, status } = req.body;
+    const { customerName, quoteDate, items, status } = req.body;
 
     if (!customerName || !items || items.length === 0) {
       return res.status(400).json({ message: 'Cần có tên khách hàng và ít nhất 1 danh mục' });
@@ -15,7 +15,7 @@ const createQuotation = async (req, res) => {
       customerName,
       quoteDate: quoteDate || Date.now(),
       items,
-      grandTotal: grandTotal || items.reduce((sum, it) => sum + ((it.quantity || 0) * (it.unitPrice || 0)), 0),
+      grandTotal: 0, // Không còn tính tổng
       status: status || 'draft',
       createdBy: req.user._id,
     });
@@ -68,12 +68,12 @@ const updateQuotation = async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy báo giá' });
     }
 
-    const { customerName, quoteDate, items, grandTotal, status } = req.body;
+    const { customerName, quoteDate, items, status } = req.body;
 
     quotation.customerName = customerName || quotation.customerName;
     quotation.quoteDate = quoteDate || quotation.quoteDate;
     quotation.items = items || quotation.items;
-    quotation.grandTotal = grandTotal ?? items?.reduce((sum, it) => sum + ((it.quantity || 0) * (it.unitPrice || 0)), 0) ?? quotation.grandTotal;
+    quotation.grandTotal = 0; // Không còn tính tổng
     quotation.status = status || quotation.status;
 
     const updated = await quotation.save();
