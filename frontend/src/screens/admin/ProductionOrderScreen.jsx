@@ -525,7 +525,7 @@ const ProductionOrderScreen = () => {
   };
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    setIsAdmin(userInfo?.isAdmin || false);
+    setIsAdmin(userInfo?.isAdmin || ['director', 'production'].includes(userInfo?.role));
   }, []);
   useEffect(() => {
     fetchData();

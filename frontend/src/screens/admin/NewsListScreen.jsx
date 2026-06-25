@@ -24,7 +24,7 @@ const NewsListScreen = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   useEffect(() => {
-    if (userInfo && userInfo.isAdmin) {
+    if (userInfo) {
         fetchNews();
     } else {
         navigate('/login');

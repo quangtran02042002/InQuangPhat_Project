@@ -17,7 +17,7 @@ const InventoryScreen = () => {
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
   const authConfig = { headers: { Authorization: `Bearer ${userInfo?.token}` } };
-  const isAdmin = userInfo?.isAdmin;
+  const isAdmin = userInfo?.isAdmin || ['director', 'production'].includes(userInfo?.role);
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -599,7 +599,7 @@ const PrintFormulaScreen = () => {
 
   useEffect(() => {
     const ui = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    setIsAdmin(ui?.isAdmin || false);
+    setIsAdmin(ui?.isAdmin || ['director', 'production'].includes(ui?.role));
   }, []);
 
   const getToken = () => {
