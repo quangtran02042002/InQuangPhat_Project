@@ -119,7 +119,7 @@ const NewsDetailScreen = () => {
                             <p className="text-white/90 text-sm mb-8 font-medium relative z-10">Bạn cần tư vấn in ấn hoặc báo giá nhanh?</p>
 
                             <a href="tel:0903597686" className="block bg-white text-[#006B4D] font-extrabold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-[#F9FAFB] transition-all transform hover:-translate-y-1 mb-4 relative z-10">
-                                <FaPhoneAlt className="inline mr-3 animate-pulse text-lg" /> 0903.597.686
+                                <FaPhoneAlt className="inline mr-3 animate-pulse text-lg" /> 0903597686
                             </a>
                             <p className="text-xs text-[#E6F0ED] font-bold tracking-wider relative z-10 uppercase">Phục vụ 24/7 (Cả T7 & CN)</p>
                         </div>

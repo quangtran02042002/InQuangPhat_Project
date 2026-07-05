@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom';
 
 const COMPANY = {
   name: 'CÔNG TY TNHH IN QUANG PHÁT',
-  address: 'Số 5, Đường số 4, cụm CN An Hoà, phường Hương An, Huế, Việt Nam',
-  phone: 'Hotline: 0935 110 639 – 0903 597 686',
+  address: 'Số 5. đường số 4, cụm CN An Hoà, phường Hương An, Huế',
+  phone: 'Hotline: 0903597686 ( Tấn ), 0935110639 ( Quang )',
   email: 'Email: inquangphat@gmail.com',
 };
 

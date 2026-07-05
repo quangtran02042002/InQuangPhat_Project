@@ -130,13 +130,17 @@ const Footer = () => {
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <FaMapMarkerAlt className="text-rose-400 text-xs" />
                   </div>
-                  <span className="text-sm text-gray-400 leading-relaxed">Số 5, Đường số 4, cụm CN An Hoà, phường Hương An, Huế, Việt Nam</span>
+                  <span className="text-sm text-gray-400 leading-relaxed">Số 5. đường số 4, cụm CN An Hoà, phường Hương An, Huế</span>
                 </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <FaPhoneAlt className="text-green-400 text-xs" />
                   </div>
-                  <a href="tel:0903597686" className="text-sm text-gray-400 hover:text-white transition-colors">0903.597.686 - 0935.110.639</a>
+                  <span className="text-sm text-gray-400 leading-relaxed">
+                    <a href="tel:0903597686" className="hover:text-white transition-colors">0903597686 ( Tấn )</a>
+                    {" - "}
+                    <a href="tel:0935110639" className="hover:text-white transition-colors">0935110639 ( Quang )</a>
+                  </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">

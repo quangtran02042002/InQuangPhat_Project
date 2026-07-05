@@ -176,7 +176,7 @@ const PaperPriceScreen = () => {
 
         const finalData = [
             ["CÔNG TY TNHH IN QUANG PHÁT"],                                    // Dòng 1
-            ["Hotline: 0903.597.686 - 0935.110.639 - Email: inquangphat@gmail.com"],        // Dòng 2
+            ["Hotline: 0903597686 ( Tấn ), 0935110639 ( Quang ) - Email: inquangphat@gmail.com"],        // Dòng 2
             [""],                                                              // Dòng 3 (Trống)
             [reportTitle],                                                     // Dòng 4 (Tiêu đề báo cáo)
             [`Ngày xuất báo cáo: ${dateStr}`],                                 // Dòng 5 (Ngày)

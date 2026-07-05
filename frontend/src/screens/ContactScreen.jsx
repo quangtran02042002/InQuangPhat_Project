@@ -43,7 +43,7 @@ const ContactScreen = () => {
       bg: 'bg-rose-50',
       color: 'text-rose-500',
       label: 'Địa chỉ xưởng',
-      value: 'Số 5, Đường số 4, cụm CN An Hoà, phường Hương An, Huế, Việt Nam',
+      value: 'Số 5. đường số 4, cụm CN An Hoà, phường Hương An, Huế',
       sub: '(Có chỗ đỗ ô tô cho khách hàng)',
     },
     {
@@ -51,8 +51,8 @@ const ContactScreen = () => {
       bg: 'bg-green-50',
       color: 'text-green-500',
       label: 'Hotline / Zalo',
-      value: '0903.597.686 (Mr. Tấn)',
-      sub: '0935.110.639 (Quang)',
+      value: '0903597686 ( Tấn )',
+      sub: '0935110639 ( Quang )',
     },
     {
       icon: <FaEnvelope />,
@@ -151,9 +151,15 @@ const ContactScreen = () => {
               </a>
               <a
                 href="tel:0903597686"
-                className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-600 hover:text-brand-600 text-gray-700 py-3.5 rounded-2xl font-bold transition-all duration-300 text-sm"
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-600 hover:text-brand-600 text-gray-700 py-3.5 rounded-2xl font-bold transition-all duration-300 text-sm"
               >
-                <FaPhoneAlt size={14} /> 0903.597.686
+                <FaPhoneAlt size={14} /> 0903597686 ( Tấn )
+              </a>
+              <a
+                href="tel:0935110639"
+                className="flex-1 min-w-[140px] flex items-center justify-center gap-2 bg-white border-2 border-gray-200 hover:border-brand-600 hover:text-brand-600 text-gray-700 py-3.5 rounded-2xl font-bold transition-all duration-300 text-sm"
+              >
+                <FaPhoneAlt size={14} /> 0935110639 ( Quang )
               </a>
             </div>
           </div>

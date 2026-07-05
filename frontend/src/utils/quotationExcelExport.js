@@ -19,8 +19,8 @@ const BRAND = {
   borderColor: 'D1D5DB',
   accentRed: 'DC2626',
   companyName: 'CÔNG TY TNHH IN QUANG PHÁT',
-  companyAddress: '18 Phùng Hưng, Phường An Cựu, TP. Huế, Thừa Thiên Huế',
-  companyPhone: '0234 3837 468',
+  companyAddress: 'Số 5. đường số 4, cụm CN An Hoà, phường Hương An, Huế',
+  companyPhone: '0903597686 ( Tấn ), 0935110639 ( Quang )',
   companyEmail: 'inquangphat@gmail.com',
 };
 

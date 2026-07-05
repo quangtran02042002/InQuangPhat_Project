@@ -162,13 +162,20 @@ const Header = () => {
             </nav>
 
             {/* HOTLINE */}
-            <a
-              href="tel:0903597686"
-              className="hidden xl:flex items-center gap-2 bg-accent text-white px-5 py-2.5 rounded-full font-bold transition-all duration-300 hover:bg-accent-dark hover:shadow-md whitespace-nowrap text-sm"
-            >
-              <FaPhoneAlt className="text-xs" />
-              0903.597.686
-            </a>
+            <div className="hidden xl:flex items-center gap-2 text-xs font-bold whitespace-nowrap">
+              <a
+                href="tel:0903597686"
+                className="flex items-center gap-1.5 bg-accent text-white px-3.5 py-2.5 rounded-full transition-all duration-300 hover:bg-accent-dark hover:shadow-md"
+              >
+                <FaPhoneAlt className="text-[10px]" /> 0903597686 ( Tấn )
+              </a>
+              <a
+                href="tel:0935110639"
+                className="flex items-center gap-1.5 bg-accent text-white px-3.5 py-2.5 rounded-full transition-all duration-300 hover:bg-accent-dark hover:shadow-md"
+              >
+                <FaPhoneAlt className="text-[10px]" /> 0935110639 ( Quang )
+              </a>
+            </div>
 
             {/* USER MENU */}
             <div className="relative z-[60]">
@@ -254,9 +261,12 @@ const Header = () => {
               Liên hệ
             </Link>
 
-            <div className="pt-3">
-              <a href="tel:0903597686" className="flex items-center justify-center gap-2 w-full bg-accent text-white py-3.5 rounded-xl font-bold text-sm">
-                <FaPhoneAlt /> 0903.597.686
+            <div className="pt-3 flex gap-2">
+              <a href="tel:0903597686" className="flex-1 flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-xl font-bold text-sm">
+                <FaPhoneAlt /> Tấn: 0903597686
+              </a>
+              <a href="tel:0935110639" className="flex-1 flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-xl font-bold text-sm">
+                <FaPhoneAlt /> Quang: 0935110639
               </a>
             </div>
           </div>

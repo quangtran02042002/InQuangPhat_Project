@@ -16,7 +16,7 @@ const ProductScreen = () => {
     const [activeImage, setActiveImage] = useState(''); // Ảnh đang chọn
 
     const CONTACT_INFO = {
-        phone: "0903.597.686",
+        phone: "0903597686",
         zaloLink: "https://zalo.me/0903597686"
     };
 

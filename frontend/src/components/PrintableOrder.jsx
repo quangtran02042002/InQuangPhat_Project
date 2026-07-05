@@ -12,8 +12,8 @@ const PrintableOrder = ({ order }) => {
       <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-6">
         <div>
           <h1 className="text-xl font-bold uppercase tracking-wider">CÔNG TY TNHH IN QUANG PHÁT</h1>
-          <p className="text-sm">Hotline: 0903.597.686 – 0935.110.639 | Email: inquangphat@gmail.com</p>
-          <p className="text-sm">Địa chỉ: Số 5, Đường số 4, Cụm CN An Hoà, phường Hương An, Huế</p>
+          <p className="text-sm">Hotline: 0903597686 ( Tấn ), 0935110639 ( Quang ) | Email: inquangphat@gmail.com</p>
+          <p className="text-sm">Địa chỉ: Số 5. đường số 4, cụm CN An Hoà, phường Hương An, Huế</p>
         </div>
         <div className="text-right">
           <h2 className="text-3xl font-black uppercase tracking-widest mt-2">LỆNH SẢN XUẤT</h2>
