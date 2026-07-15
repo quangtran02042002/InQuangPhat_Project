@@ -295,37 +295,39 @@ const MaterialPriceScreen = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-10 bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-200">
                             <div>
-                                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Nhóm vật liệu</label>
+                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Nhóm vật liệu</label>
                                 <div className="relative">
-                                    <select value={selectedCategoryFilter} onChange={(e) => setSelectedCategoryFilter(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-[#111827] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#006B4D] font-medium appearance-none">
+                                    <select value={selectedCategoryFilter} onChange={(e) => setSelectedCategoryFilter(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-[#111827] rounded-lg sm:rounded-xl px-3 py-2 text-xs sm:text-sm outline-none focus:border-[#006B4D] font-bold appearance-none">
                                         <option value="Tất cả">Tất cả Nhóm</option>
                                         {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                     </select>
-                                    <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                                    <FaChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-[#6B7280] uppercase mb-2">Tìm kiếm nhanh</label>
-                                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-[#006B4D] transition-colors">
-                                    <FaSearch className="text-gray-400 mr-3" />
-                                    <input type="text" placeholder="Tên vật liệu, NCC..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-transparent border-none text-sm outline-none font-medium text-[#111827]" />
+                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Tìm kiếm nhanh</label>
+                                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-3 py-2 focus-within:border-[#006B4D] transition-colors">
+                                    <FaSearch className="text-gray-400 mr-2.5 text-xs" />
+                                    <input type="text" placeholder="Tên vật liệu, NCC..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-transparent border-none text-xs sm:text-sm outline-none font-medium text-[#111827]" />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-6 sm:space-y-8">
                             {Object.keys(groupedMaterials).length === 0 ? (
-                                <div className="text-center py-16 text-[#6B7280] bg-white rounded-2xl border border-gray-200 text-sm shadow-sm">Không tìm thấy dữ liệu.</div>
+                                <div className="text-center py-16 text-[#6B7280] bg-white rounded-2xl border border-gray-200 text-xs sm:text-sm shadow-sm">Không tìm thấy dữ liệu.</div>
                             ) : (
                                 Object.keys(groupedMaterials).map((category, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
-                                            <h3 className="font-extrabold text-[#111827] text-lg">{category}</h3>
-                                            <span className="bg-[#E6F0ED] text-[#006B4D] text-xs font-bold px-2 py-1 rounded">{groupedMaterials[category].length}</span>
+                                    <div key={idx} className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 flex items-center gap-3">
+                                            <h3 className="font-extrabold text-[#111827] text-sm sm:text-lg">{category}</h3>
+                                            <span className="bg-[#E6F0ED] text-[#006B4D] text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full">{groupedMaterials[category].length}</span>
                                         </div>
-                                        <div className="overflow-x-auto">
+
+                                        {/* --- DESKTOP TABLE VIEW --- */}
+                                        <div className="hidden md:block overflow-x-auto">
                                             <table className="min-w-full text-left border-collapse">
                                                 <thead>
                                                     <tr className="bg-white text-[#6B7280] text-[10px] uppercase font-bold border-b border-gray-100">
@@ -359,6 +361,29 @@ const MaterialPriceScreen = () => {
                                                 </tbody>
                                             </table>
                                         </div>
+
+                                        {/* --- MOBILE LIST VIEW --- */}
+                                        <div className="md:hidden divide-y divide-gray-100 px-3.5">
+                                            {groupedMaterials[category].map((mat) => (
+                                                <div key={mat._id} className="py-3 flex flex-col gap-1.5">
+                                                    <div className="flex justify-between items-start">
+                                                        <h4 className="font-extrabold text-xs text-[#111827]">{mat.name}</h4>
+                                                        <div className="text-right">
+                                                            <span className="text-xs font-extrabold text-[#006B4D] block">{mat.price.toLocaleString()}đ</span>
+                                                            <span className="text-[9px] text-gray-400 font-bold">/ {mat.unit.replace('đ/', '')}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px] text-gray-500 font-medium">
+                                                        <div className="flex items-center gap-1"><FaTruck className="text-gray-400" size={10} /> {mat.supplier || 'Mua lẻ'}</div>
+                                                        {mat.note && <span className="text-gray-400 max-w-[150px] truncate italic">{mat.note}</span>}
+                                                    </div>
+                                                    <div className="flex justify-end gap-2.5 pt-1 border-t border-gray-50">
+                                                        <button onClick={() => openModal(mat)} className="text-[10px] text-[#006B4D] font-bold bg-[#E6F0ED] px-2 py-0.5 rounded">Sửa</button>
+                                                        <button onClick={() => { setDeleteId(mat._id); setIsDeleteModalOpen(true) }} className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded">Xóa</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -368,42 +393,41 @@ const MaterialPriceScreen = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col animate-fade-in-down overflow-hidden">
-                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
-                            <h2 className="font-extrabold text-[#111827] text-lg">
-                                {editId ? 'Cập nhật giá vật liệu' : 'Thêm báo giá vật liệu'}
+                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-xl flex flex-col animate-fade-in-down overflow-hidden">
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
+                            <h2 className="font-extrabold text-[#111827] text-sm sm:text-base">
+                                {editId ? '✏️ Cập nhật giá vật liệu' : '➕ Thêm báo giá vật liệu'}
                             </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-2 rounded-full transition"><FaTimes size={14} /></button>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-1.5 rounded-full transition"><FaTimes size={14} /></button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto max-h-[70vh]">
-                            <form id="matForm" onSubmit={submitHandler} className="space-y-5">
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="p-3 sm:p-6 overflow-y-auto max-h-[75vh]">
+                            <form id="matForm" onSubmit={submitHandler} className="space-y-3.5 sm:space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Nhóm vật liệu <span className="text-red-500">*</span></label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Nhóm vật liệu <span className="text-red-500">*</span></label>
                                         <div className="relative">
-                                            <select required value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#006B4D] outline-none text-[#111827] appearance-none cursor-pointer bg-white">
+                                            <select required value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:border-[#006B4D] outline-none text-[#111827] appearance-none cursor-pointer bg-white">
                                                 {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#006B4D]" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#006B4D] text-xs" />
                                         </div>
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Tên vật liệu (VD: Keo 3M xịt) <span className="text-red-500">*</span></label>
-                                        <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-[#006B4D] focus:border-[#006B4D] outline-none text-[#111827] font-bold" />
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Tên vật liệu <span className="text-red-500">*</span></label>
+                                        <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:ring-[#006B4D] focus:border-[#006B4D] outline-none text-[#111827] font-bold" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Giá nhập <span className="text-red-500">*</span></label>
-                                        <input type="number" min="0" required value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#006B4D] outline-none text-[#006B4D] font-extrabold" />
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Giá nhập <span className="text-red-500">*</span></label>
+                                        <input type="number" min="0" required value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:border-[#006B4D] outline-none text-[#006B4D] font-extrabold" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Đơn vị tính <span className="text-red-500">*</span></label>
-                                        <select value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#006B4D] outline-none bg-white">
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Đơn vị tính <span className="text-red-500">*</span></label>
+                                        <select value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:border-[#006B4D] outline-none bg-white">
                                             <option value="đ/cái">đ/cái</option>
                                             <option value="đ/cuộn">đ/cuộn</option>
                                             <option value="đ/bao">đ/bao</option>
@@ -415,28 +439,28 @@ const MaterialPriceScreen = () => {
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Nhà cung cấp (Tùy chọn)</label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Nhà cung cấp</label>
                                         <div className="relative">
-                                            <select value={formData.supplier} onChange={e => setFormData({ ...formData, supplier: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#006B4D] outline-none text-[#111827] appearance-none cursor-pointer bg-white">
+                                            <select value={formData.supplier} onChange={e => setFormData({ ...formData, supplier: e.target.value })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:border-[#006B4D] outline-none text-[#111827] appearance-none cursor-pointer bg-white">
                                                 <option value="">-- Bỏ trống nếu mua lẻ --</option>
                                                 {suppliersList.map(sup => (
                                                     <option key={sup._id} value={sup.name}>{sup.name}</option>
                                                 ))}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                                         </div>
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-bold text-[#6B7280] mb-2">Ghi chú thêm</label>
-                                        <textarea value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#006B4D] outline-none text-[#111827]" rows="2" placeholder="Ghi chú (không bắt buộc)..."></textarea>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Ghi chú thêm</label>
+                                        <textarea value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} className="w-full border border-gray-200 p-2 sm:p-2.5 rounded-lg text-xs sm:text-sm focus:border-[#006B4D] outline-none text-[#111827] resize-none" rows="2" placeholder="Ghi chú kỹ thuật..."></textarea>
                                     </div>
                                 </div>
                             </form>
                         </div>
-                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                            <button onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-sm text-[#6B7280] font-bold hover:bg-gray-200 rounded-xl transition">Hủy bỏ</button>
-                            <button type="submit" form="matForm" className="px-6 py-2 text-sm bg-[#006B4D] text-white font-bold rounded-xl shadow-md hover:bg-[#00543c] transition">Lưu bảng giá</button>
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 flex justify-end gap-2 bg-gray-50 rounded-b-xl sm:rounded-b-2xl font-bold">
+                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs sm:text-sm text-[#6B7280] hover:bg-gray-200 rounded-lg transition">Hủy bỏ</button>
+                            <button type="submit" form="matForm" className="px-5 py-2 text-xs sm:text-sm bg-[#006B4D] text-white rounded-lg shadow-md hover:bg-[#00543c] transition">Lưu lại</button>
                         </div>
                     </div>
                 </div>

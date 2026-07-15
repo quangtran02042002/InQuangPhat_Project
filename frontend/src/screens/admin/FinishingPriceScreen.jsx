@@ -290,22 +290,22 @@ const FinishingPriceScreen = () => {
                         {!loading && finishingPrices.length > 0 && (
                             <>
                                 {/* Stats Bar */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Tổng công đoạn</p>
-                                        <p className="text-2xl font-black text-[#111827] mt-1">{finishingPrices.length}</p>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                                    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-4">
+                                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold">Tổng công đoạn</p>
+                                        <p className="text-lg sm:text-2xl font-black text-[#111827] mt-0.5 sm:mt-1">{finishingPrices.length}</p>
                                     </div>
-                                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Nhóm</p>
-                                        <p className="text-2xl font-black text-[#111827] mt-1">{Object.keys(groupedData).length}</p>
+                                    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-4">
+                                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold">Nhóm</p>
+                                        <p className="text-lg sm:text-2xl font-black text-[#111827] mt-0.5 sm:mt-1">{Object.keys(groupedData).length}</p>
                                     </div>
-                                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Đang sửa</p>
-                                        <p className={`text-2xl font-black mt-1 ${hasChanges ? 'text-amber-500' : 'text-gray-300'}`}>{Object.keys(editedPrices).length}</p>
+                                    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-4">
+                                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold">Đang sửa</p>
+                                        <p className={`text-lg sm:text-2xl font-black mt-0.5 sm:mt-1 ${hasChanges ? 'text-amber-500' : 'text-gray-300'}`}>{Object.keys(editedPrices).length}</p>
                                     </div>
-                                    <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Cập nhật lần cuối</p>
-                                        <p className="text-sm font-bold text-[#111827] mt-1">{finishingPrices[0]?.updatedAt ? new Date(finishingPrices[0].updatedAt).toLocaleDateString('vi-VN') : '—'}</p>
+                                    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-3 sm:p-4">
+                                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold">Cập nhật lúc</p>
+                                        <p className="text-xs sm:text-sm font-bold text-[#111827] mt-1 truncate">{finishingPrices[0]?.updatedAt ? new Date(finishingPrices[0].updatedAt).toLocaleDateString('vi-VN') : '—'}</p>
                                     </div>
                                 </div>
 
@@ -317,106 +317,161 @@ const FinishingPriceScreen = () => {
                                     const isCollapsed = collapsedCategories.includes(catId);
 
                                     return (
-                                        <div key={catId} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${meta.border}`}>
+                                        <div key={catId} className={`bg-white rounded-xl sm:rounded-2xl border overflow-hidden shadow-sm ${meta.border}`}>
                                             {/* Category Header */}
                                             <button
                                                 type="button"
                                                 onClick={() => toggleCategory(catId)}
-                                                className={`w-full flex items-center justify-between px-6 py-4 ${meta.bg} hover:brightness-95 transition cursor-pointer`}
+                                                className={`w-full flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 ${meta.bg} hover:brightness-95 transition cursor-pointer`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 bg-gradient-to-br ${meta.gradient} rounded-xl flex items-center justify-center text-white text-sm shadow-sm`}>
+                                                    <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${meta.gradient} rounded-lg sm:rounded-xl flex items-center justify-center text-white text-xs sm:text-sm shadow-sm`}>
                                                         {meta.icon}
                                                     </div>
                                                     <div className="text-left">
-                                                        <h3 className="font-extrabold text-sm text-gray-800">{meta.name}</h3>
-                                                        <p className="text-[10px] text-gray-500">{meta.subtitle} • {items.length} công đoạn</p>
+                                                        <h3 className="font-extrabold text-xs sm:text-sm text-gray-800">{meta.name}</h3>
+                                                        <p className="text-[9px] sm:text-[10px] text-gray-500">{meta.subtitle} • {items.length} công đoạn</p>
                                                     </div>
                                                 </div>
-                                                {isCollapsed ? <FaChevronDown className="text-gray-400" /> : <FaChevronUp className="text-gray-400" />}
+                                                {isCollapsed ? <FaChevronDown className="text-gray-400 text-xs" /> : <FaChevronUp className="text-gray-400 text-xs" />}
                                             </button>
 
-                                            {/* Items Table */}
+                                            {/* Items View */}
                                             {!isCollapsed && (
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full">
-                                                        <thead>
-                                                            <tr className="text-[10px] uppercase tracking-wider text-gray-400 font-bold border-b border-gray-100">
-                                                                <th className="py-3 px-4 text-left w-14"></th>
-                                                                <th className="py-3 px-4 text-left">Công đoạn</th>
-                                                                <th className="py-3 px-4 text-left hidden md:table-cell">Mô tả</th>
-                                                                <th className="py-3 px-4 text-center w-32">Đơn vị</th>
-                                                                <th className="py-3 px-4 text-right w-40">Giá tiền</th>
-                                                                <th className="py-3 px-4 text-center w-20"></th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {items.map(item => {
-                                                                const isEdited = !!editedPrices[item._id];
-                                                                const currentPrice = getVal(item, 'price');
-                                                                const currentUnit = getVal(item, 'unit');
+                                                <>
+                                                    {/* --- DESKTOP TABLE VIEW --- */}
+                                                    <div className="hidden md:block overflow-x-auto">
+                                                        <table className="min-w-full">
+                                                            <thead>
+                                                                <tr className="text-[10px] uppercase tracking-wider text-gray-400 font-bold border-b border-gray-100">
+                                                                    <th className="py-3 px-4 text-left w-14"></th>
+                                                                    <th className="py-3 px-4 text-left">Công đoạn</th>
+                                                                    <th className="py-3 px-4 text-left hidden md:table-cell">Mô tả</th>
+                                                                    <th className="py-3 px-4 text-center w-32">Đơn vị</th>
+                                                                    <th className="py-3 px-4 text-right w-40">Giá tiền</th>
+                                                                    <th className="py-3 px-4 text-center w-20"></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {items.map(item => {
+                                                                    const isEdited = !!editedPrices[item._id];
+                                                                    const currentPrice = getVal(item, 'price');
+                                                                    const currentUnit = getVal(item, 'unit');
 
-                                                                return (
-                                                                    <tr
-                                                                        key={item._id}
-                                                                        className={`border-b border-gray-50 transition-colors ${isEdited ? 'bg-amber-50/50' : 'hover:bg-gray-50/50'}`}
-                                                                    >
-                                                                        {/* Icon */}
-                                                                        <td className="py-3 px-4">
-                                                                            <span className="text-xl">{item.icon}</span>
-                                                                        </td>
-                                                                        {/* Name */}
-                                                                        <td className="py-3 px-4">
-                                                                            <h4 className="font-extrabold text-sm text-gray-800 leading-tight">{item.name}</h4>
-                                                                            <span className="text-[10px] text-gray-400 font-mono">{item.processId}</span>
-                                                                        </td>
-                                                                        {/* Description */}
-                                                                        <td className="py-3 px-4 hidden md:table-cell">
-                                                                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-xs">{item.description}</p>
-                                                                        </td>
-                                                                        {/* Unit */}
-                                                                        <td className="py-3 px-4 text-center">
+                                                                    return (
+                                                                        <tr
+                                                                            key={item._id}
+                                                                            className={`border-b border-gray-50 transition-colors ${isEdited ? 'bg-amber-50/50' : 'hover:bg-gray-50/50'}`}
+                                                                        >
+                                                                            <td className="py-3 px-4">
+                                                                                <span className="text-xl">{item.icon}</span>
+                                                                            </td>
+                                                                            <td className="py-3 px-4">
+                                                                                <h4 className="font-extrabold text-sm text-gray-800 leading-tight">{item.name}</h4>
+                                                                                <span className="text-[10px] text-gray-400 font-mono">{item.processId}</span>
+                                                                            </td>
+                                                                            <td className="py-3 px-4 hidden md:table-cell">
+                                                                                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-xs">{item.description}</p>
+                                                                            </td>
+                                                                            <td className="py-3 px-4 text-center">
+                                                                                <select
+                                                                                    value={currentUnit}
+                                                                                    onChange={e => handlePriceChange(item._id, 'unit', e.target.value)}
+                                                                                    className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#006B4D]/20 focus:border-[#006B4D] cursor-pointer"
+                                                                                >
+                                                                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                                                                </select>
+                                                                            </td>
+                                                                            <td className="py-3 px-4 text-right">
+                                                                                <div className="relative inline-flex items-center">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={currentPrice}
+                                                                                        onChange={e => handlePriceChange(item._id, 'price', e.target.value)}
+                                                                                        className={`w-32 border rounded-xl px-3 py-2 text-sm text-right font-black outline-none transition-all ${isEdited
+                                                                                            ? 'border-amber-400 bg-amber-50 text-amber-700 ring-2 ring-amber-200'
+                                                                                            : 'border-gray-200 text-gray-800 focus:ring-2 focus:ring-[#006B4D]/20 focus:border-[#006B4D]'
+                                                                                            }`}
+                                                                                    />
+                                                                                    <span className="ml-1.5 text-[10px] font-bold text-gray-400">đ</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="py-3 px-4 text-center">
+                                                                                {isEdited && (
+                                                                                    <button
+                                                                                        onClick={() => saveSingle(item._id)}
+                                                                                        className="w-8 h-8 bg-[#006B4D] text-white rounded-lg flex items-center justify-center hover:bg-[#005a3f] transition transform active:scale-90 shadow-sm"
+                                                                                        title="Lưu riêng"
+                                                                                    >
+                                                                                        <FaCheck className="text-xs" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    {/* --- MOBILE CARD VIEW --- */}
+                                                    <div className="md:hidden divide-y divide-gray-100 px-3.5">
+                                                        {items.map(item => {
+                                                            const isEdited = !!editedPrices[item._id];
+                                                            const currentPrice = getVal(item, 'price');
+                                                            const currentUnit = getVal(item, 'unit');
+
+                                                            return (
+                                                                <div key={item._id} className={`py-3.5 flex flex-col gap-2.5 ${isEdited ? 'bg-amber-50/20 px-2 -mx-2 rounded-lg' : ''}`}>
+                                                                    <div className="flex justify-between items-center gap-2">
+                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                            <span className="text-xl shrink-0">{item.icon}</span>
+                                                                            <div className="min-w-0">
+                                                                                <h4 className="font-extrabold text-xs text-gray-800 leading-tight truncate">{item.name}</h4>
+                                                                                <span className="text-[9px] text-gray-400 font-mono">{item.processId}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="shrink-0 flex items-center gap-2">
+                                                                            {isEdited && (
+                                                                                <button onClick={() => saveSingle(item._id)} className="w-7 h-7 bg-[#006B4D] text-white rounded-lg flex items-center justify-center shadow-sm">
+                                                                                    <FaCheck size={11} />
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-2 gap-3 items-center border-t border-gray-100 pt-2">
+                                                                        <div>
+                                                                            <label className="block text-[8px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">Đơn vị</label>
                                                                             <select
                                                                                 value={currentUnit}
                                                                                 onChange={e => handlePriceChange(item._id, 'unit', e.target.value)}
-                                                                                className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#006B4D]/20 focus:border-[#006B4D] cursor-pointer"
+                                                                                className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#006B4D]/20 focus:border-[#006B4D] cursor-pointer"
                                                                             >
                                                                                 {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                                                                             </select>
-                                                                        </td>
-                                                                        {/* Price */}
-                                                                        <td className="py-3 px-4 text-right">
-                                                                            <div className="relative inline-flex items-center">
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[8px] uppercase tracking-wider text-gray-400 font-bold mb-0.5 text-right">Giá tiền</label>
+                                                                            <div className="relative flex items-center justify-end">
                                                                                 <input
                                                                                     type="number"
                                                                                     value={currentPrice}
                                                                                     onChange={e => handlePriceChange(item._id, 'price', e.target.value)}
-                                                                                    className={`w-32 border rounded-xl px-3 py-2 text-sm text-right font-black outline-none transition-all ${isEdited
-                                                                                        ? 'border-amber-400 bg-amber-50 text-amber-700 ring-2 ring-amber-200'
+                                                                                    className={`w-28 border rounded-lg px-2 py-1 text-xs text-right font-black outline-none transition-all ${isEdited
+                                                                                        ? 'border-amber-400 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                                                                                         : 'border-gray-200 text-gray-800 focus:ring-2 focus:ring-[#006B4D]/20 focus:border-[#006B4D]'
                                                                                         }`}
                                                                                 />
-                                                                                <span className="ml-1.5 text-[10px] font-bold text-gray-400">đ</span>
+                                                                                <span className="ml-1 text-[9px] font-bold text-gray-400">đ</span>
                                                                             </div>
-                                                                        </td>
-                                                                        {/* Save Single */}
-                                                                        <td className="py-3 px-4 text-center">
-                                                                            {isEdited && (
-                                                                                <button
-                                                                                    onClick={() => saveSingle(item._id)}
-                                                                                    className="w-8 h-8 bg-[#006B4D] text-white rounded-lg flex items-center justify-center hover:bg-[#005a3f] transition transform active:scale-90 shadow-sm"
-                                                                                    title="Lưu riêng"
-                                                                                >
-                                                                                    <FaCheck className="text-xs" />
-                                                                                </button>
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </>
                                             )}
                                         </div>
                                     );
@@ -428,12 +483,12 @@ const FinishingPriceScreen = () => {
 
                 {/* STICKY SAVE BAR */}
                 {hasChanges && (
-                    <div className="sticky bottom-0 z-30 bg-gradient-to-r from-[#111827] via-[#1E293B] to-[#111827] px-6 py-4 border-t border-gray-700 shadow-2xl">
-                        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-amber-400 rounded-full animate-pulse" />
-                                <span className="text-sm font-bold text-gray-300">
-                                    Bạn đã chỉnh sửa <span className="text-amber-400 font-black">{Object.keys(editedPrices).length}</span> công đoạn
+                    <div className="sticky bottom-0 z-30 bg-[#111827] px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-700 shadow-2xl">
+                        <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse" />
+                                <span className="text-xs sm:text-sm font-bold text-gray-300">
+                                    Đã chỉnh sửa <span className="text-amber-400 font-black">{Object.keys(editedPrices).length}</span> công đoạn
                                 </span>
                                 <button
                                     onClick={() => setEditedPrices({})}
@@ -445,9 +500,9 @@ const FinishingPriceScreen = () => {
                             <button
                                 onClick={saveAllChanges}
                                 disabled={saving}
-                                className="bg-gradient-to-r from-emerald-500 to-[#006B4D] text-white px-8 py-3 rounded-xl font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+                                className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-[#006B4D] text-white px-6 py-2 sm:px-8 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
                             >
-                                {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+                                {saving ? <FaSpinner className="animate-spin text-xs" /> : <FaSave size={12} />}
                                 {saving ? 'Đang lưu...' : 'LƯU TẤT CẢ THAY ĐỔI'}
                             </button>
                         </div>

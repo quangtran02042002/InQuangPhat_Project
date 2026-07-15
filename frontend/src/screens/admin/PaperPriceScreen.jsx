@@ -400,11 +400,11 @@ const PaperPriceScreen = () => {
                 <AdminHeader title="Bảng Giá Giấy (Gốc)" />
 
                 {/* ================= HEADER ================= */}
-                <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 shrink-0 flex flex-col sm:flex-row justify-between gap-4">
+                <header className="bg-white border-b border-gray-200 px-3.5 py-3 sm:px-8 sm:py-4 shrink-0 flex flex-col sm:flex-row justify-between gap-3 sm:gap-4">
                     <div className="flex items-center gap-4">
-                        <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
-                        <h1 className="text-lg md:text-xl font-bold text-[#111827] whitespace-nowrap">Quản lý Bảng giá</h1>
-
+                        <button className="lg:hidden text-gray-500" onClick={() => setIsSidebarOpen(true)}><FaBars size={18} /></button>
+                        <h1 className="text-base sm:text-lg md:text-xl font-bold text-[#111827] whitespace-nowrap">Quản lý Bảng giá</h1>
+ 
                         <nav className="hidden sm:flex gap-6 text-sm font-medium overflow-x-auto pb-1 -mb-1 ml-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {['Giá giấy gốc', 'Khổ giấy', 'Định lượng', 'Phụ phí'].map(tab => (
                                 <button
@@ -417,120 +417,120 @@ const PaperPriceScreen = () => {
                             ))}
                         </nav>
                     </div>
-
+ 
                     <div className="flex items-center gap-3 self-end sm:self-auto">
                         {/* NÚT XUẤT FILE EXCEL */}
-                        <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 bg-gray-100 text-[#6B7280] hover:text-[#111827] px-4 py-2 rounded-full text-sm font-bold transition">
+                        <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 bg-gray-100 text-[#6B7280] hover:text-[#111827] px-4 py-2 rounded-full text-xs font-bold transition">
                             <FaFileExport /> <span className="hidden lg:inline">Xuất file Excel</span>
                         </button>
                         <button
                             onClick={() => activeTab === 'Giá giấy gốc' ? openModal() : openConfigModal()}
-                            className="flex items-center gap-2 bg-[#006B4D] text-white px-4 md:px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-[#00543c] transition"
+                            className="flex items-center gap-1.5 bg-[#006B4D] text-white px-4 py-2 rounded-full text-xs font-bold shadow-sm hover:bg-[#00543c] transition"
                         >
                             <FaPlus className="md:hidden" /> <span className="hidden md:inline">Thêm mới</span>
                         </button>
                     </div>
                 </header>
-
-                <div className="sm:hidden bg-white px-4 border-b border-gray-200 flex items-center justify-between gap-2 text-sm font-medium">
-                    <div className="flex gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1">
+ 
+                <div className="sm:hidden bg-white px-3.5 border-b border-gray-200 flex items-center justify-between gap-2 text-xs font-medium">
+                    <div className="flex gap-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1">
                         {['Giá giấy gốc', 'Khổ giấy', 'Định lượng', 'Phụ phí'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap py-3 transition-colors ${activeTab === tab ? 'text-[#006B4D] border-b-2 border-[#006B4D]' : 'text-[#6B7280]'}`}>
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap py-2.5 transition-colors ${activeTab === tab ? 'text-[#006B4D] border-b-2 border-[#006B4D]' : 'text-[#6B7280]'}`}>
                                 {tab}
                             </button>
                         ))}
                     </div>
-                    <button onClick={exportToExcel} className="text-[#006B4D] p-2 bg-[#E6F0ED] rounded-full shrink-0">
-                        <FaFileExport size={16} />
+                    <button onClick={exportToExcel} className="text-[#006B4D] p-1.5 bg-[#E6F0ED] rounded-full shrink-0">
+                        <FaFileExport size={14} />
                     </button>
                 </div>
-
+ 
                 {/* ================= MAIN CONTENT ================= */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 md:p-8 custom-scrollbar">
                     <div className="max-w-7xl mx-auto">
-
+ 
                         {/* TAB 1: GIÁ GIẤY GỐC */}
                         {activeTab === 'Giá giấy gốc' && (
                             <div className="animate-fade-in-down">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl md:text-2xl shadow-sm shrink-0"><FaWallet /></div>
+                                <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
+                                    <div className="w-10 h-10 md:w-14 md:h-14 bg-[#E6F0ED] rounded-xl sm:rounded-2xl flex items-center justify-center text-[#006B4D] text-lg md:text-2xl shadow-sm shrink-0"><FaWallet /></div>
                                     <div>
-                                        <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Giá giấy gốc</h2>
-                                        <p className="text-[#6B7280] text-xs md:text-sm mt-0.5 md:mt-1">Theo dõi giá nhập giấy từ các Nhà cung cấp</p>
+                                        <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#111827]">Giá giấy gốc</h2>
+                                        <p className="text-[#6B7280] text-[11px] sm:text-xs md:text-sm mt-0.5 md:mt-1">Theo dõi giá nhập giấy từ các Nhà cung cấp</p>
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+ 
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-10 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200">
                                     <div>
-                                        <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Nhà cung cấp</label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Nhà cung cấp</label>
                                         <div className="relative">
-                                            <select value={selectedSupplierFilter} onChange={(e) => setSelectedSupplierFilter(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-xl px-4 py-3 text-sm appearance-none outline-none focus:border-[#006B4D] font-medium shadow-sm cursor-pointer">
+                                            <select value={selectedSupplierFilter} onChange={(e) => setSelectedSupplierFilter(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-lg sm:rounded-xl px-3 py-2 text-xs sm:text-sm appearance-none outline-none focus:border-[#006B4D] font-bold shadow-sm cursor-pointer">
                                                 <option value="Tất cả">Tất cả NCC</option>
                                                 {uniqueSuppliersInPrices.map(sup => <option key={sup} value={sup}>{sup}</option>)}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Loại giấy</label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Loại giấy</label>
                                         <div className="relative">
-                                            <select value={selectedMaterial} onChange={(e) => setSelectedMaterial(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-xl px-4 py-3 text-sm appearance-none outline-none focus:border-[#006B4D] font-medium shadow-sm cursor-pointer">
+                                            <select value={selectedMaterial} onChange={(e) => setSelectedMaterial(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-lg sm:rounded-xl px-3 py-2 text-xs sm:text-sm appearance-none outline-none focus:border-[#006B4D] font-bold shadow-sm cursor-pointer">
                                                 <option value="Tất cả">Tất cả loại giấy</option>
                                                 {uniqueMaterials.map(mat => <option key={mat} value={mat}>{mat}</option>)}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Định lượng</label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Định lượng</label>
                                         <div className="relative">
-                                            <select value={selectedWeight} onChange={(e) => setSelectedWeight(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-xl px-4 py-3 text-sm appearance-none outline-none focus:border-[#006B4D] font-medium shadow-sm cursor-pointer">
+                                            <select value={selectedWeight} onChange={(e) => setSelectedWeight(e.target.value)} className="w-full bg-white border border-gray-200 text-[#111827] rounded-lg sm:rounded-xl px-3 py-2 text-xs sm:text-sm appearance-none outline-none focus:border-[#006B4D] font-bold shadow-sm cursor-pointer">
                                                 <option value="Tất cả">Tất cả định lượng</option>
                                                 {uniqueWeights.map(weight => <option key={weight} value={weight}>{weight}</option>)}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] md:text-xs font-bold text-[#6B7280] uppercase mb-2">Tìm kiếm nhanh</label>
-                                        <div className="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm focus-within:border-[#006B4D] transition-colors">
-                                            <FaSearch className="text-gray-400 mr-3 shrink-0" />
-                                            <input type="text" placeholder="Khổ, Tên..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-transparent border-none text-[#111827] text-sm outline-none font-medium placeholder-gray-400" />
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1.5">Tìm kiếm nhanh</label>
+                                        <div className="flex items-center bg-white border border-gray-200 rounded-lg sm:rounded-xl px-3 py-2 shadow-sm focus-within:border-[#006B4D] transition-colors">
+                                            <FaSearch className="text-gray-400 mr-2.5 shrink-0 text-xs" />
+                                            <input type="text" placeholder="Khổ, Tên..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-transparent border-none text-[#111827] text-xs sm:text-sm outline-none font-medium placeholder-gray-400" />
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="space-y-10">
+ 
+                                <div className="space-y-6 sm:space-y-10">
                                     {filteredPapers.length === 0 ? (
-                                        <div className="text-center py-16 text-[#6B7280] bg-white rounded-2xl border border-gray-200 shadow-sm text-sm">Không tìm thấy dữ liệu.</div>
+                                        <div className="text-center py-16 text-[#6B7280] bg-white rounded-2xl border border-gray-200 shadow-sm text-xs sm:text-sm">Không tìm thấy dữ liệu.</div>
                                     ) : (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-6 sm:gap-y-8">
                                             {filteredPapers.map((paper) => (
                                                 <div key={paper._id} className="flex flex-col">
-                                                    <div className="flex justify-between items-center mb-4">
-                                                        <div className="flex flex-col">
-                                                            <h3 className="text-lg md:text-xl font-bold text-[#111827] flex items-center gap-2 md:gap-3">
-                                                                <span className="w-1.5 h-5 md:h-6 bg-[#006B4D] rounded-full inline-block"></span>
+                                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                                        <div className="flex flex-col min-w-0">
+                                                            <h3 className="text-base sm:text-xl font-bold text-[#111827] flex items-center gap-2 truncate">
+                                                                <span className="w-1 h-4 sm:w-1.5 sm:h-6 bg-[#006B4D] rounded-full inline-block shrink-0"></span>
                                                                 {paper.paperType}
                                                             </h3>
-                                                            <span className="text-xs font-medium text-gray-500 ml-4 md:ml-5 mt-1 flex items-center gap-1"><FaTruck className="text-gray-400" /> NCC: {paper.supplier}</span>
+                                                            <span className="text-[10px] sm:text-xs font-medium text-gray-500 ml-3 sm:ml-5 mt-0.5 flex items-center gap-1"><FaTruck className="text-gray-400 shrink-0" size={10} /> NCC: {paper.supplier}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-3 md:gap-4 self-start mt-1">
-                                                            <button onClick={() => openModal(paper)} className="text-xs md:text-sm font-bold text-[#006B4D] hover:underline">Sửa</button>
-                                                            <button onClick={() => { setDeleteId(paper._id); setIsDeleteModalOpen(true) }} className="text-xs md:text-sm font-bold text-red-500 hover:underline">Xóa</button>
+                                                        <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 self-start mt-1">
+                                                            <button onClick={() => openModal(paper)} className="text-xs sm:text-sm font-bold text-[#006B4D] hover:underline">Sửa</button>
+                                                            <button onClick={() => { setDeleteId(paper._id); setIsDeleteModalOpen(true) }} className="text-xs sm:text-sm font-bold text-red-500 hover:underline">Xóa</button>
                                                         </div>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
                                                         {paper.sizes.map((size, idx) => (
-                                                            <div key={idx} className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-[#006B4D]/30 transition-all">
-                                                                <div className="flex justify-between items-start mb-2">
-                                                                    <span className="text-[9px] md:text-[10px] text-[#6B7280] font-bold uppercase tracking-wider">Kích thước giấy</span>
-                                                                    <span className="text-[9px] md:text-[10px] text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded font-extrabold uppercase">Đơn giá</span>
+                                                            <div key={idx} className="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-[#006B4D]/30 transition-all">
+                                                                <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+                                                                    <span className="text-[8px] sm:text-[10px] text-[#6B7280] font-bold uppercase tracking-wider">Khổ</span>
+                                                                    <span className="text-[8px] sm:text-[10px] text-[#006B4D] bg-[#E6F0ED] px-1.5 py-0.5 rounded font-extrabold uppercase">Đơn giá</span>
                                                                 </div>
-                                                                <div className="text-xl md:text-2xl font-extrabold text-[#111827] mb-3 md:mb-4">{size.dimensions}</div>
-                                                                <div className="text-[9px] md:text-[10px] text-[#6B7280] font-bold uppercase tracking-wider mb-0.5">Giá nhập</div>
-                                                                <div className="text-2xl md:text-3xl font-extrabold text-[#006B4D] flex items-baseline">
-                                                                    {size.price.toLocaleString()} <span className="text-xs md:text-sm font-bold text-gray-500 underline ml-1 mb-1">{size.unit}</span>
+                                                                <div className="text-sm sm:text-xl md:text-2xl font-extrabold text-[#111827] mb-2 sm:mb-4">{size.dimensions}</div>
+                                                                <div className="text-[8px] sm:text-[10px] text-[#6B7280] font-bold uppercase tracking-wider mb-0.5">Giá nhập</div>
+                                                                <div className="text-base sm:text-2xl md:text-3xl font-extrabold text-[#006B4D] flex items-baseline">
+                                                                    {size.price.toLocaleString()} <span className="text-[10px] sm:text-xs md:text-sm font-bold text-gray-500 underline ml-0.5">{size.unit}</span>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -542,51 +542,51 @@ const PaperPriceScreen = () => {
                                 </div>
                             </div>
                         )}
-
+ 
                         {/* TAB 2: KHỔ GIẤY */}
                         {activeTab === 'Khổ giấy' && (
                             <div className="animate-fade-in-down">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-xl md:text-2xl shadow-sm shrink-0"><FaExpandArrowsAlt /></div>
+                                <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
+                                    <div className="w-10 h-10 md:w-14 md:h-14 bg-blue-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-blue-600 text-lg md:text-2xl shadow-sm shrink-0"><FaExpandArrowsAlt /></div>
                                     <div>
-                                        <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Danh mục Khổ giấy</h2>
-                                        <p className="text-[#6B7280] text-xs md:text-sm mt-0.5 md:mt-1">Kích thước giấy nguyên bản từ Nhà cung cấp</p>
+                                        <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#111827]">Danh mục Khổ giấy</h2>
+                                        <p className="text-[#6B7280] text-[11px] sm:text-xs md:text-sm mt-0.5 md:mt-1">Kích thước giấy nguyên bản từ Nhà cung cấp</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                     {paperSizes.length === 0 ? (
-                                        <div className="col-span-full text-center py-10 text-gray-400">Chưa có dữ liệu Khổ giấy</div>
+                                        <div className="col-span-full text-center py-10 text-gray-400 text-xs sm:text-sm">Chưa có dữ liệu Khổ giấy</div>
                                     ) : paperSizes.map((item) => (
-                                        <div key={item._id} className="relative group bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col hover:border-blue-300 transition-colors">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="text-2xl font-extrabold text-blue-900">{item.name}</h3>
-                                                <button onClick={() => deleteConfigHandler(item._id, 'Khổ giấy')} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition"><FaTrash /></button>
+                                        <div key={item._id} className="relative group bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm flex flex-col hover:border-blue-300 transition-colors">
+                                            <div className="flex justify-between items-start mb-1 sm:mb-2">
+                                                <h3 className="text-base sm:text-2xl font-extrabold text-blue-900">{item.name}</h3>
+                                                <button onClick={() => deleteConfigHandler(item._id, 'Khổ giấy')} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition"><FaTrash size={12} /></button>
                                             </div>
-                                            <p className="text-sm text-gray-500">{item.description || 'Chưa có mô tả'}</p>
+                                            <p className="text-[10px] sm:text-sm text-gray-500">{item.description || 'Chưa có mô tả'}</p>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
-
+ 
                         {/* TAB 3: ĐỊNH LƯỢNG */}
                         {activeTab === 'Định lượng' && (
                             <div className="animate-fade-in-down">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 text-xl md:text-2xl shadow-sm shrink-0"><FaWeightHanging /></div>
+                                <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
+                                    <div className="w-10 h-10 md:w-14 md:h-14 bg-orange-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-orange-500 text-lg md:text-2xl shadow-sm shrink-0"><FaWeightHanging /></div>
                                     <div>
-                                        <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Danh mục Định lượng</h2>
-                                        <p className="text-[#6B7280] text-xs md:text-sm mt-0.5 md:mt-1">Quản lý độ dày và thuộc tính vật lý của giấy (GSM)</p>
+                                        <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#111827]">Danh mục Định lượng</h2>
+                                        <p className="text-[#6B7280] text-[11px] sm:text-xs md:text-sm mt-0.5 md:mt-1">Quản lý độ dày và thuộc tính vật lý của giấy (GSM)</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                     {paperWeights.length === 0 ? (
-                                        <div className="col-span-full text-center py-10 text-gray-400">Chưa có dữ liệu Định lượng</div>
+                                        <div className="col-span-full text-center py-10 text-gray-400 text-xs sm:text-sm">Chưa có dữ liệu Định lượng</div>
                                     ) : paperWeights.map((item) => (
-                                        <div key={item._id} className="relative group bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:border-orange-300 transition-colors">
-                                            <div className="text-3xl font-extrabold text-orange-600 mb-2">{item.weight}</div>
-                                            <p className="text-sm text-gray-500 line-clamp-2">{item.description || '...'}</p>
-                                            <button onClick={() => deleteConfigHandler(item._id, 'Định lượng')} className="absolute top-4 right-4 text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition"><FaTrash /></button>
+                                        <div key={item._id} className="relative group bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm hover:border-orange-300 transition-colors">
+                                            <div className="text-xl sm:text-3xl font-extrabold text-orange-600 mb-1 sm:mb-2">{item.weight}</div>
+                                            <p className="text-[10px] sm:text-sm text-gray-500 line-clamp-2">{item.description || '...'}</p>
+                                            <button onClick={() => deleteConfigHandler(item._id, 'Định lượng')} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-300 opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-red-500 transition"><FaTrash size={12} /></button>
                                         </div>
                                     ))}
                                 </div>
@@ -596,14 +596,16 @@ const PaperPriceScreen = () => {
                         {/* TAB 4: PHỤ PHÍ */}
                         {activeTab === 'Phụ phí' && (
                             <div className="animate-fade-in-down">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 text-xl md:text-2xl shadow-sm shrink-0"><FaCut /></div>
+                                <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
+                                    <div className="w-10 h-10 md:w-14 md:h-14 bg-purple-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-purple-600 text-lg md:text-2xl shadow-sm shrink-0"><FaCut /></div>
                                     <div>
-                                        <h2 className="text-xl md:text-2xl font-extrabold text-[#111827]">Phụ phí & Gia công</h2>
-                                        <p className="text-[#6B7280] text-xs md:text-sm mt-0.5 md:mt-1">Cấu hình giá bế, cán màng, ép kim, dán hộp...</p>
+                                        <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#111827]">Phụ phí & Gia công</h2>
+                                        <p className="text-[#6B7280] text-[11px] sm:text-xs md:text-sm mt-0.5 md:mt-1">Cấu hình giá bế, cán màng, ép kim, dán hộp...</p>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+
+                                {/* --- DESKTOP VIEW --- */}
+                                <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full text-left border-collapse">
                                             <thead>
@@ -633,6 +635,29 @@ const PaperPriceScreen = () => {
                                         </table>
                                     </div>
                                 </div>
+
+                                {/* --- MOBILE VIEW --- */}
+                                <div className="md:hidden space-y-3">
+                                    {surcharges.length === 0 ? (
+                                        <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-gray-200 text-xs">Chưa có dữ liệu Phụ phí</div>
+                                    ) : surcharges.map((item) => (
+                                        <div key={item._id} className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2.5">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-extrabold text-sm text-[#111827]">{item.name}</h3>
+                                                <button onClick={() => deleteConfigHandler(item._id, 'Phụ phí')} className="text-gray-400 hover:text-red-500 p-1 bg-gray-50 rounded-lg"><FaTrash size={12} /></button>
+                                            </div>
+                                            <div className="flex justify-between items-baseline border-t border-gray-100 pt-2 text-xs">
+                                                <span className="text-gray-400 font-bold uppercase text-[9px] tracking-wider">Đơn giá / Tối thiểu</span>
+                                                <div className="text-right">
+                                                    <span className="font-extrabold text-purple-600">{item.price.toLocaleString()}đ</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold">/{item.unit.replace('đ/', '')}</span>
+                                                    <span className="text-gray-300 mx-1.5">|</span>
+                                                    <span className="font-bold text-gray-600">{item.minPrice.toLocaleString()}đ tối thiểu</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -644,75 +669,75 @@ const PaperPriceScreen = () => {
             {/* MODAL 1: THÊM SỬA GIÁ GIẤY GỐC */}
             {/* ============================================================== */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in-up sm:animate-fade-in-down overflow-hidden">
-                        <div className="px-6 py-4 md:px-8 md:py-5 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
-                            <h2 className="font-extrabold text-[#111827] text-lg md:text-xl">
-                                {editId ? 'Cập nhật giá nhập giấy' : 'Thêm báo giá giấy từ NCC'}
+                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col animate-fade-in-up sm:animate-fade-in-down overflow-hidden">
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
+                            <h2 className="font-extrabold text-[#111827] text-sm sm:text-base">
+                                {editId ? '✏️ Cập nhật giá nhập giấy' : '➕ Thêm báo giá giấy NCC'}
                             </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-2 rounded-full shadow-sm transition"><FaTimes size={16} /></button>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-1.5 rounded-full shadow-sm transition"><FaTimes size={14} /></button>
                         </div>
 
-                        <div className="p-4 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
-                            <form id="paperForm" onSubmit={submitHandler} className="space-y-6">
+                        <div className="p-3 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
+                            <form id="paperForm" onSubmit={submitHandler} className="space-y-4">
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 bg-[#E6F0ED]/40 p-4 md:p-6 rounded-2xl border border-[#006B4D]/10">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#E6F0ED]/40 p-3 sm:p-4 rounded-xl border border-[#006B4D]/10">
                                     <div className="sm:col-span-3 lg:col-span-1">
-                                        <label className="block text-[10px] md:text-sm font-bold text-[#006B4D] uppercase mb-2">Nhà cung cấp <span className="text-red-500">*</span></label>
+                                        <label className="block text-[10px] font-bold text-[#006B4D] uppercase mb-1">Nhà cung cấp <span className="text-red-500">*</span></label>
                                         <div className="relative">
-                                            <select required value={supplier} onChange={e => setSupplier(e.target.value)} className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-bold text-[#111827] appearance-none cursor-pointer bg-white shadow-sm">
+                                            <select required value={supplier} onChange={e => setSupplier(e.target.value)} className="w-full border border-gray-200 p-2 sm:p-2.5 text-xs sm:text-sm rounded-lg focus:ring-2 focus:border-[#006B4D] outline-none font-bold text-[#111827] appearance-none cursor-pointer bg-white shadow-sm">
                                                 <option value="" disabled>-- Chọn NCC --</option>
                                                 {suppliersList.map(sup => (
                                                     <option key={sup._id} value={sup.name}>{sup.name}</option>
                                                 ))}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#006B4D] pointer-events-none" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#006B4D] pointer-events-none text-xs" />
                                         </div>
                                     </div>
 
                                     <div className="lg:col-span-1">
-                                        <label className="block text-[10px] md:text-sm font-bold text-[#6B7280] uppercase mb-2">Tên giấy <span className="text-red-500">*</span></label>
-                                        <input type="text" required value={paperNameInput} onChange={e => setPaperNameInput(e.target.value)} className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" placeholder="VD: Couche, Decal..." />
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Tên giấy <span className="text-red-500">*</span></label>
+                                        <input type="text" required value={paperNameInput} onChange={e => setPaperNameInput(e.target.value)} className="w-full border border-gray-200 p-2 sm:p-2.5 text-xs sm:text-sm rounded-lg focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] shadow-sm" placeholder="VD: Couche, Decal..." />
                                     </div>
                                     <div className="lg:col-span-1">
-                                        <label className="block text-[10px] md:text-sm font-bold text-[#6B7280] uppercase mb-2">Định lượng (Tùy chọn)</label>
+                                        <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Định lượng</label>
                                         <div className="relative">
-                                            <select value={paperWeightSelect} onChange={e => setPaperWeightSelect(e.target.value)} className="w-full border border-gray-200 p-3 text-sm md:text-base rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] appearance-none cursor-pointer bg-white shadow-sm">
+                                            <select value={paperWeightSelect} onChange={e => setPaperWeightSelect(e.target.value)} className="w-full border border-gray-200 p-2 sm:p-2.5 text-xs sm:text-sm rounded-lg focus:ring-2 focus:border-[#006B4D] outline-none font-medium text-[#111827] appearance-none cursor-pointer bg-white shadow-sm">
                                                 <option value="">-- Không định lượng --</option>
                                                 {paperWeights.map(w => <option key={w._id} value={w.weight}>{w.weight}</option>)}
                                             </select>
-                                            <FaChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                            <FaChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="border border-gray-200 rounded-2xl p-4 md:p-6 bg-[#F9FAFB]">
-                                    <div className="flex justify-between items-center mb-4 md:mb-6">
-                                        <label className="font-bold text-[#111827] text-base md:text-lg">Kích thước giấy (Khổ) & Giá nhập</label>
-                                        <button type="button" onClick={addSizeRow} className="text-xs md:text-sm bg-white border border-[#006B4D] text-[#006B4D] font-bold px-3 md:px-4 py-2 rounded-lg hover:bg-[#E6F0ED] transition flex items-center">
+                                <div className="border border-gray-200 rounded-xl p-3 sm:p-5 bg-[#F9FAFB]">
+                                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                                        <label className="font-bold text-[#111827] text-sm sm:text-base">Khổ giấy & Giá nhập</label>
+                                        <button type="button" onClick={addSizeRow} className="text-xs bg-white border border-[#006B4D] text-[#006B4D] font-bold px-2.5 py-1.5 rounded-lg hover:bg-[#E6F0ED] transition flex items-center">
                                             <FaPlus className="mr-1" /> Thêm khổ
                                         </button>
                                     </div>
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         {sizes.map((size, index) => (
-                                            <div key={index} className="grid grid-cols-2 sm:flex sm:flex-wrap md:flex-nowrap items-center gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-xl border border-gray-200 shadow-sm relative">
-                                                <button type="button" onClick={() => removeSizeRow(index)} disabled={sizes.length === 1} className="absolute right-2 top-2 sm:static sm:right-auto sm:top-auto text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition disabled:opacity-30"><FaTrash /></button>
+                                            <div key={index} className="grid grid-cols-2 sm:flex sm:flex-wrap md:flex-nowrap items-center gap-2 sm:gap-3 bg-white p-2.5 sm:p-3 rounded-lg border border-gray-200 shadow-sm relative">
+                                                <button type="button" onClick={() => removeSizeRow(index)} disabled={sizes.length === 1} className="absolute right-2 top-2 sm:static sm:right-auto sm:top-auto text-gray-400 hover:text-red-500 p-1.5 rounded hover:bg-red-50 transition disabled:opacity-30"><FaTrash size={12} /></button>
 
                                                 <div className="col-span-2 sm:col-span-1 sm:flex-1">
-                                                    <span className="text-[9px] md:text-[10px] uppercase font-bold text-[#6B7280] ml-1 mb-1 block">Khổ giấy</span>
-                                                    <select required value={size.dimensions} onChange={e => handleSizeChange(index, 'dimensions', e.target.value)} className="w-full border-b-2 border-gray-200 px-1 md:px-2 py-1 md:py-1.5 text-sm md:text-base outline-none focus:border-[#006B4D] font-bold text-[#111827] cursor-pointer bg-transparent appearance-none">
+                                                    <span className="text-[8px] sm:text-[9px] uppercase font-bold text-[#6B7280] ml-1 mb-0.5 block">Khổ giấy</span>
+                                                    <select required value={size.dimensions} onChange={e => handleSizeChange(index, 'dimensions', e.target.value)} className="w-full border-b border-gray-200 px-1 py-1 text-xs sm:text-sm outline-none focus:border-[#006B4D] font-bold text-[#111827] cursor-pointer bg-transparent appearance-none">
                                                         <option value="" disabled>Chọn khổ</option>
                                                         {paperSizes.map(ps => <option key={ps._id} value={ps.name}>{ps.name}</option>)}
                                                     </select>
                                                 </div>
 
                                                 <div className="sm:flex-1">
-                                                    <span className="text-[9px] md:text-[10px] uppercase font-bold text-[#6B7280] ml-1 mb-1 block">Đơn giá</span>
-                                                    <input type="number" required min="0" value={size.price} onChange={e => handleSizeChange(index, 'price', e.target.value)} className="w-full border-b-2 border-gray-200 px-1 md:px-2 py-1 md:py-1.5 text-sm md:text-base outline-none focus:border-[#006B4D] font-extrabold text-[#006B4D]" placeholder="VD: 1940" />
+                                                    <span className="text-[8px] sm:text-[9px] uppercase font-bold text-[#6B7280] ml-1 mb-0.5 block">Đơn giá</span>
+                                                    <input type="number" required min="0" value={size.price} onChange={e => handleSizeChange(index, 'price', e.target.value)} className="w-full border-b border-gray-200 px-1 py-1 text-xs sm:text-sm outline-none focus:border-[#006B4D] font-extrabold text-[#006B4D]" placeholder="VD: 1940" />
                                                 </div>
-                                                <div className="sm:w-20 md:w-28">
-                                                    <span className="text-[9px] md:text-[10px] uppercase font-bold text-[#6B7280] ml-1 mb-1 block">Đơn vị</span>
-                                                    <select value={size.unit} onChange={e => handleSizeChange(index, 'unit', e.target.value)} className="w-full border-b-2 border-gray-200 px-1 py-1.5 text-xs md:text-sm outline-none focus:border-[#006B4D] font-medium text-[#111827] bg-transparent cursor-pointer">
+                                                <div className="sm:w-24">
+                                                    <span className="text-[8px] sm:text-[9px] uppercase font-bold text-[#6B7280] ml-1 mb-0.5 block">Đơn vị</span>
+                                                    <select value={size.unit} onChange={e => handleSizeChange(index, 'unit', e.target.value)} className="w-full border-b border-gray-200 px-1 py-1 text-xs sm:text-sm outline-none focus:border-[#006B4D] font-medium text-[#111827] bg-transparent cursor-pointer">
                                                         <option value="đ/ram">đ/ram</option>
                                                         <option value="đ/tờ">đ/tờ</option>
                                                         <option value="đ/kg">đ/kg</option>
@@ -726,9 +751,9 @@ const PaperPriceScreen = () => {
                                 </div>
                             </form>
                         </div>
-                        <div className="px-6 py-4 md:px-8 md:py-5 border-t border-gray-100 bg-white flex justify-end gap-3 md:gap-4 rounded-b-none sm:rounded-b-2xl">
-                            <button onClick={() => setIsModalOpen(false)} className="px-5 py-2 md:px-6 md:py-2.5 text-sm md:text-base text-[#6B7280] font-bold hover:bg-gray-100 rounded-xl transition">Hủy bỏ</button>
-                            <button type="submit" form="paperForm" className="px-6 py-2 md:px-8 md:py-2.5 text-sm md:text-base bg-[#006B4D] text-white font-bold rounded-xl shadow-md hover:bg-[#00543c] transition">Lưu bảng giá</button>
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 bg-white flex justify-end gap-2 sm:gap-3 rounded-b-xl sm:rounded-b-2xl">
+                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs sm:text-sm text-[#6B7280] font-bold hover:bg-gray-100 rounded-lg transition">Hủy bỏ</button>
+                            <button type="submit" form="paperForm" className="px-5 py-2 text-xs sm:text-sm bg-[#006B4D] text-white font-bold rounded-lg shadow-md hover:bg-[#00543c] transition">Lưu lại</button>
                         </div>
                     </div>
                 </div>
@@ -738,26 +763,26 @@ const PaperPriceScreen = () => {
             {/* MODAL 2: THÊM CẤU HÌNH */}
             {/* ============================================================== */}
             {isConfigModalOpen && (
-                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-fade-in-down overflow-hidden">
-                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
-                            <h2 className="font-extrabold text-[#111827] text-lg">
+                <div className="fixed inset-0 bg-[#111827]/60 z-50 flex items-center justify-center p-2 sm:p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md flex flex-col animate-fade-in-down overflow-hidden">
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFB]">
+                            <h2 className="font-extrabold text-[#111827] text-sm sm:text-base">
                                 Thêm mới {activeTab}
                             </h2>
-                            <button onClick={() => setIsConfigModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-2 rounded-full shadow-sm transition"><FaTimes size={14} /></button>
+                            <button onClick={() => setIsConfigModalOpen(false)} className="text-gray-400 hover:text-red-500 bg-white p-1.5 rounded-full shadow-sm transition"><FaTimes size={14} /></button>
                         </div>
-                        <div className="p-6 overflow-y-auto max-h-[70vh]">
-                            <form id="configForm" onSubmit={submitConfigHandler} className="space-y-5">
+                        <div className="p-3 sm:p-6 overflow-y-auto max-h-[70vh]">
+                            <form id="configForm" onSubmit={submitConfigHandler} className="space-y-4">
 
                                 {activeTab === 'Khổ giấy' && (
                                     <>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Kích thước giấy (VD: 65x86 cm) <span className="text-red-500">*</span></label>
-                                            <input type="text" required value={configForm.name || ''} onChange={e => setConfigForm({ ...configForm, name: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" />
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Kích thước giấy (VD: 65x86 cm) <span className="text-red-500">*</span></label>
+                                            <input type="text" required value={configForm.name || ''} onChange={e => setConfigForm({ ...configForm, name: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Mô tả thêm</label>
-                                            <textarea value={configForm.description || ''} onChange={e => setConfigForm({ ...configForm, description: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" rows="3"></textarea>
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Mô tả thêm</label>
+                                            <textarea value={configForm.description || ''} onChange={e => setConfigForm({ ...configForm, description: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827] resize-none" rows="2"></textarea>
                                         </div>
                                     </>
                                 )}
@@ -765,12 +790,12 @@ const PaperPriceScreen = () => {
                                 {activeTab === 'Định lượng' && (
                                     <>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Định lượng (VD: 300gsm) <span className="text-red-500">*</span></label>
-                                            <input type="text" required value={configForm.weight || ''} onChange={e => setConfigForm({ ...configForm, weight: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" />
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Định lượng (VD: 300gsm) <span className="text-red-500">*</span></label>
+                                            <input type="text" required value={configForm.weight || ''} onChange={e => setConfigForm({ ...configForm, weight: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Mô tả (Sử dụng cho loại ấn phẩm nào?)</label>
-                                            <textarea value={configForm.description || ''} onChange={e => setConfigForm({ ...configForm, description: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" rows="3"></textarea>
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Mô tả</label>
+                                            <textarea value={configForm.description || ''} onChange={e => setConfigForm({ ...configForm, description: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827] resize-none" rows="2"></textarea>
                                         </div>
                                     </>
                                 )}
@@ -778,17 +803,17 @@ const PaperPriceScreen = () => {
                                 {activeTab === 'Phụ phí' && (
                                     <>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Tên dịch vụ gia công <span className="text-red-500">*</span></label>
-                                            <input type="text" required value={configForm.name || ''} onChange={e => setConfigForm({ ...configForm, name: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" placeholder="VD: Bế đứt nửa..." />
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Tên dịch vụ gia công <span className="text-red-500">*</span></label>
+                                            <input type="text" required value={configForm.name || ''} onChange={e => setConfigForm({ ...configForm, name: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" placeholder="VD: Bế đứt nửa..." />
                                         </div>
-                                        <div className="flex flex-col sm:flex-row gap-4">
+                                        <div className="flex flex-col sm:flex-row gap-3">
                                             <div className="flex-1">
-                                                <label className="block text-sm font-bold text-[#6B7280] mb-2">Đơn giá <span className="text-red-500">*</span></label>
-                                                <input type="number" min="0" required value={configForm.price || ''} onChange={e => setConfigForm({ ...configForm, price: Number(e.target.value) })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-purple-600 font-bold" />
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Đơn giá <span className="text-red-500">*</span></label>
+                                                <input type="number" min="0" required value={configForm.price || ''} onChange={e => setConfigForm({ ...configForm, price: Number(e.target.value) })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-purple-600 font-bold" />
                                             </div>
                                             <div className="sm:w-32">
-                                                <label className="block text-sm font-bold text-[#6B7280] mb-2">Đơn vị <span className="text-red-500">*</span></label>
-                                                <select value={configForm.unit || 'đ/m2'} onChange={e => setConfigForm({ ...configForm, unit: e.target.value })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none bg-white">
+                                                <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Đơn vị <span className="text-red-500">*</span></label>
+                                                <select value={configForm.unit || 'đ/m2'} onChange={e => setConfigForm({ ...configForm, unit: e.target.value })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none bg-white">
                                                     <option value="đ/m2">đ/m2</option>
                                                     <option value="đ/nhịp">đ/nhịp</option>
                                                     <option value="đ/tờ">đ/tờ</option>
@@ -796,16 +821,16 @@ const PaperPriceScreen = () => {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-[#6B7280] mb-2">Giá tối thiểu <span className="text-red-500">*</span></label>
-                                            <input type="number" min="0" required value={configForm.minPrice || 0} onChange={e => setConfigForm({ ...configForm, minPrice: Number(e.target.value) })} className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" placeholder="VD: 100000" />
+                                            <label className="block text-[10px] font-bold text-[#6B7280] uppercase mb-1">Giá tối thiểu <span className="text-red-500">*</span></label>
+                                            <input type="number" min="0" required value={configForm.minPrice || 0} onChange={e => setConfigForm({ ...configForm, minPrice: Number(e.target.value) })} className="w-full border border-gray-200 p-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-[#006B4D] outline-none text-[#111827]" placeholder="VD: 100000" />
                                         </div>
                                     </>
                                 )}
                             </form>
                         </div>
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-none sm:rounded-b-2xl">
-                            <button onClick={() => setIsConfigModalOpen(false)} className="px-5 py-2 text-[#6B7280] font-bold hover:bg-gray-200 rounded-xl transition">Hủy</button>
-                            <button type="submit" form="configForm" className="px-6 py-2 bg-[#006B4D] text-white font-bold rounded-xl shadow-md hover:bg-[#00543c] transition">Lưu cấu hình</button>
+                        <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2 bg-[#F9FAFB] rounded-b-xl sm:rounded-b-2xl">
+                            <button onClick={() => setIsConfigModalOpen(false)} className="px-4 py-2 text-xs sm:text-sm text-[#6B7280] font-bold hover:bg-gray-200 rounded-lg transition font-bold">Hủy</button>
+                            <button type="submit" form="configForm" className="px-5 py-2 text-xs sm:text-sm bg-[#006B4D] text-white font-bold rounded-lg shadow-md hover:bg-[#00543c] transition font-bold">Lưu cấu hình</button>
                         </div>
                     </div>
                 </div>
