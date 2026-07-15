@@ -54,28 +54,28 @@ const EMPTY_FORM = {
 
 // ─── UI HELPERS ──────────────────────────────────────────────────────────────
 const Section = ({ title, id, section, toggleSection, children }) => (
-  <div className="border border-gray-100 rounded-2xl overflow-hidden mb-4 shadow-sm">
+  <div className="border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 shadow-sm">
     <button type="button" onClick={() => toggleSection(id)}
-      className="w-full flex justify-between items-center px-5 py-3 bg-[#F9FAFB] text-sm font-bold text-[#111827] hover:bg-[#E6F0ED] transition">
+      className="w-full flex justify-between items-center px-3.5 py-2.5 sm:px-5 sm:py-3 bg-[#F9FAFB] text-xs sm:text-sm font-bold text-[#111827] hover:bg-[#E6F0ED] transition">
       {title}
       {section[id] ? <FaChevronUp className="text-xs text-[#006B4D]" /> : <FaChevronDown className="text-xs text-gray-400" />}
     </button>
-    {section[id] && <div className="p-5 space-y-4">{children}</div>}
+    {section[id] && <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">{children}</div>}
   </div>
 );
 
 const Inp = ({ label, name, value, onChange, type = 'text', className = '', required = false, placeholder = '' }) => (
-  <div className={`flex flex-col gap-1 ${className}`}>
-    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}{required && ' *'}</label>
+  <div className={`flex flex-col gap-0.5 sm:gap-1 ${className}`}>
+    <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}{required && ' *'}</label>
     <input type={type} name={name} value={value || ''} onChange={onChange} required={required} placeholder={placeholder}
-      className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D]" />
+      className="border border-gray-200 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D]" />
   </div>
 );
 
 const Info = ({ label, value }) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{label}</span>
-    <span className="text-sm font-bold text-[#111827]">{value}</span>
+    <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-bold tracking-wider">{label}</span>
+    <span className="text-xs sm:text-sm font-bold text-[#111827]">{value}</span>
   </div>
 );
 
@@ -509,24 +509,24 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
   if (!formula) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm overflow-y-auto p-2 sm:py-8">
-      <div className="w-full max-w-4xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100">
-        <div className="flex justify-between items-start px-4 py-4 sm:px-8 sm:py-6 border-b">
+      <div className="w-full max-w-4xl bg-white rounded-xl sm:rounded-3xl shadow-2xl border border-gray-100">
+        <div className="flex justify-between items-start px-3 py-3 sm:px-8 sm:py-5 border-b border-gray-100">
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-bold text-[#006B4D] tracking-widest uppercase">{formula.formulaCode}</span>
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
-              <h2 className="text-base sm:text-xl font-extrabold text-[#111827]">{formula.name}</h2>
+            <span className="text-[10px] sm:text-xs font-bold text-[#006B4D] tracking-widest uppercase">{formula.formulaCode}</span>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+              <h2 className="text-sm sm:text-xl font-extrabold text-[#111827] truncate">{formula.name}</h2>
               <VersionBadge version={formula.version} />
               <StatusBadge status={formula.status} />
             </div>
-            {formula.sampleGroup && <p className="text-xs text-indigo-500 mt-0.5">Nhóm: <strong>{formula.sampleGroup}</strong></p>}
+            {formula.sampleGroup && <p className="text-[10px] sm:text-xs text-indigo-500 mt-0.5">Nhóm: <strong>{formula.sampleGroup}</strong></p>}
             {formula.status === 'approved' && formula.approvedAt && (
-              <p className="text-xs text-green-600 mt-1">Chốt lúc: {new Date(formula.approvedAt).toLocaleString('vi-VN')}</p>
+              <p className="text-[10px] sm:text-xs text-green-600 mt-0.5">Chốt lúc: {new Date(formula.approvedAt).toLocaleString('vi-VN')}</p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-red-500 ml-2 shrink-0"><FaTimes size={18} /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 ml-2 shrink-0"><FaTimes size={16} /></button>
         </div>
-        <div className="px-4 py-4 sm:px-8 sm:py-6 max-h-[70vh] overflow-y-auto space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm bg-gray-50 p-3 sm:p-4 rounded-2xl border border-gray-100">
+        <div className="px-3 py-3 sm:px-8 sm:py-6 max-h-[70vh] overflow-y-auto space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs bg-gray-50 p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-100">
             <Info label="Loại in"     value={formula.printType === 'offset' ? '🖨️ In Offset' : '🕸️ In Lụa'} />
             <Info label="Khách hàng" value={formula.customer || '—'} />
             <Info label="Sản phẩm"   value={formula.product || '—'} />
@@ -540,29 +540,29 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
           )}
 
           {formula.printType === 'offset' && formula.offsetComponents?.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {formula.offsetComponents.map((comp, idx) => (
                 <DetailBlock key={idx} title={`Chi tiết: ${comp.componentName || 'Không tên'}`}>
-                  <div className="bg-white border text-sm border-gray-200 rounded-xl p-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 mb-4 border-b border-dashed border-gray-200 pb-4">
+                  <div className="bg-white border text-xs border-gray-200 rounded-xl p-3 sm:p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 mb-3 border-b border-dashed border-gray-200 pb-3">
                       <Info label="Loại giấy"    value={comp.paperType || '—'} />
                       <Info label="Định lượng"   value={comp.paperWeight || '—'} />
                       <Info label="Khổ giấy"     value={comp.paperSize || '—'} />
                       <Info label="Nhà cung cấp" value={comp.paperSupplier || '—'} />
                     </div>
                     {comp.inkColors?.length > 0 && (
-                      <div className="mb-4 border-b border-dashed pb-4">
-                        <label className="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Công thức mực</label>
+                      <div className="mb-3 border-b border-dashed pb-3">
+                        <label className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 block">Công thức mực</label>
                         <table className="w-full text-xs">
-                          <thead><tr className="text-gray-500"><th className="pb-2 text-left">Tên màu</th><th className="pb-2 text-left">Mã màu</th><th className="pb-2 text-left">Tỉ lệ pha</th></tr></thead>
+                          <thead><tr className="text-gray-500"><th className="pb-1 text-left">Tên màu</th><th className="pb-1 text-left">Mã màu</th><th className="pb-1 text-left">Tỉ lệ pha</th></tr></thead>
                           <tbody>{comp.inkColors.map((c, i) => (<tr key={i}><td className="py-1 font-bold">{c.colorName}</td><td>{c.colorCode}</td><td>{c.mixRatio}</td></tr>))}</tbody>
                         </table>
                       </div>
                     )}
                     {comp.postProcess?.length > 0 && (
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Gia công sau in</label>
-                        <div className="flex flex-wrap gap-2">{comp.postProcess.map((p, i) => (<span key={i} className="px-2 py-1 bg-[#E6F0ED] text-[#006B4D] rounded text-xs font-bold">{p.step || p}</span>))}</div>
+                        <label className="text-[9px] uppercase font-bold text-gray-400 mb-1.5 block">Gia công sau in</label>
+                        <div className="flex flex-wrap gap-1.5">{comp.postProcess.map((p, i) => (<span key={i} className="px-2 py-0.5 bg-[#E6F0ED] text-[#006B4D] rounded text-[11px] font-bold">{p.step || p}</span>))}</div>
                       </div>
                     )}
                   </div>
@@ -572,14 +572,51 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
           )}
 
           {formula.printType === 'silk' && (
-            <div className="space-y-4">
-              {formula.silkEmulsion && (<DetailBlock title="Hóa chất nền"><div className="text-sm bg-gray-50 p-3 rounded-lg border border-gray-100">{formula.silkEmulsion}</div></DetailBlock>)}
+            <div className="space-y-3 sm:space-y-4">
+              {formula.silkEmulsion && (
+                <DetailBlock title="Hóa chất nền">
+                  <div className="text-xs bg-gray-50 p-2 rounded-xl border border-gray-100 font-semibold text-gray-800 inline-block min-w-[120px]">
+                    {formula.silkEmulsion}
+                  </div>
+                </DetailBlock>
+              )}
               {formula.silkFrames?.length > 0 && (
                 <DetailBlock title="Trình tự kéo khung lụa">
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  {/* Mobile list sequence */}
+                  <div className="lg:hidden space-y-2">
+                    {formula.silkFrames.map((f, i) => (
+                      <div key={i} className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
+                        <div className="flex justify-between items-center border-b pb-1.5 mb-1.5 border-dashed border-gray-200">
+                          <span className="font-bold text-[#006B4D]">{f.frameName || `Khung ${i + 1}`}</span>
+                          {f.hasIroning && <span className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-black text-[9px]">🔥 CÓ ỦI</span>}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-gray-600">
+                          <div><span className="text-[9px] text-gray-400 block uppercase font-bold">Lưới/Căng</span><span className="font-semibold text-gray-900">{f.meshDetails || '—'}</span></div>
+                          <div><span className="text-[9px] text-gray-400 block uppercase font-bold">Lần gạt</span><span className="font-semibold text-gray-900">{f.squeegeeStrokes || '—'}</span></div>
+                          <div><span className="text-[9px] text-gray-400 block uppercase font-bold">Lần in</span><span className="font-bold text-blue-600">{f.printHits || '—'}</span></div>
+                        </div>
+                        {f.inkFormula && (
+                          <div className="mt-1.5 bg-white p-1.5 rounded border border-gray-100">
+                            <span className="text-[9px] text-gray-400 block uppercase font-bold mb-0.5">Công thức mực</span>
+                            <span className="text-gray-800 break-words whitespace-pre-wrap">{f.inkFormula}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table */}
+                  <div className="hidden lg:block overflow-x-auto rounded-xl border border-gray-200">
                     <table className="w-full text-sm">
                       <thead className="bg-[#006B4D] text-white text-xs">
-                        <tr><th className="px-4 py-3">Khung</th><th className="px-4 py-3">Lưới</th><th className="px-4 py-3">Công thức hóa chất</th><th className="px-4 py-3 text-center">Lần gạt</th><th className="px-4 py-3 text-center">Lần in</th><th className="px-4 py-3 text-center">Ủi</th></tr>
+                        <tr>
+                          <th className="px-4 py-3">Khung</th>
+                          <th className="px-4 py-3">Lưới</th>
+                          <th className="px-4 py-3">Công thức hóa chất</th>
+                          <th className="px-4 py-3 text-center">Lần gạt</th>
+                          <th className="px-4 py-3 text-center">Lần in</th>
+                          <th className="px-4 py-3 text-center">Ủi</th>
+                        </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {formula.silkFrames.map((f, i) => (
@@ -602,13 +639,13 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
 
           {formula.notes && (
             <DetailBlock title="Ghi chú kỹ thuật chung">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">{formula.notes}</p>
+              <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap bg-yellow-50/50 p-3 sm:p-4 rounded-xl border border-yellow-100">{formula.notes}</p>
             </DetailBlock>
           )}
         </div>
 
-        <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-8 sm:py-5 border-t border-gray-100">
-          <button onClick={onClose} className="px-4 sm:px-5 py-2.5 rounded-xl border text-sm font-bold text-gray-600 hover:bg-gray-50">Đóng</button>
+        <div className="flex justify-end gap-2 sm:gap-3 px-3 py-3 sm:px-8 sm:py-5 border-t border-gray-100">
+          <button onClick={onClose} className="px-4 sm:px-5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-50">Đóng</button>
           {isAdmin && formula.status !== 'approved' && (
             <button onClick={() => { onEdit(formula); onClose(); }} className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold hover:bg-blue-600">
               <FaEdit /> Chỉnh sửa
@@ -715,7 +752,7 @@ const PrintFormulaScreen = () => {
     });
   };
 
-  const tabBase = 'px-5 py-2 rounded-full text-sm font-bold transition border';
+  const tabBase = 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition border';
   const tabAct  = 'bg-[#006B4D] text-white border-[#006B4D]';
   const tabIdle = 'bg-white text-gray-600 border-gray-200 hover:border-[#006B4D]/50';
 
@@ -742,39 +779,39 @@ const PrintFormulaScreen = () => {
           onCancel={() => setConfirmAction(null)} 
         />
 
-        <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="p-3.5 sm:p-6 md:p-8 space-y-3.5 sm:space-y-6 overflow-y-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
             <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#111827] flex items-center gap-2 sm:gap-3">
-                <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
-                <FaFlask className="text-[#006B4D] shrink-0" /> <span>Phát triển Mẫu In</span>
+              <h1 className="text-base sm:text-xl md:text-2xl font-extrabold text-[#111827] flex items-center gap-2 sm:gap-3">
+                <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={18} /></button>
+                <FaFlask className="text-[#006B4D] shrink-0" size={18} /> <span>Phát triển Mẫu In</span>
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">Quản lý quy trình phát triển mẫu nhiều phiên bản — chỉ chốt khi khách duyệt</p>
+              <p className="text-[11px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Quản lý quy trình phát triển mẫu nhiều phiên bản — chỉ chốt khi khách duyệt</p>
             </div>
             {isAdmin && (
-              <button onClick={() => setModal('create')} className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-[#006B4D] text-white rounded-xl text-sm font-bold hover:bg-[#005a3f] transition shadow-lg w-full sm:w-auto">
-                <FaPlus /> Tạo mẫu mới
+              <button onClick={() => setModal('create')} className="flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 bg-[#006B4D] text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold hover:bg-[#005a3f] transition shadow-md w-full sm:w-auto">
+                <FaPlus size={10} /> Tạo mẫu mới
               </button>
             )}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-center">
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-4 sm:items-center">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
               {[{ key: 'all', label: 'Tất cả' }, { key: 'offset', label: '🖨️ Offset' }, { key: 'silk', label: '🕸️ Lụa' }].map(t => (
                 <button key={t.key} onClick={() => setTab(t.key)} className={`${tabBase} whitespace-nowrap ${tab === t.key ? tabAct : tabIdle}`}>{t.label}</button>
               ))}
             </div>
             <div className="hidden sm:block flex-1" />
-            <div className="flex gap-2 w-full sm:w-auto">
-              <select value={status} onChange={e => setStatus(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 flex-1 sm:flex-none">
+            <div className="flex gap-1.5 w-full sm:w-auto">
+              <select value={status} onChange={e => setStatus(e.target.value)} className="border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 text-xs sm:text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 flex-1 sm:flex-none">
                 <option value="">Mọi trạng thái</option>
                 <option value="draft">Đang phát triển</option>
                 <option value="approved">Đã chốt</option>
                 <option value="archived">Phiên bản cũ</option>
               </select>
               <div className="relative flex-1 sm:flex-none">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchFormulas()} placeholder="Tìm tên, mã..." className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 w-full sm:w-52 lg:w-64" />
+                <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] sm:text-xs" />
+                <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchFormulas()} placeholder="Tìm tên, mã..." className="pl-7 pr-3 py-1.5 border border-gray-200 rounded-lg sm:rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 w-full sm:w-52 lg:w-64" />
               </div>
             </div>
           </div>
