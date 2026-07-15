@@ -778,156 +778,214 @@ const PrintFormulaScreen = () => {
                 {isAdmin && <button onClick={() => setModal('create')} className="mt-4 px-5 py-2.5 bg-[#006B4D] text-white rounded-xl text-sm font-bold hover:bg-[#005a3f]">Tạo mẫu đầu tiên</button>}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[1000px]">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-[10px] tracking-wider uppercase font-bold border-b border-gray-200">
-                      <th className="px-5 py-4 text-left">Mã mẫu</th>
-                      <th className="px-5 py-4 text-left">Tên mẫu / Sản phẩm</th>
-                      <th className="px-5 py-4 text-left">Phân loại</th>
-                      <th className="px-5 py-4 text-center">Phiên bản</th>
-                      <th className="px-5 py-4 text-center">Trạng thái</th>
-                      <th className="px-5 py-4 text-left">Nhóm mẫu</th>
-                      <th className="px-5 py-4 text-center">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {(() => {
-                      // Nhóm mẫu lại theo sampleGroup
-                      const groups = {};
-                      formulas.forEach(f => {
-                        const key = f.sampleGroup || f._id;
-                        if (!groups[key]) groups[key] = [];
-                        groups[key].push(f);
-                      });
-                      
-                      const groupedFormulas = Object.values(groups).map(g => {
-                        g.sort((a,b) => b.version - a.version); // Mới nhất lên đầu nội bộ
-                        return g;
-                      }).sort((a,b) => new Date(b[0].updatedAt) - new Date(a[0].updatedAt)); // Sort nhóm hiển thị
+              <>
+                {/* ── MOBILE CARD VIEW (< lg) ── */}
+                <div className="lg:hidden divide-y divide-gray-100">
+                  {(() => {
+                    const groups = {};
+                    formulas.forEach(f => { const key = f.sampleGroup || f._id; if (!groups[key]) groups[key] = []; groups[key].push(f); });
+                    const groupedFormulas = Object.values(groups).map(g => { g.sort((a,b) => b.version - a.version); return g; }).sort((a,b) => new Date(b[0].updatedAt) - new Date(a[0].updatedAt));
 
-                      return groupedFormulas.map(group => {
-                        const latestV = group[0];
-                        const isExpanded = expandedGroups[latestV.sampleGroup];
-                        const hasMultiple = group.length > 1;
+                    return groupedFormulas.map(group => {
+                      const f = group[0];
+                      const isOff = f.printType === 'offset';
+                      const isDraft = f.status === 'draft';
+                      const isApprovedF = f.status === 'approved';
+                      const hasMultiple = group.length > 1;
+                      const isExp = expandedGroups[f.sampleGroup];
 
-                        const f = latestV; // Dòng chính luôn hiển thị phiên bản mới nhất
-                        const isOff = f.printType === 'offset';
-                        const isDraft    = f.status === 'draft';
-                        const isApproved = f.status === 'approved';
-                        
-                        return (
-                          <React.Fragment key={f._id}>
-                            <tr className={`hover:bg-[#F9FAFB] transition group ${isApproved ? 'bg-green-50/30' : ''}`}>
-                              <td className="px-5 py-4 font-mono text-xs text-[#006B4D] font-bold">{f.formulaCode}</td>
-                              <td className="px-5 py-4">
-                                <div className="font-bold text-[#111827] line-clamp-1">{f.name}</div>
-                                {f.product && <div className="text-xs text-gray-400 mt-0.5">{f.product}{f.customer && ` (${f.customer})`}</div>}
-                              </td>
-                              <td className="px-5 py-4">
-                                <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold border ${isOff ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
-                                  {isOff ? '🖨️ Offset' : '🕸️ Lụa'}
+                      return (
+                        <div key={f._id} className={`p-3 ${isApprovedF ? 'bg-green-50/30' : ''}`}>
+                          {/* Main card */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                <span className="font-mono text-[10px] text-[#006B4D] font-bold">{f.formulaCode}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${isOff ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
+                                  {isOff ? 'Offset' : 'Lụa'}
                                 </span>
-                              </td>
-                              <td className="px-5 py-4 text-center">
-                                {hasMultiple ? (
-                                  <button onClick={() => toggleGroup(latestV.sampleGroup)} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-sm">
-                                    <FaCodeBranch size={10} /> v{f.version}
-                                    {isExpanded ? <FaChevronUp size={10} className="ml-1" /> : <FaChevronDown size={10} className="ml-1" />}
-                                  </button>
-                                ) : (
-                                  <VersionBadge version={f.version} />
-                                )}
-                              </td>
-                              <td className="px-5 py-4 text-center"><StatusBadge status={f.status} /></td>
-                              <td className="px-5 py-4 text-xs font-bold text-gray-500">
-                                {f.sampleGroup}
-                              </td>
-                              <td className="px-5 py-4">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  {/* Xem */}
-                                  <button onClick={() => setViewing(f)} title="Xem chi tiết" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-[#006B4D] hover:text-white transition"><FaEye size={12} /></button>
-                                  {/* Chỉnh sửa (chỉ draft) */}
-                                  {isAdmin && isDraft && (
-                                    <button onClick={() => setModal(f)} title="Chỉnh sửa" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-500 hover:text-white transition"><FaEdit size={12} /></button>
-                                  )}
-                                  {/* Tạo phiên bản tiếp theo */}
-                                  {isAdmin && latestV.status !== 'approved' && (
-                                    <button onClick={() => handleNextVersion(f._id)} title={`Tạo v${latestV.version + 1} từ phiên bản này`} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-indigo-500 hover:text-white transition">
-                                      <FaCodeBranch size={12} />
-                                    </button>
-                                  )}
-                                  {/* CHỐT MẪU */}
-                                  {isAdmin && isDraft && (
-                                    <button onClick={() => handleApprove(f._id, f.name)} title="Chốt mẫu (Khách duyệt)"
-                                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-green-600 hover:text-white transition">
-                                      <FaCheck size={12} />
-                                    </button>
-                                  )}
-                                  {/* Xóa */}
-                                  {isAdmin && !isApproved && (
-                                    <button onClick={() => handleDelete(f._id)} title="Xóa" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-red-500 hover:text-white transition"><FaTrash size={12} /></button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                            
-                            {/* Danh sách phiên bản cũ (Accordion) */}
-                            {isExpanded && hasMultiple && (
-                              <tr className="bg-slate-50/50">
-                                <td colSpan="7" className="p-0 border-b border-gray-200">
-                                  <div className="py-4 pl-16 pr-8 border-l-4 border-indigo-400 m-2 ml-4 rounded-r-xl bg-white shadow-sm ring-1 ring-gray-100">
-                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Các phiên bản trước của {latestV.sampleGroup}</h4>
-                                    <div className="grid gap-2">
-                                      {group.slice(1).map(v => (
-                                        <div key={v._id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition">
-                                          <div className="flex items-center gap-4">
-                                            <VersionBadge version={v.version} />
-                                            {v.status === 'approved' ? (
-                                              <span className="text-xs font-bold text-green-600 border border-green-200 bg-green-50 px-2 py-0.5 rounded-full">✅ Đã chốt</span>
-                                            ) : (
-                                              <span className="text-xs font-bold text-gray-500 border border-gray-200 bg-gray-100 px-2 py-0.5 rounded-full">Phiên bản cũ</span>
-                                            )}
-                                            <span className="text-xs text-gray-400 w-24">{new Date(v.createdAt).toLocaleDateString('vi-VN')}</span>
-                                            <span className="text-sm font-semibold text-gray-700">{v.name}</span>
-                                          </div>
-                                          <div className="flex items-center gap-1.5">
-                                            <button onClick={() => setViewing(v)} title="Xem chi tiết" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-[#006B4D] hover:text-white transition"><FaEye size={10} /></button>
-                                            
-                                            {/* Sửa phiên bản cũ (nếu draft) */}
-                                            {isAdmin && v.status === 'draft' && (
-                                              <button onClick={() => setModal(v)} title="Chỉnh sửa" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-500 hover:text-white transition"><FaEdit size={10} /></button>
-                                            )}
-                                            
-                                            {/* Tạo version chia nhánh từ bản cũ */}
-                                            {isAdmin && latestV.status !== 'approved' && (
-                                              <button onClick={() => handleNextVersion(v._id)} title={`Tạo phiên bản mới từ v${v.version}`} className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-indigo-500 hover:text-white transition"><FaCodeBranch size={10} /></button>
-                                            )}
-                                            
-                                            {/* Chốt bản cũ (sẽ ghi đè làm bản chính thức) */}
-                                            {isAdmin && v.status === 'draft' && latestV.status !== 'approved' && (
-                                              <button onClick={() => handleApprove(v._id, v.name)} title="Chốt phiên bản này" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-green-600 hover:text-white transition"><FaCheck size={10} /></button>
-                                            )}
+                                <VersionBadge version={f.version} />
+                                <StatusBadge status={f.status} />
+                              </div>
+                              <p className="font-bold text-sm text-[#111827] leading-tight truncate">{f.name}</p>
+                              {f.product && <p className="text-[11px] text-gray-400 truncate">{f.product}{f.customer && ` (${f.customer})`}</p>}
+                            </div>
+                          </div>
 
-                                            {/* Xoá */}
-                                            {isAdmin && v.status !== 'approved' && (
-                                              <button onClick={() => handleDelete(v._id)} title="Xóa" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-red-500 hover:text-white transition"><FaTrash size={10} /></button>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
+                          {/* Actions row */}
+                          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                            <button onClick={() => setViewing(f)} className="h-7 px-2.5 flex items-center gap-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-semibold hover:bg-[#006B4D] hover:text-white transition"><FaEye size={10} /> Xem</button>
+                            {isAdmin && isDraft && (
+                              <button onClick={() => setModal(f)} className="h-7 px-2.5 flex items-center gap-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-semibold hover:bg-blue-500 hover:text-white transition"><FaEdit size={10} /> Sửa</button>
+                            )}
+                            {isAdmin && !isApprovedF && (
+                              <button onClick={() => handleNextVersion(f._id)} className="h-7 px-2.5 flex items-center gap-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-semibold hover:bg-indigo-500 hover:text-white transition"><FaCodeBranch size={10} /> +v</button>
+                            )}
+                            {isAdmin && isDraft && (
+                              <button onClick={() => handleApprove(f._id, f.name)} className="h-7 px-2.5 flex items-center gap-1 rounded-lg bg-gray-100 text-gray-600 text-[11px] font-semibold hover:bg-green-600 hover:text-white transition"><FaCheck size={10} /> Chốt</button>
+                            )}
+                            {isAdmin && !isApprovedF && (
+                              <button onClick={() => handleDelete(f._id)} className="h-7 w-7 flex items-center justify-center rounded-lg bg-gray-100 text-red-400 hover:bg-red-500 hover:text-white transition"><FaTrash size={10} /></button>
+                            )}
+                            {hasMultiple && (
+                              <button onClick={() => toggleGroup(f.sampleGroup)} className="h-7 px-2.5 flex items-center gap-1 rounded-lg bg-indigo-50 text-indigo-700 text-[11px] font-bold border border-indigo-200 ml-auto">
+                                <FaCodeBranch size={9} /> {group.length} bản {isExp ? <FaChevronUp size={8} /> : <FaChevronDown size={8} />}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Expanded older versions */}
+                          {isExp && hasMultiple && (
+                            <div className="mt-2 pl-3 border-l-2 border-indigo-300 space-y-2">
+                              {group.slice(1).map(v => (
+                                <div key={v._id} className="bg-white rounded-lg border border-gray-100 p-2.5">
+                                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                    <VersionBadge version={v.version} />
+                                    <StatusBadge status={v.status} />
+                                    <span className="text-[10px] text-gray-400">{new Date(v.createdAt).toLocaleDateString('vi-VN')}</span>
+                                  </div>
+                                  <p className="text-xs font-semibold text-gray-700 truncate">{v.name}</p>
+                                  <div className="flex items-center gap-1.5 mt-1.5">
+                                    <button onClick={() => setViewing(v)} className="h-6 px-2 flex items-center gap-1 rounded text-[10px] bg-gray-100 text-gray-600"><FaEye size={9} /> Xem</button>
+                                    {isAdmin && v.status === 'draft' && <button onClick={() => setModal(v)} className="h-6 px-2 flex items-center gap-1 rounded text-[10px] bg-gray-100 text-gray-600"><FaEdit size={9} /> Sửa</button>}
+                                    {isAdmin && !isApprovedF && <button onClick={() => handleNextVersion(v._id)} className="h-6 px-2 flex items-center gap-1 rounded text-[10px] bg-gray-100 text-gray-600"><FaCodeBranch size={9} /></button>}
+                                    {isAdmin && v.status === 'draft' && !isApprovedF && <button onClick={() => handleApprove(v._id, v.name)} className="h-6 px-2 flex items-center gap-1 rounded text-[10px] bg-gray-100 text-gray-600"><FaCheck size={9} /></button>}
+                                    {isAdmin && v.status !== 'approved' && <button onClick={() => handleDelete(v._id)} className="h-6 w-6 flex items-center justify-center rounded text-[10px] bg-gray-100 text-red-400"><FaTrash size={9} /></button>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                {/* ── DESKTOP TABLE VIEW (lg+) ── */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full text-sm min-w-[1000px]">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-[10px] tracking-wider uppercase font-bold border-b border-gray-200">
+                        <th className="px-5 py-4 text-left">Mã mẫu</th>
+                        <th className="px-5 py-4 text-left">Tên mẫu / Sản phẩm</th>
+                        <th className="px-5 py-4 text-left">Phân loại</th>
+                        <th className="px-5 py-4 text-center">Phiên bản</th>
+                        <th className="px-5 py-4 text-center">Trạng thái</th>
+                        <th className="px-5 py-4 text-left">Nhóm mẫu</th>
+                        <th className="px-5 py-4 text-center">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {(() => {
+                        const groups = {};
+                        formulas.forEach(f => { const key = f.sampleGroup || f._id; if (!groups[key]) groups[key] = []; groups[key].push(f); });
+                        const groupedFormulas = Object.values(groups).map(g => { g.sort((a,b) => b.version - a.version); return g; }).sort((a,b) => new Date(b[0].updatedAt) - new Date(a[0].updatedAt));
+
+                        return groupedFormulas.map(group => {
+                          const latestV = group[0];
+                          const isExpanded = expandedGroups[latestV.sampleGroup];
+                          const hasMultiple = group.length > 1;
+                          const f = latestV;
+                          const isOff = f.printType === 'offset';
+                          const isDraft = f.status === 'draft';
+                          const isApproved = f.status === 'approved';
+
+                          return (
+                            <React.Fragment key={f._id}>
+                              <tr className={`hover:bg-[#F9FAFB] transition group ${isApproved ? 'bg-green-50/30' : ''}`}>
+                                <td className="px-5 py-4 font-mono text-xs text-[#006B4D] font-bold">{f.formulaCode}</td>
+                                <td className="px-5 py-4">
+                                  <div className="font-bold text-[#111827] line-clamp-1">{f.name}</div>
+                                  {f.product && <div className="text-xs text-gray-400 mt-0.5">{f.product}{f.customer && ` (${f.customer})`}</div>}
+                                </td>
+                                <td className="px-5 py-4">
+                                  <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-bold border ${isOff ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
+                                    {isOff ? '🖨️ Offset' : '🕸️ Lụa'}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-4 text-center">
+                                  {hasMultiple ? (
+                                    <button onClick={() => toggleGroup(latestV.sampleGroup)} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-sm">
+                                      <FaCodeBranch size={10} /> v{f.version}
+                                      {isExpanded ? <FaChevronUp size={10} className="ml-1" /> : <FaChevronDown size={10} className="ml-1" />}
+                                    </button>
+                                  ) : (
+                                    <VersionBadge version={f.version} />
+                                  )}
+                                </td>
+                                <td className="px-5 py-4 text-center"><StatusBadge status={f.status} /></td>
+                                <td className="px-5 py-4 text-xs font-bold text-gray-500">{f.sampleGroup}</td>
+                                <td className="px-5 py-4">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button onClick={() => setViewing(f)} title="Xem chi tiết" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-[#006B4D] hover:text-white transition"><FaEye size={12} /></button>
+                                    {isAdmin && isDraft && (
+                                      <button onClick={() => setModal(f)} title="Chỉnh sửa" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-500 hover:text-white transition"><FaEdit size={12} /></button>
+                                    )}
+                                    {isAdmin && latestV.status !== 'approved' && (
+                                      <button onClick={() => handleNextVersion(f._id)} title={`Tạo v${latestV.version + 1} từ phiên bản này`} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-indigo-500 hover:text-white transition">
+                                        <FaCodeBranch size={12} />
+                                      </button>
+                                    )}
+                                    {isAdmin && isDraft && (
+                                      <button onClick={() => handleApprove(f._id, f.name)} title="Chốt mẫu (Khách duyệt)" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-green-600 hover:text-white transition">
+                                        <FaCheck size={12} />
+                                      </button>
+                                    )}
+                                    {isAdmin && !isApproved && (
+                                      <button onClick={() => handleDelete(f._id)} title="Xóa" className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-red-500 hover:text-white transition"><FaTrash size={12} /></button>
+                                    )}
                                   </div>
                                 </td>
                               </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      });
-                    })()}
-                  </tbody>
-                </table>
-              </div>
+                              {isExpanded && hasMultiple && (
+                                <tr className="bg-slate-50/50">
+                                  <td colSpan="7" className="p-0 border-b border-gray-200">
+                                    <div className="py-4 pl-16 pr-8 border-l-4 border-indigo-400 m-2 ml-4 rounded-r-xl bg-white shadow-sm ring-1 ring-gray-100">
+                                      <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Các phiên bản trước của {latestV.sampleGroup}</h4>
+                                      <div className="grid gap-2">
+                                        {group.slice(1).map(v => (
+                                          <div key={v._id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition">
+                                            <div className="flex items-center gap-4">
+                                              <VersionBadge version={v.version} />
+                                              {v.status === 'approved' ? (
+                                                <span className="text-xs font-bold text-green-600 border border-green-200 bg-green-50 px-2 py-0.5 rounded-full">✅ Đã chốt</span>
+                                              ) : (
+                                                <span className="text-xs font-bold text-gray-500 border border-gray-200 bg-gray-100 px-2 py-0.5 rounded-full">Phiên bản cũ</span>
+                                              )}
+                                              <span className="text-xs text-gray-400 w-24">{new Date(v.createdAt).toLocaleDateString('vi-VN')}</span>
+                                              <span className="text-sm font-semibold text-gray-700">{v.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                              <button onClick={() => setViewing(v)} title="Xem chi tiết" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-[#006B4D] hover:text-white transition"><FaEye size={10} /></button>
+                                              {isAdmin && v.status === 'draft' && (
+                                                <button onClick={() => setModal(v)} title="Chỉnh sửa" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-500 hover:text-white transition"><FaEdit size={10} /></button>
+                                              )}
+                                              {isAdmin && latestV.status !== 'approved' && (
+                                                <button onClick={() => handleNextVersion(v._id)} title={`Tạo phiên bản mới từ v${v.version}`} className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-indigo-500 hover:text-white transition"><FaCodeBranch size={10} /></button>
+                                              )}
+                                              {isAdmin && v.status === 'draft' && latestV.status !== 'approved' && (
+                                                <button onClick={() => handleApprove(v._id, v.name)} title="Chốt phiên bản này" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-green-600 hover:text-white transition"><FaCheck size={10} /></button>
+                                              )}
+                                              {isAdmin && v.status !== 'approved' && (
+                                                <button onClick={() => handleDelete(v._id)} title="Xóa" className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-red-500 hover:text-white transition"><FaTrash size={10} /></button>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
 
