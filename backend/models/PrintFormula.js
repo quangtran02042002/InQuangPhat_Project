@@ -90,18 +90,40 @@ printFormulaSchema.pre('save', async function () {
   // 1. Nếu là bản MỚI HOÀN TOÀN (chưa có sampleGroup)
   if (this.isNew && !this.sampleGroup) {
     const prefix = `PTM-${year}`;
-    const count  = await Model.countDocuments({ sampleGroup: { $regex: `^${prefix}` } });
-    const seq    = String(count + 1).padStart(3, '0');
-    this.sampleGroup = `${prefix}-${seq}`;
+    // Tìm sampleGroup có số thứ tự cao nhất thay vì đếm documents
+    // (vì mỗi nhóm mẫu có nhiều phiên bản → countDocuments bị sai)
+    const last = await Model.findOne(
+      { sampleGroup: { $regex: `^${prefix}` } },
+      { sampleGroup: 1 },
+      { sort: { sampleGroup: -1 } }
+    );
+    let seq = 1;
+    if (last && last.sampleGroup) {
+      const parts = last.sampleGroup.split('-');
+      const lastSeq = parseInt(parts[parts.length - 1]);
+      if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    }
+    this.sampleGroup = `${prefix}-${String(seq).padStart(3, '0')}`;
     this.version     = 1;
   }
 
   // 2. Nếu chưa có formulaCode (mọi bản)
   if (!this.formulaCode) {
     const typePrefix = this.printType === 'offset' ? 'OFF' : 'SILK';
-    const count = await Model.countDocuments({ printType: this.printType });
-    const seq   = String(count + 1).padStart(3, '0');
-    this.formulaCode = `${typePrefix}-${year}-${seq}`;
+    const codePrefix = `${typePrefix}-${year}`;
+    // Tìm formulaCode có số thứ tự cao nhất thay vì đếm documents
+    const last = await Model.findOne(
+      { formulaCode: { $regex: `^${codePrefix}` } },
+      { formulaCode: 1 },
+      { sort: { formulaCode: -1 } }
+    );
+    let seq = 1;
+    if (last && last.formulaCode) {
+      const parts = last.formulaCode.split('-');
+      const lastSeq = parseInt(parts[parts.length - 1]);
+      if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    }
+    this.formulaCode = `${codePrefix}-${String(seq).padStart(3, '0')}`;
   }
 });
 

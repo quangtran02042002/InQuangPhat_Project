@@ -271,15 +271,15 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-5xl mx-4 bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '90vh' }}>
-        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 shrink-0">
-          <div>
-            <h2 className="text-xl font-extrabold text-[#111827]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-2 sm:p-4">
+      <div className="w-full max-w-5xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '95vh' }}>
+        <div className="flex justify-between items-center px-4 py-4 sm:px-8 sm:py-6 border-b border-gray-100 shrink-0">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-xl font-extrabold text-[#111827] truncate">
               {isEdit ? (isApproved ? '👁️ Xem mẫu đã chốt' : '✏️ Chỉnh sửa mẫu') : '🧪 Tạo mẫu mới (v1)'}
             </h2>
             {isEdit && (
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                 <p className="text-xs text-gray-400">Mã: <strong>{formula.formulaCode}</strong></p>
                 <VersionBadge version={formula.version} />
                 <StatusBadge status={formula.status} />
@@ -288,10 +288,10 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
             )}
             {isApproved && <p className="text-xs text-yellow-600 mt-1 bg-yellow-50 px-2 py-0.5 rounded-lg inline-block">Mẫu đã chốt — chỉ đọc</p>}
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition"><FaTimes size={18} /></button>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition ml-2 shrink-0"><FaTimes size={18} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-8 py-6 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="px-4 py-4 sm:px-8 sm:py-6 overflow-y-auto flex-1">
           {/* THÔNG TIN CHUNG */}
           <Section title="Thông tin chung" id="general" section={section} toggleSection={toggleSection}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -347,23 +347,37 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                       <span className="bg-[#E6F0ED] rounded-full w-6 h-6 flex items-center justify-center">{cIdx + 1}</span>
                       Chi tiết: {comp.componentName || 'Chưa đặt tên'}
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <Inp label="Tên chi tiết" value={comp.componentName} onChange={e => changeOffsetComp(cIdx, 'componentName', e.target.value)} required placeholder="Nắp hộp..." />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                      <Inp label="Tên chi tiết" value={comp.componentName} onChange={e => changeOffsetComp(cIdx, 'componentName', e.target.value)} required placeholder="Nắp hộp..." className="col-span-2 md:col-span-1" />
                       <Inp label="Loại giấy"    value={comp.paperType}     onChange={e => changeOffsetComp(cIdx, 'paperType', e.target.value)} placeholder="Couche, Ivory..." />
                       <Inp label="Định lượng"   value={comp.paperWeight}   onChange={e => changeOffsetComp(cIdx, 'paperWeight', e.target.value)} placeholder="300gsm" />
-                      <Inp label="Khổ giấy"     value={comp.paperSize}     onChange={e => changeOffsetComp(cIdx, 'paperSize', e.target.value)} placeholder="65x90" />
+                      <Inp label="Khổ giấy"     value={comp.paperSize}     onChange={e => changeOffsetComp(cIdx, 'paperSize', e.target.value)} placeholder="65x90" className="col-span-2 md:col-span-1" />
                     </div>
                     {/* Inks */}
-                    <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
+                    <div className="bg-gray-50 rounded-xl p-3 sm:p-4 mb-4 border border-gray-100">
                       <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Công thức mực CMYK</label>
-                      <div className="space-y-2">
+                      <div className="space-y-3 sm:space-y-2">
                         {comp.inkColors.map((ink, iIdx) => (
-                          <div key={iIdx} className="flex gap-2 items-center">
-                            <input placeholder="Tên màu *"   value={ink.colorName} onChange={e => changeOffsetInk(cIdx, iIdx, 'colorName', e.target.value)} className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
-                            <input placeholder="Mã C/M/Y/K" value={ink.colorCode} onChange={e => changeOffsetInk(cIdx, iIdx, 'colorCode', e.target.value)} className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
-                            <input placeholder="Tỉ lệ"       value={ink.mixRatio}  onChange={e => changeOffsetInk(cIdx, iIdx, 'mixRatio', e.target.value)}  className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
-                            <input placeholder="Ghi chú"     value={ink.note}      onChange={e => changeOffsetInk(cIdx, iIdx, 'note', e.target.value)}      className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
-                            {!isApproved && comp.inkColors.length > 1 && <button type="button" onClick={() => rmOffsetInk(cIdx, iIdx)} className="text-red-400 hover:text-red-600"><FaTimes size={12} /></button>}
+                          <div key={iIdx} className="grid grid-cols-2 sm:flex gap-2 items-start sm:items-center bg-white sm:bg-transparent p-2 sm:p-0 rounded-lg sm:rounded-none border sm:border-0 border-gray-100">
+                            <div className="col-span-2 sm:flex-1">
+                              <label className="text-[9px] text-gray-400 uppercase font-bold sm:hidden">Tên màu</label>
+                              <input placeholder="Tên màu *" value={ink.colorName} onChange={e => changeOffsetInk(cIdx, iIdx, 'colorName', e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
+                            </div>
+                            <div className="sm:w-24">
+                              <label className="text-[9px] text-gray-400 uppercase font-bold sm:hidden">Mã màu</label>
+                              <input placeholder="Mã C/M/Y/K" value={ink.colorCode} onChange={e => changeOffsetInk(cIdx, iIdx, 'colorCode', e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
+                            </div>
+                            <div className="sm:w-20">
+                              <label className="text-[9px] text-gray-400 uppercase font-bold sm:hidden">Tỉ lệ</label>
+                              <input placeholder="Tỉ lệ" value={ink.mixRatio} onChange={e => changeOffsetInk(cIdx, iIdx, 'mixRatio', e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
+                            </div>
+                            <div className="col-span-2 sm:flex-1 flex gap-2 items-end">
+                              <div className="flex-1">
+                                <label className="text-[9px] text-gray-400 uppercase font-bold sm:hidden">Ghi chú</label>
+                                <input placeholder="Ghi chú" value={ink.note} onChange={e => changeOffsetInk(cIdx, iIdx, 'note', e.target.value)} className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none" disabled={isApproved} />
+                              </div>
+                              {!isApproved && comp.inkColors.length > 1 && <button type="button" onClick={() => rmOffsetInk(cIdx, iIdx)} className="text-red-400 hover:text-red-600 shrink-0 pb-1"><FaTimes size={12} /></button>}
+                            </div>
                           </div>
                         ))}
                         {!isApproved && <button type="button" onClick={() => addOffsetInk(cIdx)} className="text-xs text-[#006B4D] font-bold mt-2 hover:underline flex items-center gap-1"><FaPlus size={10} /> Thêm màu mực</button>}
@@ -399,6 +413,7 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                 <Inp label="Keo chụp bảng" name="silkEmulsion" value={form.silkEmulsion} onChange={handleChange} placeholder="VD: Ulanogel..." />
               </div>
               <div className="space-y-4 text-sm">
+                {/* Desktop header row */}
                 <div className="hidden lg:grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider px-2">
                   <div className="col-span-3">Tên khung</div><div className="col-span-2">Lưới/Căng</div>
                   <div className="col-span-4">Hóa chất pha mực</div><div className="col-span-1 text-center">Gạt</div>
@@ -406,16 +421,34 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                   <div className="col-span-1 text-center">Xóa</div>
                 </div>
                 {form.silkFrames.map((frame, idx) => (
-                  <div key={idx} className="flex flex-col lg:grid lg:grid-cols-12 gap-2 items-start lg:items-center bg-gray-50 p-4 lg:p-2 border border-gray-100 rounded-xl">
-                    <div className="w-full lg:col-span-3"><input value={frame.frameName} onChange={e => changeSilkFrame(idx, 'frameName', e.target.value)} placeholder="Tên khung" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" /></div>
-                    <div className="w-full lg:col-span-2"><input value={frame.meshDetails} onChange={e => changeSilkFrame(idx, 'meshDetails', e.target.value)} placeholder="VD: 120T" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" /></div>
-                    <div className="w-full lg:col-span-4"><textarea value={frame.inkFormula} onChange={e => changeSilkFrame(idx, 'inkFormula', e.target.value)} placeholder="20% bóng, 80% trắng..." rows={1} disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border resize-none" /></div>
-                    <div className="w-full lg:col-span-1"><input value={frame.squeegeeStrokes} onChange={e => changeSilkFrame(idx, 'squeegeeStrokes', e.target.value)} placeholder="số gạt" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" /></div>
-                    <div className="w-full lg:col-span-1"><input value={frame.printHits} onChange={e => changeSilkFrame(idx, 'printHits', e.target.value)} placeholder="SL" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" /></div>
-                    <div className="w-full lg:col-span-1 flex justify-center">
-                      {!isApproved && form.silkFrames.length > 1 && (
-                        <button type="button" onClick={() => rmSilkFrame(idx)} className="text-red-400 hover:text-red-600 border border-red-200 rounded-lg p-2 w-full flex justify-center"><FaTrash size={14} /></button>
-                      )}
+                  <div key={idx} className="bg-gray-50 p-3 sm:p-4 lg:p-2 border border-gray-100 rounded-xl">
+                    {/* Mobile: stacked with labels, Desktop: grid row */}
+                    <div className="grid grid-cols-2 lg:grid-cols-12 gap-2 items-start lg:items-center">
+                      <div className="col-span-2 lg:col-span-3">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Tên khung</label>
+                        <input value={frame.frameName} onChange={e => changeSilkFrame(idx, 'frameName', e.target.value)} placeholder="Tên khung" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" />
+                      </div>
+                      <div className="col-span-2 lg:col-span-2">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Lưới/Căng</label>
+                        <input value={frame.meshDetails} onChange={e => changeSilkFrame(idx, 'meshDetails', e.target.value)} placeholder="VD: 120T" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" />
+                      </div>
+                      <div className="col-span-2 lg:col-span-4">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Hóa chất pha mực</label>
+                        <textarea value={frame.inkFormula} onChange={e => changeSilkFrame(idx, 'inkFormula', e.target.value)} placeholder="20% bóng, 80% trắng..." rows={1} disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border resize-none" />
+                      </div>
+                      <div className="col-span-1 lg:col-span-1">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Gạt</label>
+                        <input value={frame.squeegeeStrokes} onChange={e => changeSilkFrame(idx, 'squeegeeStrokes', e.target.value)} placeholder="Số gạt" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" />
+                      </div>
+                      <div className="col-span-1 lg:col-span-1">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">In (hit)</label>
+                        <input value={frame.printHits} onChange={e => changeSilkFrame(idx, 'printHits', e.target.value)} placeholder="SL" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" />
+                      </div>
+                      <div className="col-span-2 lg:col-span-1 flex justify-center mt-1 lg:mt-0">
+                        {!isApproved && form.silkFrames.length > 1 && (
+                          <button type="button" onClick={() => rmSilkFrame(idx)} className="text-red-400 hover:text-red-600 border border-red-200 rounded-lg p-2 w-full lg:w-auto flex justify-center items-center gap-1 text-xs"><FaTrash size={12} /> <span className="lg:hidden">Xóa khung</span></button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -430,7 +463,7 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
 
           {/* CÀI ĐẶT MÁY */}
           <Section title="Cài đặt máy (Tùy chọn)" id="machine" section={section} toggleSection={toggleSection}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Inp label="Tên máy sử dụng" name="machineName" value={form.machineName} onChange={handleChange} />
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Thông số kỹ thuật</label>
@@ -447,11 +480,11 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
           </Section>
         </form>
 
-        <div className="flex justify-end gap-3 px-8 py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-3xl">
-          <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">Hủy</button>
+        <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-8 sm:py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-2xl sm:rounded-b-3xl">
+          <button type="button" onClick={onClose} className="px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">Hủy</button>
           {!isApproved && (
             <button type="button" onClick={handleSubmit} disabled={loading || uploading}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-sm font-bold transition shadow-lg disabled:opacity-60">
+              className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-sm font-bold transition shadow-lg disabled:opacity-60">
               <FaSave /> {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Lưu mẫu (v1)'}
             </button>
           )}
@@ -465,27 +498,25 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
 const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
   if (!formula) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm overflow-y-auto py-8">
-      <div className="w-full max-w-4xl mx-4 bg-white rounded-3xl shadow-2xl border border-gray-100">
-        <div className="flex justify-between items-center px-8 py-6 border-b">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-xs font-bold text-[#006B4D] tracking-widest uppercase">{formula.formulaCode}</span>
-              <div className="flex items-center gap-2 mt-1">
-                <h2 className="text-xl font-extrabold text-[#111827]">{formula.name}</h2>
-                <VersionBadge version={formula.version} />
-                <StatusBadge status={formula.status} />
-              </div>
-              {formula.sampleGroup && <p className="text-xs text-indigo-500 mt-0.5">Nhóm: <strong>{formula.sampleGroup}</strong></p>}
-              {formula.status === 'approved' && formula.approvedAt && (
-                <p className="text-xs text-green-600 mt-1">Chốt lúc: {new Date(formula.approvedAt).toLocaleString('vi-VN')}</p>
-              )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm overflow-y-auto p-2 sm:py-8">
+      <div className="w-full max-w-4xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100">
+        <div className="flex justify-between items-start px-4 py-4 sm:px-8 sm:py-6 border-b">
+          <div className="min-w-0 flex-1">
+            <span className="text-xs font-bold text-[#006B4D] tracking-widest uppercase">{formula.formulaCode}</span>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
+              <h2 className="text-base sm:text-xl font-extrabold text-[#111827]">{formula.name}</h2>
+              <VersionBadge version={formula.version} />
+              <StatusBadge status={formula.status} />
             </div>
+            {formula.sampleGroup && <p className="text-xs text-indigo-500 mt-0.5">Nhóm: <strong>{formula.sampleGroup}</strong></p>}
+            {formula.status === 'approved' && formula.approvedAt && (
+              <p className="text-xs text-green-600 mt-1">Chốt lúc: {new Date(formula.approvedAt).toLocaleString('vi-VN')}</p>
+            )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-red-500"><FaTimes size={18} /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500 ml-2 shrink-0"><FaTimes size={18} /></button>
         </div>
-        <div className="px-8 py-6 max-h-[65vh] overflow-y-auto space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-gray-50 p-4 rounded-2xl border border-gray-100">
+        <div className="px-4 py-4 sm:px-8 sm:py-6 max-h-[70vh] overflow-y-auto space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm bg-gray-50 p-3 sm:p-4 rounded-2xl border border-gray-100">
             <Info label="Loại in"     value={formula.printType === 'offset' ? '🖨️ In Offset' : '🕸️ In Lụa'} />
             <Info label="Khách hàng" value={formula.customer || '—'} />
             <Info label="Sản phẩm"   value={formula.product || '—'} />
@@ -565,10 +596,10 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
           )}
         </div>
 
-        <div className="flex justify-end gap-3 px-8 py-5 border-t border-gray-100">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border text-sm font-bold text-gray-600 hover:bg-gray-50">Đóng</button>
+        <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-8 sm:py-5 border-t border-gray-100">
+          <button onClick={onClose} className="px-4 sm:px-5 py-2.5 rounded-xl border text-sm font-bold text-gray-600 hover:bg-gray-50">Đóng</button>
           {isAdmin && formula.status !== 'approved' && (
-            <button onClick={() => { onEdit(formula); onClose(); }} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold hover:bg-blue-600">
+            <button onClick={() => { onEdit(formula); onClose(); }} className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold hover:bg-blue-600">
               <FaEdit /> Chỉnh sửa
             </button>
           )}
@@ -700,38 +731,40 @@ const PrintFormulaScreen = () => {
           onCancel={() => setConfirmAction(null)} 
         />
 
-        <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 overflow-y-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-xl md:text-2xl font-extrabold text-[#111827] flex items-center gap-3">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#111827] flex items-center gap-2 sm:gap-3">
                 <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
-                <FaFlask className="text-[#006B4D]" /> Phát triển Mẫu In
+                <FaFlask className="text-[#006B4D] shrink-0" /> <span>Phát triển Mẫu In</span>
               </h1>
-              <p className="text-sm text-gray-500 mt-1">Quản lý quy trình phát triển mẫu nhiều phiên bản — chỉ chốt khi khách duyệt</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">Quản lý quy trình phát triển mẫu nhiều phiên bản — chỉ chốt khi khách duyệt</p>
             </div>
             {isAdmin && (
-              <button onClick={() => setModal('create')} className="flex items-center gap-2 px-5 py-2.5 bg-[#006B4D] text-white rounded-xl text-sm font-bold hover:bg-[#005a3f] transition shadow-lg">
+              <button onClick={() => setModal('create')} className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-[#006B4D] text-white rounded-xl text-sm font-bold hover:bg-[#005a3f] transition shadow-lg w-full sm:w-auto">
                 <FaPlus /> Tạo mẫu mới
               </button>
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-center">
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
               {[{ key: 'all', label: 'Tất cả' }, { key: 'offset', label: '🖨️ Offset' }, { key: 'silk', label: '🕸️ Lụa' }].map(t => (
-                <button key={t.key} onClick={() => setTab(t.key)} className={`${tabBase} ${tab === t.key ? tabAct : tabIdle}`}>{t.label}</button>
+                <button key={t.key} onClick={() => setTab(t.key)} className={`${tabBase} whitespace-nowrap ${tab === t.key ? tabAct : tabIdle}`}>{t.label}</button>
               ))}
             </div>
-            <div className="flex-1" />
-            <select value={status} onChange={e => setStatus(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30">
-              <option value="">Mọi trạng thái</option>
-              <option value="draft">Đang phát triển</option>
-              <option value="approved">Đã chốt</option>
-              <option value="archived">Phiên bản cũ</option>
-            </select>
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-              <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchFormulas()} placeholder="Tìm tên, mã, nhóm mẫu..." className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 w-64" />
+            <div className="hidden sm:block flex-1" />
+            <div className="flex gap-2 w-full sm:w-auto">
+              <select value={status} onChange={e => setStatus(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 flex-1 sm:flex-none">
+                <option value="">Mọi trạng thái</option>
+                <option value="draft">Đang phát triển</option>
+                <option value="approved">Đã chốt</option>
+                <option value="archived">Phiên bản cũ</option>
+              </select>
+              <div className="relative flex-1 sm:flex-none">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchFormulas()} placeholder="Tìm tên, mã..." className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 w-full sm:w-52 lg:w-64" />
+              </div>
             </div>
           </div>
 
@@ -899,12 +932,12 @@ const PrintFormulaScreen = () => {
           </div>
 
           {/* LEGEND */}
-          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs text-gray-500">
             <span className="flex items-center gap-1.5"><FaEye className="text-[#006B4D]" /> Xem chi tiết</span>
             <span className="flex items-center gap-1.5"><FaEdit className="text-blue-500" /> Chỉnh sửa (draft)</span>
-            <span className="flex items-center gap-1.5"><FaCodeBranch className="text-indigo-500" /> Tạo phiên bản tiếp theo</span>
-            <span className="flex items-center gap-1.5"><FaCheck className="text-green-600" /> Chốt mẫu (khi khách duyệt)</span>
-            <span className="flex items-center gap-1.5"><FaHistory className="text-indigo-600" /> Xem lịch sử phiên bản</span>
+            <span className="hidden sm:flex items-center gap-1.5"><FaCodeBranch className="text-indigo-500" /> Tạo phiên bản tiếp theo</span>
+            <span className="hidden sm:flex items-center gap-1.5"><FaCheck className="text-green-600" /> Chốt mẫu (khi khách duyệt)</span>
+            <span className="hidden sm:flex items-center gap-1.5"><FaHistory className="text-indigo-600" /> Xem lịch sử phiên bản</span>
           </div>
         </div>
       </div>
