@@ -170,32 +170,34 @@ const ExportSlipTemplate = ({ transaction, onClose }) => {
   );
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center overflow-y-auto py-4 backdrop-blur-sm print:bg-transparent print:block print:py-0">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center overflow-y-auto py-4 px-2 sm:px-4 backdrop-blur-sm print:bg-transparent print:block print:py-0">
       {/* Thanh công cụ - ẩn khi in */}
-      <div className="print:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white px-6 py-3 flex justify-between items-center z-10 shadow-xl">
-        <div className="flex items-center gap-3">
-          <FaPrint className="text-green-400" />
-          <span className="font-bold text-sm">Xem trước Phiếu Xuất Kho</span>
+      <div className="print:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white px-4 py-2.5 sm:px-6 sm:py-3 flex justify-between items-center z-10 shadow-xl">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <FaPrint className="text-green-400 text-xs sm:text-base" />
+          <span className="font-bold text-xs sm:text-sm">Xem trước Phiếu</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition"
+            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
           >
-            <FaPrint size={13} /> In phiếu
+            <FaPrint size={11} /> <span className="hidden sm:inline">In phiếu</span>
           </button>
           <button
             onClick={onClose}
             className="text-gray-300 hover:text-red-400 transition p-1"
           >
-            <FaTimes size={18} />
+            <FaTimes size={16} />
           </button>
         </div>
       </div>
 
       {/* Nội dung phiếu */}
-      <div className="mt-12 print:mt-0 shadow-2xl print:shadow-none">
-        {slipContent}
+      <div className="mt-12 print:mt-0 shadow-2xl print:shadow-none w-full overflow-x-auto sm:overflow-visible flex justify-start sm:justify-center">
+        <div className="min-w-[800px] sm:min-w-0 mx-auto">
+          {slipContent}
+        </div>
       </div>
     </div>,
     document.body

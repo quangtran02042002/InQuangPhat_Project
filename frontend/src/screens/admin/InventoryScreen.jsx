@@ -128,63 +128,63 @@ const InventoryScreen = () => {
       <div className="flex-1 flex flex-col w-full overflow-hidden">
         <AdminHeader title="Lịch Sử Xuất Nhập (BTP)" />
         {/* HEADER */}
-        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex items-center gap-4 shrink-0">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 flex items-center gap-3 sm:gap-4 shrink-0">
           <button className="lg:hidden text-gray-500 hover:text-[#006B4D]" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
           <div>
-            <h1 className="text-xl md:text-2xl font-extrabold flex items-center gap-2">
+            <h1 className="text-base sm:text-xl md:text-2xl font-extrabold flex items-center gap-2">
               <FaBoxOpen className="text-[#006B4D]" /> Quản Lý Xuất Nhập (BTP)
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Ghi nhận hàng bán thành phẩm in vải – nhiều style / màu mỗi phiếu</p>
+            <p className="text-[11px] sm:text-xs md:text-sm text-gray-500 mt-0.5">Ghi nhận hàng bán thành phẩm in vải – nhiều style / màu mỗi phiếu</p>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 custom-scrollbar">
           <div className="max-w-7xl mx-auto flex flex-col xl:flex-row gap-6">
 
             {/* ══════════════ FORM ══════════════ */}
             {isAdmin && (
               <div className="xl:w-[420px] shrink-0">
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 sticky top-6">
-                  <h2 className="text-base font-bold mb-4 flex items-center gap-2">
+                <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 sticky top-6">
+                  <h2 className="text-sm sm:text-base font-bold mb-3.5 flex items-center gap-2">
                     <FaExchangeAlt className="text-gray-400" /> Tạo Phiếu Giao Dịch Mới
                   </h2>
 
                   {/* Toggle type */}
-                  <div className="flex bg-gray-100 p-1 rounded-xl mb-5">
+                  <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
                     {['import', 'export'].map(t => (
                       <button key={t} type="button"
                         onClick={() => setTxType(t)}
-                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${txType === t ? (t === 'import' ? 'bg-[#006B4D] text-white shadow' : 'bg-orange-500 text-white shadow') : 'text-gray-500'}`}
+                        className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${txType === t ? (t === 'import' ? 'bg-[#006B4D] text-white shadow' : 'bg-orange-500 text-white shadow') : 'text-gray-500'}`}
                       >{t === 'import' ? 'Nhập Hàng' : 'Xuất Hàng'}</button>
                     ))}
                   </div>
 
-                  <form onSubmit={submitHandler} className="space-y-4 text-sm">
+                  <form onSubmit={submitHandler} className="space-y-3.5 text-xs sm:text-sm">
                     {/* ─── Info chung ─── */}
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-2.5">
                       <div>
                         <label className="font-bold text-gray-600 mb-1 block">Tên Nhà may / Kho <span className="text-red-500">*</span></label>
                         <input value={factoryName} onChange={e => setFactoryName(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#006B4D]"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm outline-none focus:border-[#006B4D]"
                           placeholder="VD: Xưởng A, Nhà may Bình Minh..." />
                       </div>
                       <div>
                         <label className="font-bold text-gray-600 mb-1 block">Khách hàng đặt Order (Brand)</label>
                         <input value={orderCustomer} onChange={e => setOrderCustomer(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#006B4D]"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm outline-none focus:border-[#006B4D]"
                           placeholder="VD: Adidas VN, HueOneFood..." />
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2.5">
                         <div>
                           <label className="font-bold text-gray-600 mb-1 block">Địa chỉ giao</label>
                           <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#006B4D]"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm outline-none focus:border-[#006B4D]"
                             placeholder="..." />
                         </div>
                         <div>
                           <label className="font-bold text-gray-600 mb-1 block">Lý do</label>
                           <input value={reason} onChange={e => setReason(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-[#006B4D]"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm outline-none focus:border-[#006B4D]"
                             placeholder="Giao hàng theo PO..." />
                         </div>
                       </div>
@@ -192,7 +192,7 @@ const InventoryScreen = () => {
 
                     {/* ─── Danh sách mặt hàng ─── */}
                     <div>
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center mb-1.5">
                         <label className="font-bold text-gray-700 flex items-center gap-1"><FaLayerGroup size={12} /> Danh sách hàng hóa <span className="text-red-500">*</span></label>
                         <button type="button" onClick={addItemRow}
                           className="text-xs flex items-center gap-1 text-[#006B4D] hover:underline font-bold">
@@ -200,53 +200,53 @@ const InventoryScreen = () => {
                         </button>
                       </div>
 
-                      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                      <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                         {items.map((it, idx) => (
-                          <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 relative">
+                          <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-2.5 relative">
                             {/* Số thứ tự & xóa dòng */}
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs font-black text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded">#{idx + 1}</span>
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-[10px] font-black text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded">#{idx + 1}</span>
                               {items.length > 1 && (
                                 <button type="button" onClick={() => removeItemRow(idx)} className="text-gray-400 hover:text-red-500 transition">
-                                  <FaMinus size={12} />
+                                  <FaMinus size={11} />
                                 </button>
                               )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-2">
                               <div>
-                                <label className="text-[11px] text-gray-500 font-bold">Mã hàng (PO) *</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Mã hàng (PO) *</label>
                                 <input value={it.itemCode} onChange={e => updateItem(idx, 'itemCode', e.target.value.toUpperCase())}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D] font-bold uppercase"
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D] font-bold uppercase"
                                   placeholder="QP1, ABC-001..." />
                               </div>
                               <div>
-                                <label className="text-[11px] text-gray-500 font-bold">Màu sắc *</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Màu sắc *</label>
                                 <input value={it.color} onChange={e => updateItem(idx, 'color', e.target.value)}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D]"
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D]"
                                   placeholder="Đen, Trắng, Đỏ..." />
                               </div>
                               <div className="col-span-2">
-                                <label className="text-[11px] text-gray-500 font-bold">Tên BTP / Loại vải *</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Tên BTP / Loại vải *</label>
                                 <input value={it.itemName} onChange={e => updateItem(idx, 'itemName', e.target.value)}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D]"
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D]"
                                   placeholder="Áo thun, Quần short..." />
                               </div>
                               <div>
-                                <label className="text-[11px] text-gray-500 font-bold">Số lượng *</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Số lượng *</label>
                                 <input type="number" min="1" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D] font-bold"
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D] font-bold"
                                   placeholder="0" />
                               </div>
                               <div>
-                                <label className="text-[11px] text-gray-500 font-bold">Đơn vị</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Đơn vị</label>
                                 <input value={it.unit} onChange={e => updateItem(idx, 'unit', e.target.value)}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D]" />
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D]" />
                               </div>
                               <div className="col-span-2">
-                                <label className="text-[11px] text-gray-500 font-bold">Ghi chú dòng</label>
+                                <label className="text-[10px] text-gray-500 font-bold">Ghi chú dòng</label>
                                 <input value={it.note} onChange={e => updateItem(idx, 'note', e.target.value)}
-                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-[#006B4D]"
+                                  className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs outline-none focus:border-[#006B4D]"
                                   placeholder="(Không bắt buộc)" />
                               </div>
                             </div>
@@ -255,16 +255,16 @@ const InventoryScreen = () => {
                       </div>
 
                       {/* Tổng SL preview */}
-                      <div className="flex justify-end mt-2 text-xs text-gray-500 font-bold">
+                      <div className="flex justify-end mt-2 text-[11px] text-gray-500 font-bold">
                         {items.length} mặt hàng • Tổng SL: <span className="text-[#006B4D] ml-1">{totalItems.toLocaleString()}</span>
                       </div>
                     </div>
 
                     {/* Submit */}
                     <button type="submit" disabled={loading}
-                      className={`w-full py-3 rounded-xl text-white font-bold flex justify-center items-center gap-2 transition ${loading ? 'opacity-70 cursor-not-allowed' : ''} ${txType === 'import' ? 'bg-[#006B4D] hover:bg-[#00543C]' : 'bg-orange-500 hover:bg-orange-600'}`}
+                      className={`w-full py-2.5 rounded-lg sm:rounded-xl text-white font-bold flex justify-center items-center gap-2 transition text-xs sm:text-sm ${loading ? 'opacity-70 cursor-not-allowed' : ''} ${txType === 'import' ? 'bg-[#006B4D] hover:bg-[#00543C]' : 'bg-orange-500 hover:bg-orange-600'}`}
                     >
-                      {txType === 'import' ? <FaPlus /> : <FaFileExport />}
+                      {txType === 'import' ? <FaPlus size={10} /> : <FaFileExport size={10} />}
                       {loading ? 'Đang xử lý...' : (txType === 'import' ? 'Xác Nhận Nhập Kho' : 'Xác Nhận Xuất Kho')}
                     </button>
                   </form>

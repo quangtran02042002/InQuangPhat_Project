@@ -147,32 +147,32 @@ const ProductListScreen = () => {
             </div>
 
             {/* --- TOOLBAR --- */}
-            <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col lg:flex-row gap-3 items-center justify-between">
               {/* Search Input */}
               <div className="relative w-full lg:w-1/2">
-                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                 <input
                   type="text"
                   placeholder="Tìm sản phẩm theo tên..."
-                  className="w-full bg-gray-50 border border-gray-200 text-[#111827] text-sm md:text-base rounded-xl pl-12 pr-10 py-3 outline-none focus:border-[#006B4D] focus:bg-white transition shadow-sm"
+                  className="w-full bg-gray-50 border border-gray-200 text-[#111827] text-xs sm:text-sm rounded-xl pl-9 pr-9 py-2.5 outline-none focus:border-[#006B4D] focus:bg-white transition shadow-sm"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                 />
                 {keyword && (
-                  <button onClick={() => setKeyword('')} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
-                    <FaTimes />
+                  <button onClick={() => setKeyword('')} className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
+                    <FaTimes size={12} />
                   </button>
                 )}
               </div>
 
               {/* Filters & Count */}
-              <div className="flex flex-wrap sm:flex-nowrap gap-3 md:gap-4 w-full lg:w-auto items-center">
+              <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto items-center">
                 <div className="relative flex-1 sm:flex-none">
-                  <FaFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FaFilter className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm" />
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="w-full sm:w-auto pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#006B4D] bg-white text-[#111827] text-sm md:text-base font-bold appearance-none cursor-pointer shadow-sm transition"
+                    className="w-full sm:w-auto pl-9 pr-9 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-[#006B4D] bg-white text-[#111827] text-xs sm:text-sm font-bold appearance-none cursor-pointer shadow-sm transition"
                   >
                     <option value="all">Tất cả danh mục</option>
                     <option value="hop">Hộp giấy</option>
@@ -180,10 +180,10 @@ const ProductListScreen = () => {
                     <option value="tem">Tem nhãn</option>
                     <option value="khac">Khác</option>
                   </select>
-                  <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
+                  <FaChevronDown className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-[9px] pointer-events-none" />
                 </div>
 
-                <div className="flex items-center justify-center bg-[#E6F0ED] text-[#006B4D] px-5 py-3 rounded-xl font-extrabold text-sm shadow-sm shrink-0 border border-[#006B4D]/10">
+                <div className="flex items-center justify-center bg-[#E6F0ED] text-[#006B4D] px-4 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm shadow-sm shrink-0 border border-[#006B4D]/10">
                   {filteredProducts.length} <span className="font-bold ml-1">Mẫu</span>
                 </div>
               </div>

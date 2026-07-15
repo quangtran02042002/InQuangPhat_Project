@@ -250,14 +250,14 @@ const ProductEditScreen = () => {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     
                     {/* Form Header */}
-                    <div className="bg-[#E6F0ED] px-6 md:px-8 py-5 md:py-6 border-b border-[#006B4D]/10">
-                        <h1 className="text-xl md:text-2xl font-extrabold text-[#006B4D] flex items-center">
-                            <FaBoxOpen className="mr-3 text-2xl"/>
+                    <div className="bg-[#E6F0ED] px-4 md:px-8 py-4 md:py-6 border-b border-[#006B4D]/10">
+                        <h1 className="text-lg md:text-2xl font-extrabold text-[#006B4D] flex items-center">
+                            <FaBoxOpen className="mr-2.5 text-xl md:text-2xl"/>
                             {isEditMode ? 'Cập nhật thông tin sản phẩm' : 'Đăng sản phẩm mới lên Website'}
                         </h1>
                     </div>
 
-                    <form onSubmit={submitHandler} className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-10">
+                    <form onSubmit={submitHandler} className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
                         
                         {/* ================= CỘT TRÁI: THÔNG TIN CHI TIẾT ================= */}
                         <div className="lg:col-span-2 space-y-8">
@@ -316,47 +316,49 @@ const ProductEditScreen = () => {
                                     </button>
                                 </div>
                                 
-                                <div className="p-5 space-y-4">
+                                <div className="p-3.5 sm:p-5 space-y-4">
                                     {priceTable.map((item, index) => (
-                                        <div key={index} className="flex items-end gap-4 bg-[#F9FAFB] p-4 rounded-xl border border-gray-200">
-                                            <div className="flex-1 relative">
-                                                <label className="text-[10px] text-gray-500 mb-1.5 block uppercase font-bold">Số lượng đặt in (&ge;)</label>
+                                        <div key={index} className="grid grid-cols-2 sm:flex sm:flex-row sm:items-end gap-2.5 sm:gap-4 bg-[#F9FAFB] p-3 sm:p-4 rounded-xl border border-gray-200 relative pt-7 sm:pt-4">
+                                            {/* Delete button absolute on mobile, static on desktop */}
+                                            <button 
+                                                type="button" 
+                                                onClick={() => removePriceRow(index)}
+                                                className="absolute right-2 top-2 sm:static text-gray-400 hover:text-red-500 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 h-7 w-7 sm:h-[38px] sm:w-[38px] rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                disabled={priceTable.length === 1} 
+                                                title="Xóa mốc giá này"
+                                            >
+                                                <FaTrash size={11} className="sm:hidden" />
+                                                <FaTrash size={14} className="hidden sm:block" />
+                                            </button>
+
+                                            <div className="col-span-1 sm:flex-1 relative">
+                                                <label className="text-[9px] sm:text-[10px] text-gray-500 mb-1 block uppercase font-bold">Số lượng đặt in (&ge;)</label>
                                                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#006B4D] focus-within:ring-1 focus-within:ring-[#006B4D] transition-all">
-                                                    <span className="bg-gray-50 px-3 py-2 text-gray-500 font-bold border-r border-gray-200">&ge;</span>
+                                                    <span className="bg-gray-50 px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-500 font-bold border-r border-gray-200 text-xs">&ge;</span>
                                                     <input 
                                                         type="number" 
                                                         value={item.minQuantity} 
                                                         onChange={(e) => handlePriceChange(index, 'minQuantity', e.target.value)}
-                                                        className="w-full px-3 py-2 text-sm outline-none font-bold text-[#111827]"
+                                                        className="w-full px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm outline-none font-bold text-[#111827]"
                                                         placeholder="VD: 1000"
                                                     />
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex-1 relative">
-                                                <label className="text-[10px] text-gray-500 mb-1.5 block uppercase font-bold">Tỉ lệ giá (%)</label>
+                                            <div className="col-span-1 sm:flex-1 relative">
+                                                <label className="text-[9px] sm:text-[10px] text-gray-500 mb-1 block uppercase font-bold">Tỉ lệ giá (%)</label>
                                                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#006B4D] focus-within:ring-1 focus-within:ring-[#006B4D] transition-all">
                                                     <input 
                                                         type="number" 
                                                         min="1" max="100"
                                                         value={item.price} 
                                                         onChange={(e) => handlePriceChange(index, 'price', e.target.value)}
-                                                        className="w-full px-3 py-2 text-sm outline-none font-extrabold text-[#006B4D]"
+                                                        className="w-full px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm outline-none font-extrabold text-[#006B4D]"
                                                         placeholder="VD: 100"
                                                     />
-                                                    <span className="bg-gray-50 px-3 py-2 text-gray-500 font-bold border-l border-gray-200">%</span>
+                                                    <span className="bg-gray-50 px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-500 font-bold border-l border-gray-200 text-xs">%</span>
                                                 </div>
                                             </div>
-                                            
-                                            <button 
-                                                type="button" 
-                                                onClick={() => removePriceRow(index)}
-                                                className="text-gray-400 hover:text-red-500 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 h-[38px] w-[38px] rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                disabled={priceTable.length === 1} 
-                                                title="Xóa mốc giá này"
-                                            >
-                                                <FaTrash size={14} />
-                                            </button>
                                         </div>
                                     ))}
                                     
@@ -427,7 +429,7 @@ const ProductEditScreen = () => {
                                                     <button 
                                                         type="button" 
                                                         onClick={() => removeImageHandler(index)} 
-                                                        className="absolute top-1.5 right-1.5 bg-white text-red-500 rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 hover:bg-red-600 hover:text-white transition-all transform hover:scale-110 z-10"
+                                                        className="absolute top-1.5 right-1.5 bg-white text-red-500 rounded-full p-1.5 shadow-md opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-600 hover:text-white transition-all transform hover:scale-110 z-10"
                                                     >
                                                         <FaTimes className="text-[10px]" />
                                                     </button>
