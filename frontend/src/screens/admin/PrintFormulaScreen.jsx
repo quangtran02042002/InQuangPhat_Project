@@ -41,7 +41,7 @@ const OFFSET_POST_PROCESS = [
 
 const EMPTY_INK         = { colorName: '', colorCode: '', inkBrand: '', mixRatio: '', note: '' };
 const EMPTY_OFFSET_COMP = { componentName: '', paperType: '', paperWeight: '', paperSize: '', paperSupplier: '', inkColors: [{ ...EMPTY_INK }], postProcess: [] };
-const EMPTY_SILK_FRAME  = { frameName: '', meshDetails: '', inkFormula: '', squeegeeStrokes: '', printHits: '', image: '' };
+const EMPTY_SILK_FRAME  = { frameName: '', meshDetails: '', inkFormula: '', squeegeeStrokes: '', printHits: '', hasIroning: false, image: '' };
 
 const EMPTY_FORM = {
   name: '', printType: 'offset', customer: '', product: '', status: 'draft',
@@ -416,8 +416,9 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                 {/* Desktop header row */}
                 <div className="hidden lg:grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider px-2">
                   <div className="col-span-3">Tên khung</div><div className="col-span-2">Lưới/Căng</div>
-                  <div className="col-span-4">Hóa chất pha mực</div><div className="col-span-1 text-center">Gạt</div>
+                  <div className="col-span-3">Hóa chất pha mực</div><div className="col-span-1 text-center">Gạt</div>
                   <div className="col-span-1 text-center">In (hit)</div>
+                  <div className="col-span-1 text-center">Ủi</div>
                   <div className="col-span-1 text-center">Xóa</div>
                 </div>
                 {form.silkFrames.map((frame, idx) => (
@@ -432,7 +433,7 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                         <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Lưới/Căng</label>
                         <input value={frame.meshDetails} onChange={e => changeSilkFrame(idx, 'meshDetails', e.target.value)} placeholder="VD: 120T" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border" />
                       </div>
-                      <div className="col-span-2 lg:col-span-4">
+                      <div className="col-span-2 lg:col-span-3">
                         <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">Hóa chất pha mực</label>
                         <textarea value={frame.inkFormula} onChange={e => changeSilkFrame(idx, 'inkFormula', e.target.value)} placeholder="20% bóng, 80% trắng..." rows={1} disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border resize-none" />
                       </div>
@@ -444,9 +445,18 @@ const FormulaModal = ({ formula, onClose, onSaved }) => {
                         <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden">In (hit)</label>
                         <input value={frame.printHits} onChange={e => changeSilkFrame(idx, 'printHits', e.target.value)} placeholder="SL" disabled={isApproved} className="w-full border-gray-200 rounded-lg px-2 py-2 text-xs outline-none focus:ring-1 focus:ring-[#006B4D] border text-center" />
                       </div>
-                      <div className="col-span-2 lg:col-span-1 flex justify-center mt-1 lg:mt-0">
+                      <div className="col-span-1 lg:col-span-1 flex items-center justify-center gap-1.5 lg:gap-0 mt-1 lg:mt-0">
+                        <div className="w-full">
+                          <label className="text-[9px] text-gray-400 uppercase font-bold lg:hidden block">Ủi</label>
+                          <div className="flex items-center gap-1.5 lg:justify-center w-full mt-1 lg:mt-0">
+                            <input type="checkbox" checked={frame.hasIroning || false} onChange={e => changeSilkFrame(idx, 'hasIroning', e.target.checked)} disabled={isApproved} className="w-4 h-4 text-[#006B4D] border-gray-300 rounded focus:ring-[#006B4D] cursor-pointer" />
+                            <span className="lg:hidden text-xs text-gray-500 font-medium">Có ủi</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-span-1 lg:col-span-1 flex justify-center mt-1 lg:mt-0">
                         {!isApproved && form.silkFrames.length > 1 && (
-                          <button type="button" onClick={() => rmSilkFrame(idx)} className="text-red-400 hover:text-red-600 border border-red-200 rounded-lg p-2 w-full lg:w-auto flex justify-center items-center gap-1 text-xs"><FaTrash size={12} /> <span className="lg:hidden">Xóa khung</span></button>
+                          <button type="button" onClick={() => rmSilkFrame(idx)} className="text-red-400 hover:text-red-600 border border-red-200 rounded-lg p-2 w-full lg:w-auto flex justify-center items-center gap-1 text-xs"><FaTrash size={12} /> <span className="lg:hidden">Xóa</span></button>
                         )}
                       </div>
                     </div>
@@ -569,7 +579,7 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
                   <div className="overflow-x-auto rounded-xl border border-gray-200">
                     <table className="w-full text-sm">
                       <thead className="bg-[#006B4D] text-white text-xs">
-                        <tr><th className="px-4 py-3">Khung</th><th className="px-4 py-3">Lưới</th><th className="px-4 py-3">Công thức hóa chất</th><th className="px-4 py-3 text-center">Lần gạt</th><th className="px-4 py-3 text-center">Lần in</th></tr>
+                        <tr><th className="px-4 py-3">Khung</th><th className="px-4 py-3">Lưới</th><th className="px-4 py-3">Công thức hóa chất</th><th className="px-4 py-3 text-center">Lần gạt</th><th className="px-4 py-3 text-center">Lần in</th><th className="px-4 py-3 text-center">Ủi</th></tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {formula.silkFrames.map((f, i) => (
@@ -579,6 +589,7 @@ const ViewModal = ({ formula, onClose, onEdit, isAdmin }) => {
                             <td className="px-4 py-3 text-xs whitespace-pre-wrap">{f.inkFormula}</td>
                             <td className="px-4 py-3 text-center font-semibold">{f.squeegeeStrokes}</td>
                             <td className="px-4 py-3 text-center font-bold text-blue-600">{f.printHits}</td>
+                            <td className="px-4 py-3 text-center font-semibold">{f.hasIroning ? '🔥 Có' : '—'}</td>
                           </tr>
                         ))}
                       </tbody>

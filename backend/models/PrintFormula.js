@@ -34,6 +34,7 @@ const silkFrameSchema = new mongoose.Schema({
   inkFormula:      { type: String },                 // Công thức keo/mực pha trộn
   squeegeeStrokes: { type: String },                 // Số lần gạt
   printHits:       { type: String },                 // Số lần in
+  hasIroning:      { type: Boolean, default: false }, // Có ủi hay không
 }, { _id: true });
 
 // --- Sub-schema: File đính kèm chung ---
