@@ -68,29 +68,29 @@ const EMPTY_FORM = {
 // Helper UI components
 // ─────────────────────────────────────────────
 const Section = ({ title, id, section, toggleSection, children }) => (
-  <div className="border border-gray-100 rounded-2xl overflow-hidden mb-4">
+  <div className="border border-gray-100 rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4">
     <button type="button" onClick={() => toggleSection(id)}
-      className="w-full flex justify-between items-center px-5 py-3 bg-[#F9FAFB] text-sm font-bold text-[#111827] hover:bg-[#E6F0ED] transition">
+      className="w-full flex justify-between items-center px-3.5 py-2.5 sm:px-5 sm:py-3 bg-[#F9FAFB] text-xs sm:text-sm font-bold text-[#111827] hover:bg-[#E6F0ED] transition">
       {title}
       {section[id] ? <FaChevronUp className="text-xs text-[#006B4D]" /> : <FaChevronDown className="text-xs text-gray-400" />}
     </button>
-    {section[id] && <div className="p-5 space-y-4">{children}</div>}
+    {section[id] && <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">{children}</div>}
   </div>
 );
 
 const Inp = ({ label, name, value, onChange, type = 'text', className = '', required = false, placeholder = '' }) => (
-  <div className={`flex flex-col gap-1 ${className}`}>
-    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label}{required && ' *'}</label>
-    <input type={type} name={name} value={value} onChange={onChange} required={required} placeholder={placeholder}
-      className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D]" />
+  <div className={`flex flex-col gap-0.5 sm:gap-1 ${className}`}>
+    <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}{required && ' *'}</label>
+    <input type={type} name={name} value={value || ''} onChange={onChange} required={required} placeholder={placeholder}
+      className="border border-gray-200 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D]" />
   </div>
 );
 
 const Sel = ({ label, name, value, onChange, options }) => (
-  <div className="flex flex-col gap-1">
-    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label}</label>
+  <div className="flex flex-col gap-0.5 sm:gap-1">
+    <label className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-wider">{label}</label>
     <select name={name} value={value} onChange={onChange}
-      className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D]">
+      className="border border-gray-200 rounded-lg sm:rounded-xl px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#006B4D]/30 focus:border-[#006B4D] bg-white">
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   </div>
@@ -104,19 +104,19 @@ const ViewOrderModal = ({ order, formulas, onClose }) => {
   const toggleSection = (k) => setSection(s => ({ ...s, [k]: !s[k] }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-5xl mx-4 bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '95vh' }}>
-        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2 sm:p-4">
+      <div className="w-full max-w-5xl bg-white rounded-xl sm:rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '95vh' }}>
+        <div className="flex justify-between items-center px-4 py-3 sm:px-8 sm:py-5 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-extrabold text-[#111827]">👁️ Chi tiết Lệnh sản xuất</h2>
-            <p className="text-xs text-gray-400 mt-1">Mã: <strong>{order.orderCode}</strong></p>
+            <h2 className="text-base sm:text-xl font-extrabold text-[#111827]">👁️ Chi tiết Lệnh sản xuất</h2>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Mã: <strong>{order.orderCode}</strong></p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition">
             <FaTimes size={18} />
           </button>
         </div>
 
-        <div className="px-8 py-6 overflow-y-auto flex-1 bg-[#F9FAFB]/50">
+        <div className="px-3 py-3 sm:px-8 sm:py-6 overflow-y-auto flex-1 bg-[#F9FAFB]/50">
           <Section title="A. Thông tin chung của Lệnh" id="general" section={section} toggleSection={toggleSection}>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="col-span-2">
@@ -205,9 +205,9 @@ const ViewOrderModal = ({ order, formulas, onClose }) => {
           </Section>
         </div>
 
-        <div className="flex justify-end gap-3 px-8 py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-3xl">
+        <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-8 sm:py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-xl sm:rounded-b-3xl">
           <button type="button" onClick={onClose}
-            className="px-6 py-2.5 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-sm font-bold transition shadow-lg w-full md:w-auto">
+            className="px-4 sm:px-6 py-2 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg w-full sm:w-auto">
             Đóng
           </button>
         </div>
@@ -324,22 +324,22 @@ const OrderModal = ({ order, formulas, onClose, onSaved }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-5xl mx-4 bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '95vh' }}>
-        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-2 sm:p-4">
+      <div className="w-full max-w-5xl bg-white rounded-xl sm:rounded-3xl shadow-2xl border border-gray-100 flex flex-col" style={{ maxHeight: '95vh' }}>
+        <div className="flex justify-between items-center px-4 py-3 sm:px-8 sm:py-5 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-extrabold text-[#111827]">
+            <h2 className="text-base sm:text-xl font-extrabold text-[#111827]">
               {isEdit ? '✏️ Sửa lệnh sản xuất' : '🎫 Tạo lệnh SX mới'}
             </h2>
-            {isEdit && <p className="text-xs text-gray-400 mt-1">Mã: <strong>{order.orderCode}</strong></p>}
-            <p className="text-[10px] text-gray-400 mt-1 italic">Mẹo: Bạn có thể nhấn Ctrl+V / Cmd+V để dán ảnh mẫu trực tiếp vào bài in trống.</p>
+            {isEdit && <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Mã: <strong>{order.orderCode}</strong></p>}
+            <p className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5 italic">Mẹo: Bạn có thể nhấn Ctrl+V / Cmd+V để dán ảnh mẫu trực tiếp vào bài in trống.</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-red-500 transition">
             <FaTimes size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-8 py-6 overflow-y-auto flex-1 bg-[#F9FAFB]/50">
+        <form onSubmit={handleSubmit} className="px-3 py-3 sm:px-8 sm:py-6 overflow-y-auto flex-1 bg-[#F9FAFB]/50">
           {/* 1. THÔNG TIN CHUNG CỦA LỆNH */}
           <Section title="A. Thông tin chung của Lệnh" id="general" section={section} toggleSection={toggleSection}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-gray-100 pb-4 mb-2">
@@ -467,14 +467,14 @@ const OrderModal = ({ order, formulas, onClose, onSaved }) => {
         </form>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-8 py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-3xl">
+        <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-8 sm:py-5 border-t border-gray-100 shrink-0 bg-white rounded-b-xl sm:rounded-b-3xl">
           <button type="button" onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
+            className="px-4 sm:px-5 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
             Hủy
           </button>
           <button type="button" onClick={handleSubmit} disabled={loading || uploading}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-sm font-bold transition shadow-lg disabled:opacity-60">
-            <FaSave /> {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Lưu Lệnh Sản Xuất'}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-[#006B4D] hover:bg-[#005a3f] text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg disabled:opacity-60">
+            <FaSave /> {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Lưu Lệnh'}
           </button>
         </div>
       </div>
@@ -626,15 +626,15 @@ const ProductionOrderScreen = () => {
         )}
 
         {/* HEADER */}
-        <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 md:py-6 shrink-0 z-0 relative">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="bg-white border-b border-gray-100 px-3.5 py-3.5 sm:px-8 sm:py-6 shrink-0 z-0 relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="flex items-center gap-3">
-              <button className="lg:hidden text-gray-500 hover:text-gray-700 transition" onClick={() => setIsSidebarOpen(true)}><FaBars size={20} /></button>
-              <div className="w-10 h-10 bg-[#E6F0ED] rounded-xl flex items-center justify-center text-[#006B4D]">
-                <FaFileAlt size={20} />
+              <button className="lg:hidden text-gray-500 hover:text-gray-700 transition" onClick={() => setIsSidebarOpen(true)}><FaBars size={18} /></button>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E6F0ED] rounded-xl flex items-center justify-center text-[#006B4D]">
+                <FaFileAlt size={16} />
               </div>
               <div>
-                <h1 className="text-xl md:text-2xl font-black text-[#111827] tracking-tight">Quản Lý Lệnh Sản Xuất</h1>
+                <h1 className="text-base sm:text-xl md:text-2xl font-black text-[#111827] tracking-tight">Quản Lý Lệnh Sản Xuất</h1>
                 <p className="hidden md:block text-sm text-gray-500 font-medium">Theo dõi thông số và các bài in trong từng đơn hàng</p>
               </div>
             </div>
@@ -642,37 +642,37 @@ const ProductionOrderScreen = () => {
               {isAdmin && (
                 <button
                   onClick={() => setModal('create')}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#006B4D] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#00543c] transition shadow-md"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#006B4D] text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold hover:bg-[#00543c] transition shadow-md"
                 >
-                  <FaPlus /> Tạo lệnh in mới
+                  <FaPlus size={10} /> Tạo lệnh in mới
                 </button>
               )}
             </div>
           </div>
 
           {/* FILTERS */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between">
             <div className="flex flex-wrap sm:flex-nowrap bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar">
               {[{ id: 'all', label: 'Tất cả Bài In' }, { id: 'offset', label: 'Chứa In Offset' }, { id: 'silk', label: 'Chứa In Lụa' }].map(tab => (
                 <button key={tab.id} onClick={() => setPrintType(tab.id)}
-                  className={`flex-1 min-w-[100px] md:w-32 py-2 px-2 text-[11px] sm:text-sm font-bold rounded-lg transition-all whitespace-nowrap ${printType === tab.id ? 'bg-white text-[#006B4D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  className={`flex-1 min-w-[90px] md:w-32 py-1.5 px-2 text-[10px] sm:text-sm font-bold rounded-lg transition-all whitespace-nowrap ${printType === tab.id ? 'bg-white text-[#006B4D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                   {tab.label}
                 </button>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
               <select value={status} onChange={e => setStatus(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:outline-none focus:border-[#006B4D] bg-white">
+                className="border border-gray-200 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-bold text-gray-700 focus:outline-none focus:border-[#006B4D] bg-white flex-1 sm:flex-none">
                 <option value="all">Mọi trạng thái</option>
                 <option value="pending">Chờ xử lý</option>
                 <option value="in_progress">Đang chạy</option>
                 <option value="completed">Hoàn thành</option>
               </select>
               <div className="relative flex-1 md:w-64">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" placeholder="Tìm tên Lệnh, Khách hàng..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#006B4D] bg-white transition-colors" />
+                <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                <input type="text" placeholder="Tìm tên..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg sm:rounded-xl pl-8 pr-3 py-1.5 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#006B4D] bg-white transition-colors" />
               </div>
             </div>
           </div>
