@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import Sidebar from '../../components/Sidebar';
-import AdminHeader from '../../components/AdminHeader';
 import {
-  FaPlus, FaTimes, FaBars, FaEdit, FaTrash, FaCheck, FaUndo,
-  FaListAlt, FaFilter, FaCalendarAlt, FaUser, FaFlag,
+  FaPlus, FaTimes, FaEdit, FaTrash, FaCheck, FaUndo,
+  FaListAlt, FaFilter, FaCalendarAlt, FaUser,
   FaExclamationTriangle, FaClock, FaCheckCircle, FaSpinner,
   FaChevronDown, FaChevronUp, FaSave, FaFire, FaArrowUp, FaArrowDown, FaMinus
 } from 'react-icons/fa';
@@ -23,17 +21,10 @@ const CATEGORY_MAP = {
   general: { label: 'Chung', color: 'bg-gray-100 text-gray-700' },
 };
 
-const STATUS_MAP = {
-  pending: { label: 'Chờ xử lý', color: 'bg-yellow-100 text-yellow-700', icon: <FaClock /> },
-  in_progress: { label: 'Đang làm', color: 'bg-blue-100 text-blue-700', icon: <FaSpinner /> },
-  done: { label: 'Hoàn thành', color: 'bg-green-100 text-green-700', icon: <FaCheckCircle /> },
-};
-
-const TodoScreen = () => {
+const TodoTab = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  const config = { headers: { Authorization: `Bearer ${userInfo?.token}` } };
+  const config = useMemo(() => ({ headers: { Authorization: `Bearer ${userInfo?.token}` } }), [userInfo?.token]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -315,129 +306,105 @@ const TodoScreen = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
-      {/* Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-[#111827]/50 z-40 lg:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-      )}
-      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 flex-shrink-0 lg:block`}>
-        <Sidebar />
+    <div className="p-3 md:p-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
+            <FaListAlt />
+          </div>
+          <div>
+            <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">
+              Danh sách Công việc
+              {pendingCount > 0 && (
+                <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
+                  {pendingCount} chưa xong
+                </span>
+              )}
+            </h2>
+            <p className="text-[#6B7280] text-xs mt-0.5">Quản lý & theo dõi tiến độ công việc</p>
+          </div>
+        </div>
+
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 bg-[#006B4D] hover:bg-[#00543c] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md active:scale-95"
+        >
+          <FaPlus /> Thêm công việc
+        </button>
       </div>
 
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
-        <AdminHeader title="Công việc (Todo)" onMenuClick={() => setIsSidebarOpen(true)} />
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <FaFilter /> Lọc:
+        </div>
+        <select
+          value={filterPriority}
+          onChange={(e) => setFilterPriority(e.target.value)}
+          className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
+        >
+          <option value="">Tất cả ưu tiên</option>
+          <option value="urgent">🔥 Khẩn cấp</option>
+          <option value="high">🔶 Cao</option>
+          <option value="medium">🔵 Trung bình</option>
+          <option value="low">⬜ Thấp</option>
+        </select>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
+        >
+          <option value="">Tất cả phân loại</option>
+          <option value="production">Sản xuất</option>
+          <option value="purchasing">Mua hàng</option>
+          <option value="finance">Tài chính</option>
+          <option value="general">Chung</option>
+        </select>
+      </div>
 
-        <main className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar">
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
-                  <FaListAlt />
-                </div>
-                <div>
-                  <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">
-                    Danh sách Công việc
-                    {pendingCount > 0 && (
-                      <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
-                        {pendingCount} chưa xong
-                      </span>
-                    )}
-                  </h2>
-                  <p className="text-[#6B7280] text-xs mt-0.5">Quản lý & theo dõi tiến độ công việc</p>
-                </div>
-              </div>
-
-              <button
-                onClick={openCreate}
-                className="flex items-center gap-2 bg-[#006B4D] hover:bg-[#00543c] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md active:scale-95"
-              >
-                <FaPlus /> Thêm công việc
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-2 mb-5">
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <FaFilter /> Lọc:
-              </div>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
-              >
-                <option value="">Tất cả ưu tiên</option>
-                <option value="urgent">🔥 Khẩn cấp</option>
-                <option value="high">🔶 Cao</option>
-                <option value="medium">🔵 Trung bình</option>
-                <option value="low">⬜ Thấp</option>
-              </select>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
-              >
-                <option value="">Tất cả phân loại</option>
-                <option value="production">Sản xuất</option>
-                <option value="purchasing">Mua hàng</option>
-                <option value="finance">Tài chính</option>
-                <option value="general">Chung</option>
-              </select>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006B4D] mx-auto mb-4" />
-                <div className="text-gray-500 font-medium">Đang tải...</div>
+      {loading ? (
+        <div className="text-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006B4D] mx-auto mb-4" />
+          <div className="text-gray-500 font-medium">Đang tải...</div>
+        </div>
+      ) : (
+        <>
+          {/* ACTIVE TODOS */}
+          <div className="space-y-3 mb-8">
+            {activeTodos.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                <FaCheckCircle className="text-4xl text-emerald-300 mx-auto mb-3" />
+                <p className="font-bold text-gray-500">Không có công việc nào đang chờ</p>
+                <p className="text-xs text-gray-400 mt-1">Nhấn "Thêm công việc" để bắt đầu</p>
               </div>
             ) : (
-              <>
-                {/* ACTIVE TODOS */}
-                <div className="space-y-3 mb-8">
-                  {activeTodos.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-                      <FaCheckCircle className="text-4xl text-emerald-300 mx-auto mb-3" />
-                      <p className="font-bold text-gray-500">Không có công việc nào đang chờ</p>
-                      <p className="text-xs text-gray-400 mt-1">Nhấn "Thêm công việc" để bắt đầu</p>
-                    </div>
-                  ) : (
-                    activeTodos.map((todo) => renderTodoCard(todo, false))
-                  )}
-                </div>
-
-                {/* COMPLETED TODOS */}
-                {completedTodos.length > 0 && (
-                  <div>
-                    <button
-                      onClick={() => setShowCompleted(!showCompleted)}
-                      className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#111827] transition mb-3 w-full"
-                    >
-                      {showCompleted ? <FaChevronUp /> : <FaChevronDown />}
-                      <FaCheckCircle className="text-emerald-500" />
-                      Đã hoàn thành ({completedTodos.length})
-                      <div className="flex-1 border-t border-gray-200 ml-2" />
-                    </button>
-
-                    {showCompleted && (
-                      <div className="space-y-3 animate-fade-in-down">
-                        {completedTodos.map((todo) => renderTodoCard(todo, true))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
+              activeTodos.map((todo) => renderTodoCard(todo, false))
             )}
           </div>
 
-          {/* FAB Mobile */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#006B4D] text-white rounded-full shadow-xl flex items-center justify-center z-30 hover:bg-[#00543c] transition active:scale-95"
-          >
-            <FaBars size={24} />
-          </button>
-        </main>
-      </div>
+          {/* COMPLETED TODOS */}
+          {completedTodos.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#111827] transition mb-3 w-full"
+              >
+                {showCompleted ? <FaChevronUp /> : <FaChevronDown />}
+                <FaCheckCircle className="text-emerald-500" />
+                Đã hoàn thành ({completedTodos.length})
+                <div className="flex-1 border-t border-gray-200 ml-2" />
+              </button>
+
+              {showCompleted && (
+                <div className="space-y-3 animate-fade-in-down">
+                  {completedTodos.map((todo) => renderTodoCard(todo, true))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {/* MODAL */}
       {showModal && (
@@ -453,7 +420,6 @@ const TodoScreen = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              {/* Title */}
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Tiêu đề *</label>
                 <input
@@ -466,7 +432,6 @@ const TodoScreen = () => {
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Mô tả</label>
                 <textarea
@@ -478,7 +443,6 @@ const TodoScreen = () => {
                 />
               </div>
 
-              {/* Priority + Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Ưu tiên</label>
@@ -508,7 +472,6 @@ const TodoScreen = () => {
                 </div>
               </div>
 
-              {/* DueDate + AssignedTo */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Hạn hoàn thành</label>
@@ -531,7 +494,6 @@ const TodoScreen = () => {
                 </div>
               </div>
 
-              {/* Target Quantity + Threshold */}
               <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                 <p className="text-xs font-bold text-gray-600 mb-2">📊 Theo dõi tiến độ theo số lượng <span className="font-normal text-gray-400">(tùy chọn)</span></p>
                 <div className="grid grid-cols-2 gap-3">
@@ -561,7 +523,6 @@ const TodoScreen = () => {
                 <p className="text-[10px] text-gray-400 mt-1.5">Khi hoàn thành ≥ {form.autoCompleteThreshold}% → tự động đánh dấu "Hoàn thành"</p>
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 className="w-full bg-[#006B4D] hover:bg-[#00543c] text-white font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 active:scale-95"
@@ -576,4 +537,4 @@ const TodoScreen = () => {
   );
 };
 
-export default TodoScreen;
+export default TodoTab;

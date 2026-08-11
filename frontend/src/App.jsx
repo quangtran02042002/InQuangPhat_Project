@@ -52,8 +52,7 @@ import PrintPriceCalcScreen from './screens/admin/PrintPriceCalcScreen';
 import FinishingPriceScreen from './screens/admin/FinishingPriceScreen';
 import CashFlowScreen from './screens/admin/CashFlowScreen';
 import QuotationScreen from './screens/admin/QuotationScreen';
-import TodoScreen from './screens/admin/TodoScreen';
-import MaterialOrderScreen from './screens/admin/MaterialOrderScreen';
+import TasksScreen from './screens/admin/TasksScreen';
 // Admin screens loaded ✓
 
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
@@ -137,8 +136,9 @@ const AppContent = () => {
             <Route path="/admin/inventory" element={<InventoryScreen />} />
             <Route path="/admin/finance" element={<CashFlowScreen />} />
             <Route path="/admin/quotations" element={<QuotationScreen />} />
-            <Route path="/admin/todos" element={<TodoScreen />} />
-            <Route path="/admin/material-orders" element={<MaterialOrderScreen />} />
+            <Route path="/admin/tasks" element={<TasksScreen />} />
+            <Route path="/admin/todos" element={<TasksScreen initialTab="todo" />} />
+            <Route path="/admin/material-orders" element={<TasksScreen initialTab="material-orders" />} />
           </Route>
         </Routes>
       </main>

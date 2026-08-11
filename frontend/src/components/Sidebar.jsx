@@ -35,7 +35,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/todos')) {
+    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/tasks')) {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
     } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });
@@ -117,8 +117,8 @@ const Sidebar = () => {
               <Link to="/admin/profile" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/profile')}`}>
                 <span className="text-sm ml-6">Hồ sơ cá nhân</span>
               </Link>
-              <Link to="/admin/todos" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/todos')}`}>
-                <FaListAlt className="mr-3 text-gray-400" /> <span className="text-sm">Công việc (Todo)</span>
+              <Link to="/admin/tasks" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/tasks') || isActive('/admin/todos') || isActive('/admin/material-orders')}`}>
+                <FaClipboardList className="mr-3 text-gray-400" /> <span className="text-sm">Quản lý Nhiệm vụ</span>
               </Link>
             </div>
           )}
@@ -181,9 +181,6 @@ const Sidebar = () => {
                   </Link>
                   <Link to="/admin/production-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/production-orders')}`}>
                     <FaFileAlt className="mr-3 text-gray-400" /> <span className="text-sm">Lệnh Sản Xuất</span>
-                  </Link>
-                  <Link to="/admin/material-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/material-orders')}`}>
-                    <FaShoppingCart className="mr-3 text-gray-400" /> <span className="text-sm">Đặt Nguyên vật liệu</span>
                   </Link>
                 </div>
               )}

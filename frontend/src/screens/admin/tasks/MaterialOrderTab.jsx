@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import Sidebar from '../../components/Sidebar';
-import AdminHeader from '../../components/AdminHeader';
 import {
-  FaPlus, FaTimes, FaBars, FaEdit, FaTrash, FaCheck,
-  FaShoppingCart, FaFilter, FaCalendarAlt, FaTruck,
-  FaBoxOpen, FaWarehouse, FaSave, FaCheckDouble,
+  FaPlus, FaTimes, FaEdit, FaTrash, FaCheck,
+  FaShoppingCart, FaFilter, FaTruck,
+  FaBoxOpen, FaSave,
   FaExclamationTriangle, FaClock, FaCheckCircle,
-  FaUndo, FaInfoCircle
+  FaInfoCircle
 } from 'react-icons/fa';
 
 const STATUS_BADGE = {
@@ -22,11 +20,10 @@ const getOrderStatus = (order) => {
   return 'pending';
 };
 
-const MaterialOrderScreen = () => {
+const MaterialOrderTab = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-  const config = { headers: { Authorization: `Bearer ${userInfo?.token}` } };
+  const config = useMemo(() => ({ headers: { Authorization: `Bearer ${userInfo?.token}` } }), [userInfo?.token]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [orders, setOrders] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -280,220 +277,196 @@ const MaterialOrderScreen = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB] font-sans text-[#111827] relative">
-      {/* Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-[#111827]/50 z-40 lg:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-      )}
-      <div className={`fixed inset-y-0 left-0 z-50 h-full transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 flex-shrink-0 lg:block`}>
-        <Sidebar />
+    <div className="p-3 md:p-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
+            <FaShoppingCart />
+          </div>
+          <div>
+            <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">Đơn đặt Nguyên vật liệu</h2>
+            <p className="text-[#6B7280] text-xs mt-0.5">Theo dõi đặt hàng & nhập kho NVL</p>
+          </div>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 bg-[#006B4D] hover:bg-[#00543c] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md active:scale-95"
+        >
+          <FaPlus /> Tạo đơn đặt hàng
+        </button>
       </div>
 
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
-        <AdminHeader title="Đặt Nguyên vật liệu" onMenuClick={() => setIsSidebarOpen(true)} />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 text-center cursor-pointer hover:border-[#006B4D]/30 transition" onClick={() => setFilterStatus('')}>
+          <div className="text-2xl font-extrabold text-[#111827]">{stats.total}</div>
+          <div className="text-[10px] font-bold text-gray-500 uppercase">Tổng đơn</div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 text-center cursor-pointer hover:border-gray-400 transition" onClick={() => setFilterStatus('pending')}>
+          <div className="text-2xl font-extrabold text-gray-600">{stats.pending}</div>
+          <div className="text-[10px] font-bold text-gray-500 uppercase">Chờ đặt</div>
+        </div>
+        <div className="bg-white rounded-xl border border-blue-200 p-3 text-center cursor-pointer hover:border-blue-400 transition" onClick={() => setFilterStatus('ordered')}>
+          <div className="text-2xl font-extrabold text-blue-600">{stats.ordered}</div>
+          <div className="text-[10px] font-bold text-blue-500 uppercase">Đã đặt</div>
+        </div>
+        <div className="bg-white rounded-xl border border-emerald-200 p-3 text-center cursor-pointer hover:border-emerald-400 transition" onClick={() => setFilterStatus('delivered')}>
+          <div className="text-2xl font-extrabold text-emerald-600">{stats.delivered}</div>
+          <div className="text-[10px] font-bold text-emerald-500 uppercase">Đã nhận</div>
+        </div>
+      </div>
 
-        <main className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
-                  <FaShoppingCart />
-                </div>
-                <div>
-                  <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">Đơn đặt Nguyên vật liệu</h2>
-                  <p className="text-[#6B7280] text-xs mt-0.5">Theo dõi đặt hàng & nhập kho NVL</p>
-                </div>
-              </div>
-              <button
-                onClick={openCreate}
-                className="flex items-center gap-2 bg-[#006B4D] hover:bg-[#00543c] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md active:scale-95"
-              >
-                <FaPlus /> Tạo đơn đặt hàng
-              </button>
+      {/* Info Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2 text-xs text-blue-700">
+        <FaInfoCircle className="shrink-0" />
+        <span>Khi tick <strong>"Hàng đã về"</strong> → số lượng sẽ được <strong>tự động cộng vào kho vật tư</strong> & tạo phiếu nhập kho.</span>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <FaFilter /> Lọc:
+        </div>
+        {[
+          { value: '', label: 'Tất cả' },
+          { value: 'pending', label: 'Chờ đặt' },
+          { value: 'ordered', label: 'Đã đặt' },
+          { value: 'delivered', label: 'Đã nhận' },
+        ].map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setFilterStatus(tab.value)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border
+              ${filterStatus === tab.value
+                ? 'bg-[#006B4D] text-white border-[#006B4D]'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-[#006B4D]/30'
+              }
+            `}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006B4D] mx-auto mb-4" />
+          <div className="text-gray-500 font-medium">Đang tải...</div>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+          <FaShoppingCart className="text-4xl text-gray-300 mx-auto mb-3" />
+          <p className="font-bold text-gray-500">Chưa có đơn đặt hàng nào</p>
+          <p className="text-xs text-gray-400 mt-1">Nhấn "Tạo đơn đặt hàng" để bắt đầu</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table */}
+          <div className="hidden lg:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">Mã đơn</th>
+                    <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">Vật tư</th>
+                    <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">SL</th>
+                    <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">NCC</th>
+                    <th className="text-right px-4 py-3 font-bold text-xs text-gray-500 uppercase">Đơn giá</th>
+                    <th className="text-right px-4 py-3 font-bold text-xs text-gray-500 uppercase">Thành tiền</th>
+                    <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">Ngày đặt</th>
+                    <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">☑ Đã đặt</th>
+                    <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">☑ Hàng về</th>
+                    <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order, idx) => {
+                    const status = getOrderStatus(order);
+                    const badge = STATUS_BADGE[status];
+                    return (
+                      <tr key={order._id} className={`border-b border-gray-100 hover:bg-gray-50/50 transition ${idx % 2 === 0 ? '' : 'bg-gray-50/30'}`}>
+                        <td className="px-4 py-3">
+                          <span className="text-xs font-extrabold text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded-lg">
+                            {order.orderCode}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-[#111827] text-sm">{order.materialName}</div>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.color} inline-flex items-center gap-1 mt-0.5`}>
+                            {badge.icon} {badge.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center font-bold">{order.quantity} <span className="text-gray-400 text-xs">{order.materialUnit}</span></td>
+                        <td className="px-4 py-3 text-gray-600 text-xs">{order.supplier || '—'}</td>
+                        <td className="px-4 py-3 text-right text-xs text-gray-600">{formatCurrency(order.unitPrice)}</td>
+                        <td className="px-4 py-3 text-right text-xs font-bold text-[#111827]">{formatCurrency(order.totalPrice)}</td>
+                        <td className="px-4 py-3 text-center text-xs text-gray-500">{formatDate(order.orderDate)}</td>
+
+                        {/* Checkbox: Đã đặt */}
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handleToggleOrdered(order)}
+                            disabled={order.isDelivered}
+                            className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mx-auto transition
+                              ${order.isOrdered
+                                ? 'bg-blue-500 border-blue-500 text-white'
+                                : 'border-gray-300 hover:border-blue-400 text-transparent hover:text-blue-400'
+                              }
+                              ${order.isDelivered ? 'cursor-not-allowed opacity-60' : 'cursor-pointer active:scale-90'}
+                            `}
+                          >
+                            <FaCheck className="text-xs" />
+                          </button>
+                        </td>
+
+                        {/* Checkbox: Hàng đã về */}
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handleToggleDelivered(order)}
+                            disabled={toggling === order._id}
+                            className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mx-auto transition
+                              ${order.isDelivered
+                                ? 'bg-emerald-500 border-emerald-500 text-white'
+                                : 'border-gray-300 hover:border-emerald-400 text-transparent hover:text-emerald-400'
+                              }
+                              ${toggling === order._id ? 'cursor-wait animate-pulse' : 'cursor-pointer active:scale-90'}
+                            `}
+                          >
+                            {toggling === order._id ? (
+                              <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <FaCheck className="text-xs" />
+                            )}
+                          </button>
+                        </td>
+
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {!order.isDelivered && (
+                              <button onClick={() => openEdit(order)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition" title="Sửa">
+                                <FaEdit className="text-xs" />
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(order._id)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition" title="Xóa">
+                              <FaTrash className="text-xs" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-              <div className="bg-white rounded-xl border border-gray-200 p-3 text-center cursor-pointer hover:border-[#006B4D]/30 transition" onClick={() => setFilterStatus('')}>
-                <div className="text-2xl font-extrabold text-[#111827]">{stats.total}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase">Tổng đơn</div>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-3 text-center cursor-pointer hover:border-gray-400 transition" onClick={() => setFilterStatus('pending')}>
-                <div className="text-2xl font-extrabold text-gray-600">{stats.pending}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase">Chờ đặt</div>
-              </div>
-              <div className="bg-white rounded-xl border border-blue-200 p-3 text-center cursor-pointer hover:border-blue-400 transition" onClick={() => setFilterStatus('ordered')}>
-                <div className="text-2xl font-extrabold text-blue-600">{stats.ordered}</div>
-                <div className="text-[10px] font-bold text-blue-500 uppercase">Đã đặt</div>
-              </div>
-              <div className="bg-white rounded-xl border border-emerald-200 p-3 text-center cursor-pointer hover:border-emerald-400 transition" onClick={() => setFilterStatus('delivered')}>
-                <div className="text-2xl font-extrabold text-emerald-600">{stats.delivered}</div>
-                <div className="text-[10px] font-bold text-emerald-500 uppercase">Đã nhận</div>
-              </div>
-            </div>
-
-            {/* Info Banner */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mb-5 flex items-center gap-2 text-xs text-blue-700">
-              <FaInfoCircle className="shrink-0" />
-              <span>Khi tick <strong>"Hàng đã về"</strong> → số lượng sẽ được <strong>tự động cộng vào kho vật tư</strong> & tạo phiếu nhập kho.</span>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <FaFilter /> Lọc:
-              </div>
-              {[
-                { value: '', label: 'Tất cả' },
-                { value: 'pending', label: 'Chờ đặt' },
-                { value: 'ordered', label: 'Đã đặt' },
-                { value: 'delivered', label: 'Đã nhận' },
-              ].map(tab => (
-                <button
-                  key={tab.value}
-                  onClick={() => setFilterStatus(tab.value)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border
-                    ${filterStatus === tab.value
-                      ? 'bg-[#006B4D] text-white border-[#006B4D]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#006B4D]/30'
-                    }
-                  `}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#006B4D] mx-auto mb-4" />
-                <div className="text-gray-500 font-medium">Đang tải...</div>
-              </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                <FaShoppingCart className="text-4xl text-gray-300 mx-auto mb-3" />
-                <p className="font-bold text-gray-500">Chưa có đơn đặt hàng nào</p>
-                <p className="text-xs text-gray-400 mt-1">Nhấn "Tạo đơn đặt hàng" để bắt đầu</p>
-              </div>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="hidden lg:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">Mã đơn</th>
-                          <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">Vật tư</th>
-                          <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">SL</th>
-                          <th className="text-left px-4 py-3 font-bold text-xs text-gray-500 uppercase">NCC</th>
-                          <th className="text-right px-4 py-3 font-bold text-xs text-gray-500 uppercase">Đơn giá</th>
-                          <th className="text-right px-4 py-3 font-bold text-xs text-gray-500 uppercase">Thành tiền</th>
-                          <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">Ngày đặt</th>
-                          <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">☑ Đã đặt</th>
-                          <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">☑ Hàng về</th>
-                          <th className="text-center px-4 py-3 font-bold text-xs text-gray-500 uppercase">Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredOrders.map((order, idx) => {
-                          const status = getOrderStatus(order);
-                          const badge = STATUS_BADGE[status];
-                          return (
-                            <tr key={order._id} className={`border-b border-gray-100 hover:bg-gray-50/50 transition ${idx % 2 === 0 ? '' : 'bg-gray-50/30'}`}>
-                              <td className="px-4 py-3">
-                                <span className="text-xs font-extrabold text-[#006B4D] bg-[#E6F0ED] px-2 py-0.5 rounded-lg">
-                                  {order.orderCode}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="font-bold text-[#111827] text-sm">{order.materialName}</div>
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge.color} inline-flex items-center gap-1 mt-0.5`}>
-                                  {badge.icon} {badge.label}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center font-bold">{order.quantity} <span className="text-gray-400 text-xs">{order.materialUnit}</span></td>
-                              <td className="px-4 py-3 text-gray-600 text-xs">{order.supplier || '—'}</td>
-                              <td className="px-4 py-3 text-right text-xs text-gray-600">{formatCurrency(order.unitPrice)}</td>
-                              <td className="px-4 py-3 text-right text-xs font-bold text-[#111827]">{formatCurrency(order.totalPrice)}</td>
-                              <td className="px-4 py-3 text-center text-xs text-gray-500">{formatDate(order.orderDate)}</td>
-                              
-                              {/* Checkbox: Đã đặt */}
-                              <td className="px-4 py-3 text-center">
-                                <button
-                                  onClick={() => handleToggleOrdered(order)}
-                                  disabled={order.isDelivered}
-                                  className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mx-auto transition
-                                    ${order.isOrdered
-                                      ? 'bg-blue-500 border-blue-500 text-white'
-                                      : 'border-gray-300 hover:border-blue-400 text-transparent hover:text-blue-400'
-                                    }
-                                    ${order.isDelivered ? 'cursor-not-allowed opacity-60' : 'cursor-pointer active:scale-90'}
-                                  `}
-                                >
-                                  <FaCheck className="text-xs" />
-                                </button>
-                              </td>
-
-                              {/* Checkbox: Hàng đã về */}
-                              <td className="px-4 py-3 text-center">
-                                <button
-                                  onClick={() => handleToggleDelivered(order)}
-                                  disabled={toggling === order._id}
-                                  className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mx-auto transition
-                                    ${order.isDelivered
-                                      ? 'bg-emerald-500 border-emerald-500 text-white'
-                                      : 'border-gray-300 hover:border-emerald-400 text-transparent hover:text-emerald-400'
-                                    }
-                                    ${toggling === order._id ? 'cursor-wait animate-pulse' : 'cursor-pointer active:scale-90'}
-                                  `}
-                                >
-                                  {toggling === order._id ? (
-                                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                                  ) : (
-                                    <FaCheck className="text-xs" />
-                                  )}
-                                </button>
-                              </td>
-
-                              <td className="px-4 py-3 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  {!order.isDelivered && (
-                                    <button onClick={() => openEdit(order)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition" title="Sửa">
-                                      <FaEdit className="text-xs" />
-                                    </button>
-                                  )}
-                                  <button onClick={() => handleDelete(order._id)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition" title="Xóa">
-                                    <FaTrash className="text-xs" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Mobile Card List */}
-                <div className="lg:hidden space-y-3">
-                  {filteredOrders.map(renderOrderCard)}
-                </div>
-              </>
-            )}
           </div>
 
-          {/* FAB Mobile */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#006B4D] text-white rounded-full shadow-xl flex items-center justify-center z-30 hover:bg-[#00543c] transition active:scale-95"
-          >
-            <FaBars size={24} />
-          </button>
-        </main>
-      </div>
+          {/* Mobile Card List */}
+          <div className="lg:hidden space-y-3">
+            {filteredOrders.map(renderOrderCard)}
+          </div>
+        </>
+      )}
 
       {/* MODAL */}
       {showModal && (
@@ -509,7 +482,6 @@ const MaterialOrderScreen = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              {/* Material Selection */}
               {!editingOrder && (
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Chọn vật tư *</label>
@@ -529,7 +501,6 @@ const MaterialOrderScreen = () => {
                 </div>
               )}
 
-              {/* New Material Fields */}
               {(form.isNewMaterial || editingOrder) && (
                 <div className={`${form.isNewMaterial ? 'bg-amber-50 border border-amber-200 rounded-xl p-3' : ''}`}>
                   {form.isNewMaterial && (
@@ -566,7 +537,6 @@ const MaterialOrderScreen = () => {
                 </div>
               )}
 
-              {/* Quantity + Supplier */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Số lượng đặt *</label>
@@ -599,7 +569,6 @@ const MaterialOrderScreen = () => {
                 </div>
               </div>
 
-              {/* Price */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Đơn giá (đ)</label>
@@ -621,7 +590,6 @@ const MaterialOrderScreen = () => {
                 </div>
               </div>
 
-              {/* Dates */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Ngày đặt</label>
@@ -643,7 +611,6 @@ const MaterialOrderScreen = () => {
                 </div>
               </div>
 
-              {/* Note */}
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Ghi chú</label>
                 <textarea
@@ -655,7 +622,6 @@ const MaterialOrderScreen = () => {
                 />
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 className="w-full bg-[#006B4D] hover:bg-[#00543c] text-white font-bold py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 active:scale-95"
@@ -670,4 +636,4 @@ const MaterialOrderScreen = () => {
   );
 };
 
-export default MaterialOrderScreen;
+export default MaterialOrderTab;
