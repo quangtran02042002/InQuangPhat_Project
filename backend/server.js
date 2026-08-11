@@ -31,6 +31,8 @@ const adminQuoteRoutes = require('./routes/adminQuoteRoutes');
 const finishingPriceRoutes = require('./routes/finishingPriceRoutes');
 const financeRoutes = require('./routes/financeRoutes');
 const quotationRoutes = require('./routes/quotationRoutes');
+const todoRoutes = require('./routes/todoRoutes');
+const materialOrderRoutes = require('./routes/materialOrderRoutes');
 
 dotenv.config();
 const app = express();
@@ -113,6 +115,8 @@ app.use('/api/admin-quotes', adminQuoteRoutes);
 app.use('/api/finishing-prices', finishingPriceRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/quotations', quotationRoutes);
+app.use('/api/todos', todoRoutes);
+app.use('/api/material-orders', materialOrderRoutes);
 
 // Health check endpoint (để hosting platform kiểm tra server còn sống)
 app.get('/', (req, res) => {

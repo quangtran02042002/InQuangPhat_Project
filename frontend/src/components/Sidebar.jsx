@@ -5,7 +5,8 @@ import {
   FaUsers, FaSignOutAlt, FaChartLine, FaUserCog, FaNewspaper,
   FaCogs, FaTruck, FaHome, FaFlask, FaBars, FaTimes,
   FaChevronDown, FaChevronRight, FaCopy, FaFillDrip, FaLayerGroup,
-  FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt, FaFileInvoiceDollar
+  FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt, FaFileInvoiceDollar,
+  FaListAlt, FaShoppingCart
 } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -34,11 +35,11 @@ const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/admin/dashboard') || path.includes('/admin/profile')) {
+    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/todos')) {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
     } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });
-    } else if (path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory')) {
+    } else if (path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory') || path.includes('/admin/material-orders')) {
       setExpanded({ overview: false, business: false, production: true, content: false, partners: false });
     } else if (path.includes('/admin/news') || path.includes('/admin/user') || path.includes('/admin/product') || path.includes('/admin/machine')) {
       setExpanded({ overview: false, business: false, production: false, content: true, partners: false });
@@ -116,6 +117,9 @@ const Sidebar = () => {
               <Link to="/admin/profile" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/profile')}`}>
                 <span className="text-sm ml-6">Hồ sơ cá nhân</span>
               </Link>
+              <Link to="/admin/todos" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/todos')}`}>
+                <FaListAlt className="mr-3 text-gray-400" /> <span className="text-sm">Công việc (Todo)</span>
+              </Link>
             </div>
           )}
 
@@ -177,6 +181,9 @@ const Sidebar = () => {
                   </Link>
                   <Link to="/admin/production-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/production-orders')}`}>
                     <FaFileAlt className="mr-3 text-gray-400" /> <span className="text-sm">Lệnh Sản Xuất</span>
+                  </Link>
+                  <Link to="/admin/material-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/material-orders')}`}>
+                    <FaShoppingCart className="mr-3 text-gray-400" /> <span className="text-sm">Đặt Nguyên vật liệu</span>
                   </Link>
                 </div>
               )}
