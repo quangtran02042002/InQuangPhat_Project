@@ -53,6 +53,7 @@ import FinishingPriceScreen from './screens/admin/FinishingPriceScreen';
 import CashFlowScreen from './screens/admin/CashFlowScreen';
 import QuotationScreen from './screens/admin/QuotationScreen';
 import TasksScreen from './screens/admin/TasksScreen';
+import QCInspectionScreen from './screens/admin/QCInspectionScreen';
 // Admin screens loaded ✓
 
 // --- TẠO COMPONENT CON ĐỂ XỬ LÝ LOGIC ẨN/HIỆN ---
@@ -139,7 +140,7 @@ const AppContent = () => {
             <Route path="/admin/tasks" element={<TasksScreen />} />
             <Route path="/admin/todos" element={<TasksScreen initialTab="todo" />} />
             <Route path="/admin/material-orders" element={<TasksScreen initialTab="material-orders" />} />
-            <Route path="/admin/qc-inspection" element={<TasksScreen initialTab="qc-inspection" />} />
+            <Route path="/admin/qc-inspection" element={<QCInspectionScreen />} />
           </Route>
         </Routes>
       </main>

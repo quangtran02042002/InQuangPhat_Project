@@ -6,7 +6,7 @@ import {
   FaCogs, FaTruck, FaHome, FaFlask, FaBars, FaTimes,
   FaChevronDown, FaChevronRight, FaCopy, FaFillDrip, FaLayerGroup,
   FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt, FaFileInvoiceDollar,
-  FaListAlt, FaShoppingCart
+  FaListAlt, FaShoppingCart, FaClipboardCheck
 } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -35,11 +35,11 @@ const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/tasks') || path.includes('/admin/qc-inspection')) {
+    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/tasks')) {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
     } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });
-    } else if (path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory') || path.includes('/admin/material-orders')) {
+    } else if (path.includes('/admin/materials') || path.includes('/admin/chemicals') || path.includes('/admin/print-formulas') || path.includes('/admin/production-orders') || path.includes('/admin/inventory') || path.includes('/admin/material-orders') || path.includes('/admin/qc-inspection')) {
       setExpanded({ overview: false, business: false, production: true, content: false, partners: false });
     } else if (path.includes('/admin/news') || path.includes('/admin/user') || path.includes('/admin/product') || path.includes('/admin/machine')) {
       setExpanded({ overview: false, business: false, production: false, content: true, partners: false });
@@ -181,6 +181,9 @@ const Sidebar = () => {
                   </Link>
                   <Link to="/admin/production-orders" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/production-orders')}`}>
                     <FaFileAlt className="mr-3 text-gray-400" /> <span className="text-sm">Lệnh Sản Xuất</span>
+                  </Link>
+                  <Link to="/admin/qc-inspection" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/qc-inspection')}`}>
+                    <FaClipboardCheck className="mr-3 text-gray-400" /> <span className="text-sm">Duyệt mẫu QC</span>
                   </Link>
                 </div>
               )}

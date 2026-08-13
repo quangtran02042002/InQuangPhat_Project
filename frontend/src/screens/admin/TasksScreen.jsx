@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import AdminHeader from '../../components/AdminHeader';
-import { FaListAlt, FaShoppingCart, FaBars, FaClipboardCheck } from 'react-icons/fa';
+import { FaListAlt, FaShoppingCart, FaBars } from 'react-icons/fa';
 import TodoTab from './tasks/TodoTab';
 import MaterialOrderTab from './tasks/MaterialOrderTab';
-import QCInspectionTab from './tasks/QCInspectionTab';
 
 const TABS = [
   { id: 'todo', label: 'Công việc (Todo)', icon: FaListAlt },
   { id: 'material-orders', label: 'Đặt NVL', icon: FaShoppingCart },
-  { id: 'qc-inspection', label: 'Duyệt mẫu QC', icon: FaClipboardCheck },
 ];
 
 const TasksScreen = ({ initialTab }) => {
@@ -73,7 +71,6 @@ const TasksScreen = ({ initialTab }) => {
         <main className="flex-1 overflow-y-auto custom-scrollbar">
           {activeTab === 'todo' && <TodoTab />}
           {activeTab === 'material-orders' && <MaterialOrderTab />}
-          {activeTab === 'qc-inspection' && <QCInspectionTab />}
         </main>
       </div>
     </div>
