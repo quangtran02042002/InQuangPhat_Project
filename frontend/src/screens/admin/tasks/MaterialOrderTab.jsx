@@ -281,12 +281,12 @@ const MaterialOrderTab = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-lg sm:text-xl shadow-sm">
             <FaShoppingCart />
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">Đơn đặt Nguyên vật liệu</h2>
-            <p className="text-[#6B7280] text-xs mt-0.5">Theo dõi đặt hàng & nhập kho NVL</p>
+            <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-[#111827]">Đơn đặt Nguyên vật liệu</h2>
+            <p className="text-[#6B7280] text-[11px] mt-0.5">Theo dõi đặt hàng & nhập kho NVL</p>
           </div>
         </div>
         <button
@@ -325,7 +325,7 @@ const MaterialOrderTab = () => {
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-[11px] text-gray-500">
           <FaFilter /> Lọc:
         </div>
         {[
@@ -337,7 +337,7 @@ const MaterialOrderTab = () => {
           <button
             key={tab.value}
             onClick={() => setFilterStatus(tab.value)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition border
               ${filterStatus === tab.value
                 ? 'bg-[#006B4D] text-white border-[#006B4D]'
                 : 'bg-white text-gray-600 border-gray-200 hover:border-[#006B4D]/30'
@@ -481,7 +481,7 @@ const MaterialOrderTab = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <form onSubmit={handleSubmit} className="px-3 py-3 sm:p-4 space-y-4">
               {!editingOrder && (
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Chọn vật tư *</label>

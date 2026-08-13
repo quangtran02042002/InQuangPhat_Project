@@ -139,6 +139,7 @@ const AppContent = () => {
             <Route path="/admin/tasks" element={<TasksScreen />} />
             <Route path="/admin/todos" element={<TasksScreen initialTab="todo" />} />
             <Route path="/admin/material-orders" element={<TasksScreen initialTab="material-orders" />} />
+            <Route path="/admin/qc-inspection" element={<TasksScreen initialTab="qc-inspection" />} />
           </Route>
         </Routes>
       </main>

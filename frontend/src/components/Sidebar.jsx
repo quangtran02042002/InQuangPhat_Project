@@ -35,7 +35,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/tasks')) {
+    if (path.includes('/admin/dashboard') || path.includes('/admin/profile') || path.includes('/admin/tasks') || path.includes('/admin/qc-inspection')) {
       setExpanded({ overview: true, business: false, production: false, content: false, partners: false });
     } else if (path.includes('/admin/quotes') || path.includes('/admin/print-price-calc') || path.includes('/admin/customer') || path.includes('/admin/finance') || path.includes('/admin/debts') || path.includes('/admin/finishing-prices') || path.includes('/admin/quotations')) {
       setExpanded({ overview: false, business: true, production: false, content: false, partners: false });

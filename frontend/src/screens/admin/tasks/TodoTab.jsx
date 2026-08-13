@@ -310,19 +310,19 @@ const TodoTab = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-xl shadow-sm">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-[#006B4D] text-lg sm:text-xl shadow-sm">
             <FaListAlt />
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-[#111827]">
+            <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-[#111827] flex items-center gap-2 flex-wrap">
               Danh sách Công việc
               {pendingCount > 0 && (
-                <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
                   {pendingCount} chưa xong
                 </span>
               )}
             </h2>
-            <p className="text-[#6B7280] text-xs mt-0.5">Quản lý & theo dõi tiến độ công việc</p>
+            <p className="text-[#6B7280] text-[11px] mt-0.5">Quản lý & theo dõi tiến độ công việc</p>
           </div>
         </div>
 
@@ -336,13 +336,13 @@ const TodoTab = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-[11px] text-gray-500">
           <FaFilter /> Lọc:
         </div>
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
+          className="border border-gray-200 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
         >
           <option value="">Tất cả ưu tiên</option>
           <option value="urgent">🔥 Khẩn cấp</option>
@@ -353,7 +353,7 @@ const TodoTab = () => {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
+          className="border border-gray-200 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs focus:ring-1 focus:ring-[#006B4D] outline-none bg-white"
         >
           <option value="">Tất cả phân loại</option>
           <option value="production">Sản xuất</option>
@@ -419,7 +419,7 @@ const TodoTab = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <form onSubmit={handleSubmit} className="px-3 py-3 sm:p-4 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-600 mb-1">Tiêu đề *</label>
                 <input
