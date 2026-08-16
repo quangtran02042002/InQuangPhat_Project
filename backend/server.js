@@ -34,6 +34,7 @@ const quotationRoutes = require('./routes/quotationRoutes');
 const todoRoutes = require('./routes/todoRoutes');
 const materialOrderRoutes = require('./routes/materialOrderRoutes');
 const qcInspectionRoutes = require('./routes/qcInspectionRoutes');
+const aiAssistantRoutes = require('./routes/aiAssistantRoutes');
 
 dotenv.config();
 const app = express();
@@ -119,6 +120,7 @@ app.use('/api/quotations', quotationRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/material-orders', materialOrderRoutes);
 app.use('/api/qc-inspections', qcInspectionRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
 
 // Health check endpoint (để hosting platform kiểm tra server còn sống)
 app.get('/', (req, res) => {

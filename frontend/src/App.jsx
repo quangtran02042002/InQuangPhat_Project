@@ -7,6 +7,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import FloatingContact from './components/FloatingContact'; // Import nút chat nổi
+import AIAssistantWidget from './components/AIAssistantWidget'; // Import Trợ lý AI Admin
 
 // Import Screens (Giữ nguyên)
 import HomeScreen from './screens/HomeScreen';
@@ -150,6 +151,9 @@ const AppContent = () => {
 
       {/* 3. Ẩn Nút Chat Nổi nếu là trang Admin */}
       {!isAdminRoute && <FloatingContact />}
+
+      {/* 4. Hiện Trợ lý AI Agent nếu là trang Admin */}
+      {isAdminRoute && <AIAssistantWidget />}
 
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
