@@ -20,6 +20,7 @@ const CATEGORIZED_PROMPTS = [
     items: [
       { id: 'stock', title: 'Tồn kho giấy & mực', query: 'Kiểm tra tồn kho các loại giấy chính', desc: 'Tra cứu số lượng giấy, kẽm, mực' },
       { id: 'low_stock', title: 'Cảnh báo sắp hết', query: 'Những vật tư nào sắp hết hàng?', desc: 'Vật tư dưới ngưỡng an toàn' },
+      { id: 'quick_export', title: 'Lệnh xuất kho nhanh', query: 'Xuất 10 ram Couche 300', desc: 'Mẫu lệnh trừ tồn kho' },
     ],
   },
   {
@@ -37,7 +38,7 @@ const CATEGORIZED_PROMPTS = [
     color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     items: [
       { id: 'production', title: 'Tiến độ Lệnh SX', query: 'Tiến độ các lệnh sản xuất gần đây', desc: 'Trạng thái bài in, công đoạn' },
-      { id: 'material_order', title: 'Đơn đặt NVL', query: 'Danh sách các đơn đặt nguyên vật liệu đang chờ hàng về', desc: 'Theo dõi hàng đã đặt' },
+      { id: 'material_order', title: 'Đặt mua NVL', query: 'Đặt 50 ram giấy Couche 250', desc: 'Tạo đơn mua vật tư' },
     ],
   },
   {
@@ -45,7 +46,8 @@ const CATEGORIZED_PROMPTS = [
     icon: FaTasks,
     color: 'text-purple-600 bg-purple-50 border-purple-200',
     items: [
-      { id: 'todo', title: 'Việc chưa xong', query: 'Danh sách công việc chưa hoàn thành', desc: 'Todo list và mức ưu tiên' },
+      { id: 'todo_create', title: 'Tạo công việc mới', query: 'Tạo task: Liên hệ khách hàng duyệt mẫu in', desc: 'Thêm nhanh việc cần làm' },
+      { id: 'todo_list', title: 'Việc chưa xong', query: 'Danh sách công việc chưa hoàn thành', desc: 'Todo list và mức ưu tiên' },
       { id: 'qc', title: 'Duyệt mẫu QC', query: 'Kết quả các phiếu duyệt mẫu QC gần đây', desc: 'Mẫu in lụa đạt / hỏng' },
     ],
   },
@@ -54,7 +56,8 @@ const CATEGORIZED_PROMPTS = [
     icon: FaCalculator,
     color: 'text-rose-600 bg-rose-50 border-rose-200',
     items: [
-      { id: 'calc', title: 'Chia khổ giấy in', query: 'Khổ in 65x86 cm chia được bao nhiêu con A4?', desc: 'Tính toán khổ cắt tối ưu' },
+      { id: 'calc_cut', title: 'Chia khổ giấy in', query: 'Khổ in 65x86 cm chia được bao nhiêu con A4?', desc: 'Tùy chỉnh kích thước để tính' },
+      { id: 'calc_price', title: 'Ước tính giá in', query: 'Tính giá in 1000 tờ rơi A4 Couche 150 cán màng', desc: 'Ước lượng chi phí bài in' },
     ],
   },
 ];
@@ -114,6 +117,7 @@ const AIAssistantWidget = () => {
   const [loading, setLoading] = useState(false);
   const [aiStatus, setAiStatus] = useState(null);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Lưu lịch sử tin nhắn
   useEffect(() => {
@@ -123,6 +127,20 @@ const AIAssistantWidget = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Chọn gợi ý: điền vào ô chat và focus để người dùng chỉnh sửa
+  const handleSelectPrompt = (queryText) => {
+    setInputQuery(queryText);
+    if (window.innerWidth < 768) {
+      setShowSidePanel(false);
+    }
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(queryText.length, queryText.length);
+      }
+    }, 100);
   };
 
   // Kiểm tra trạng thái AI Engine
@@ -231,7 +249,7 @@ const AIAssistantWidget = () => {
                   </div>
                   <div>
                     <h4 className="font-extrabold text-xs text-[#111827]">Tác Vụ Gợi Ý</h4>
-                    <p className="text-[10px] text-gray-500">Chạm để hỏi ngay</p>
+                    <p className="text-[10px] text-gray-500">Chạm để chèn vào ô chat & chỉnh sửa</p>
                   </div>
                 </div>
                 {/* Nút đóng side panel trên mobile */}
@@ -258,18 +276,14 @@ const AIAssistantWidget = () => {
                         {group.items.map((item) => (
                           <button
                             key={item.id}
-                            onClick={() => {
-                              handleSendMessage(item.query);
-                              // Trên mobile tự động chuyển về màn chat sau khi bấm
-                              if (window.innerWidth < 768) {
-                                setShowSidePanel(false);
-                              }
-                            }}
+                            onClick={() => handleSelectPrompt(item.query)}
                             disabled={loading}
                             className="w-full text-left p-2 rounded-xl bg-white hover:bg-emerald-50/80 border border-gray-100 hover:border-emerald-200 transition-all duration-150 group shadow-2xs hover:shadow-xs active:scale-98"
+                            title="Bấm để đưa nội dung vào ô chat"
                           >
-                            <div className="font-bold text-[#111827] group-hover:text-[#006B4D] text-[11px] leading-tight">
-                              {item.title}
+                            <div className="font-bold text-[#111827] group-hover:text-[#006B4D] text-[11px] leading-tight flex items-center justify-between">
+                              <span>{item.title}</span>
+                              <FaArrowRight className="text-[9px] text-gray-300 group-hover:text-[#006B4D] transition-transform group-hover:translate-x-0.5" />
                             </div>
                             <div className="text-[9px] text-gray-400 mt-0.5 leading-snug truncate">
                               {item.desc}
@@ -417,7 +431,7 @@ const AIAssistantWidget = () => {
               <div className="bg-emerald-50/50 border-t border-emerald-100 px-3 py-1.5 flex items-center justify-between text-[11px] shrink-0">
                 <span className="text-gray-500 font-medium flex items-center gap-1">
                   <FaLightbulb className="text-amber-500 text-[10px]" />
-                  <span>Gợi ý tác vụ nhanh:</span>
+                  <span>Gợi ý mẫu câu hỏi:</span>
                 </span>
                 <button
                   onClick={() => setShowSidePanel(true)}
@@ -438,6 +452,7 @@ const AIAssistantWidget = () => {
               className="p-2.5 bg-white border-t border-gray-100 flex items-center gap-2 shrink-0"
             >
               <input
+                ref={inputRef}
                 type="text"
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
