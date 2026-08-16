@@ -202,6 +202,74 @@ const handleDirectActions = async (message, user) => {
     };
   }
 
+  // 5. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER)
+  if (lower.startsWith('tạo lệnh sản xuất') || lower.startsWith('tạo lệnh sx') || lower.startsWith('thêm lệnh sx') || lower.startsWith('lập lệnh sx')) {
+    const rawOrder = message.replace(/^(tạo lệnh sản xuất|tạo lệnh sx|thêm lệnh sx|lập lệnh sx)[:\s]*/i, '').trim();
+    const qtyMatch = rawOrder.match(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm)?/i);
+    const qty = qtyMatch ? parseInt(qtyMatch[1].replace(/[.,]/g, ''), 10) : 1000;
+
+    const isSilk = lower.includes('lụa') || lower.includes('in lụa') || lower.includes('silk');
+    const printType = isSilk ? 'silk' : 'offset';
+
+    // Tạo mã lệnh sản xuất tự động
+    const today = new Date();
+    const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const orderCode = `LSX-${dateStr}-${randomSuffix}`;
+
+    let orderName = rawOrder
+      .replace(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm)?/i, '')
+      .replace(/(in offset|in lụa|offset|lụa)/gi, '')
+      .trim();
+    if (!orderName) orderName = 'Đơn hàng in ấn mới';
+
+    const newProdOrder = await ProductionOrder.create({
+      orderCode,
+      orderName,
+      totalQuantity: qty,
+      printType,
+      printJobs: [
+        {
+          jobName: orderName,
+          quantity: qty,
+          printColors: isSilk ? 'In lụa 1 màu' : 'In Offset 4 màu CMYK',
+          notes: `Khởi tạo nhanh bởi AI Agent: ${message}`,
+        },
+      ],
+      status: 'pending',
+    });
+
+    return {
+      handled: true,
+      action: 'create_production_order',
+      data: newProdOrder,
+      response: `🏭 **Đã tạo thành công Lệnh Sản Xuất mới:**\n- **Mã lệnh:** \`${newProdOrder.orderCode}\`\n- **Tên đơn:** ${newProdOrder.orderName}\n- **Số lượng:** ${newProdOrder.totalQuantity.toLocaleString('vi-VN')} SP\n- **Kỹ thuật in:** ${printType === 'offset' ? '🖨️ In Offset' : '🎨 In Lụa'}\n\n*Bạn có thể xem và quản lý chi tiết tại trang [Lệnh Sản Xuất](/admin/production-orders).*`,
+    };
+  }
+
+  // 6. Tác vụ: THÊM KHÁCH HÀNG MỚI (CUSTOMER)
+  if (lower.startsWith('thêm khách hàng') || lower.startsWith('tạo khách hàng') || lower.startsWith('thêm khách')) {
+    const rawCust = message.replace(/^(thêm khách hàng|tạo khách hàng|thêm khách)[:\s]*/i, '').trim();
+    const phoneMatch = rawCust.match(/(0\d{9,10})/);
+    const phone = phoneMatch ? phoneMatch[1] : '';
+
+    let name = rawCust.replace(/(0\d{9,10})/g, '').replace(/(sđt|số điện thoại|sdt|đt)[:\s]*/gi, '').trim();
+    if (!name) name = 'Khách hàng mới';
+
+    const newCustomer = await Customer.create({
+      name,
+      phone: phone || 'Chưa cập nhật',
+      address: 'Chưa cập nhật',
+    });
+
+    return {
+      handled: true,
+      action: 'create_customer',
+      data: newCustomer,
+      response: `👥 **Đã thêm khách hàng mới thành công:**\n- **Tên khách:** ${newCustomer.name}\n- **Số điện thoại:** ${newCustomer.phone}\n\n*Đã lưu vào danh bạ khách hàng của hệ thống.*`,
+    };
+  }
+
   return { handled: false };
 };
 
