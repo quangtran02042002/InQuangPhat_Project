@@ -352,6 +352,8 @@ const PayableTab = () => {
             </button>
           </form>
         )}
+      </Modal>
+
       {/* Confirm Delete Modal */}
       <ConfirmModal
         isOpen={deleteModal.isOpen}

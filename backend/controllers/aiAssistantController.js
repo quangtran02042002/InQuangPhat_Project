@@ -416,8 +416,14 @@ QUY TẮC TRẢ LỜI:
 3. Nếu người dùng muốn xuất kho, nhập kho, tạo task hoặc đặt hàng NVL, hãy nhắc nhở cú pháp ngắn gọn (ví dụ: "Tạo task: ...", "Xuất 10 ram Couche 300").
 4. Trả lời trực tiếp vào vấn đề, không dài dòng.`;
 
-        // Thử model gemini-1.5-pro, nếu lỗi thử tiếp gemini-1.5-flash
-        const modelsToTry = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+        // Danh sách model Google Gemini thế hệ mới nhất đang hoạt động
+        const modelsToTry = [
+          'gemini-3.5-flash-lite',
+          'gemini-3.1-flash-lite',
+          'gemini-3.5-flash',
+          'gemini-3.7-flash',
+          'gemini-3-flash-preview',
+        ];
         let geminiResponseText = null;
 
         for (const model of modelsToTry) {
@@ -433,20 +439,22 @@ QUY TẮC TRẢ LỜI:
               ],
               generationConfig: {
                 temperature: 0.4,
-                maxOutputTokens: 1200,
+                maxOutputTokens: 1500,
               },
             };
 
-            const response = await axios.post(endpoint, payload, { timeout: 10000 });
+            const response = await axios.post(endpoint, payload, { timeout: 12000 });
             if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
               geminiResponseText = response.data.candidates[0].content.parts[0].text;
               return res.json({
                 reply: geminiResponseText,
-                engine: `gemini (${model})`,
+                engine: `Gemini AI (${model})`,
+                isOnlineAI: true,
+                model: model,
               });
             }
           } catch (modelErr) {
-            console.warn(`Gemini model ${model} failed, trying next...`, modelErr.message);
+            console.warn(`Gemini model ${model} failed (${modelErr.response?.status || modelErr.message}), trying next...`);
           }
         }
       } catch (geminiError) {
@@ -458,7 +466,8 @@ QUY TẮC TRẢ LỜI:
     const ruleReply = await runRuleBasedEngine(cleanMsg, liveContext);
     return res.json({
       reply: ruleReply,
-      engine: 'rule_based_fallback',
+      engine: 'offline_rule_engine',
+      isOnlineAI: false,
     });
   } catch (error) {
     console.error('Error in processChatMessage:', error);
@@ -470,11 +479,30 @@ QUY TẮC TRẢ LỜI:
 // STATUS ENDPOINT: KIỂM TRA TRẠNG THÁI AI ENGINE
 // ============================================================================
 const getAIAssistantStatus = async (req, res) => {
-  const hasGeminiKey = !!(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim());
+  const geminiKey = process.env.GEMINI_API_KEY;
+  let isGeminiWorking = false;
+  let activeModel = 'Chưa kết nối';
+
+  if (geminiKey && geminiKey.trim()) {
+    try {
+      const pingUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiKey.trim()}`;
+      const pingRes = await axios.post(pingUrl, {
+        contents: [{ role: 'user', parts: [{ text: 'ping' }] }]
+      }, { timeout: 4000 });
+      if (pingRes.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        isGeminiWorking = true;
+        activeModel = 'Google Gemini 3.5 Flash';
+      }
+    } catch {
+      isGeminiWorking = false;
+    }
+  }
+
   res.json({
     status: 'online',
-    activeEngine: hasGeminiKey ? 'Google Gemini AI (Model 1.5 Pro / Flash) + Live Database' : 'Rule-based Live DB Engine',
-    hasGeminiKey,
+    isOnlineAI: isGeminiWorking,
+    activeEngine: isGeminiWorking ? `Google Gemini AI (${activeModel}) + Live Database` : 'Offline Rule-based Engine',
+    model: isGeminiWorking ? activeModel : 'Offline Fallback',
     features: [
       'Tra cứu tồn kho & cảnh báo vật tư',
       'Thao tác trừ / cộng kho nhanh qua lệnh chat',

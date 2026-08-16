@@ -304,11 +304,19 @@ const AIAssistantWidget = () => {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-black text-xs sm:text-sm tracking-tight leading-none">Trợ lý AI Quang Phát</h3>
-                    <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse" />
+                    <span className={`w-2 h-2 rounded-full ${aiStatus?.isOnlineAI ? 'bg-emerald-300 animate-pulse' : 'bg-amber-300'}`} />
                   </div>
-                  <p className="text-[9px] text-emerald-100/90 font-medium mt-0.5 truncate max-w-[180px]">
-                    {aiStatus?.activeEngine || 'Google Gemini AI + Live Database'}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {aiStatus?.isOnlineAI ? (
+                      <span className="text-[9px] bg-white/20 text-emerald-100 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                        <span>✨</span> {aiStatus.model || 'Gemini 3.5 Flash'}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] bg-amber-500/30 text-amber-100 px-1.5 py-0.5 rounded font-medium">
+                        ⚠️ Chế độ Offline
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -367,8 +375,22 @@ const AIAssistantWidget = () => {
                   <div className="flex items-center gap-1.5 mt-1 px-1">
                     <span className="text-[9px] text-gray-400 font-medium">{msg.time}</span>
                     {msg.engine && (
-                      <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.2 rounded font-mono border border-emerald-100">
-                        {msg.engine}
+                      <span
+                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border ${
+                          msg.engine.includes('Gemini')
+                            ? 'bg-purple-50 text-purple-700 border-purple-200'
+                            : msg.action
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
+                        {msg.engine.includes('Gemini') ? (
+                          <><span>✨</span> {msg.engine}</>
+                        ) : msg.action ? (
+                          <><span>⚡</span> Tác vụ hệ thống</>
+                        ) : (
+                          <><span>🤖</span> Offline Fallback</>
+                        )}
                       </span>
                     )}
                   </div>
