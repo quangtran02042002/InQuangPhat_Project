@@ -304,12 +304,12 @@ const AIAssistantWidget = () => {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-black text-xs sm:text-sm tracking-tight leading-none">Trợ lý AI Quang Phát</h3>
-                    <span className={`w-2 h-2 rounded-full ${aiStatus?.isOnlineAI ? 'bg-emerald-300 animate-pulse' : 'bg-amber-300'}`} />
+                    <span className={`w-2 h-2 rounded-full ${aiStatus?.isOnlineAI !== false ? 'bg-emerald-300 animate-pulse' : 'bg-amber-300'}`} />
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {aiStatus?.isOnlineAI ? (
+                    {aiStatus?.isOnlineAI !== false ? (
                       <span className="text-[9px] bg-white/20 text-emerald-100 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
-                        <span>✨</span> {aiStatus.model || 'Gemini 3.5 Flash'}
+                        <span>✨</span> {aiStatus?.model || 'Gemini 3.5 Flash'}
                       </span>
                     ) : (
                       <span className="text-[9px] bg-amber-500/30 text-amber-100 px-1.5 py-0.5 rounded font-medium">

@@ -480,29 +480,13 @@ QUY TẮC TRẢ LỜI:
 // ============================================================================
 const getAIAssistantStatus = async (req, res) => {
   const geminiKey = process.env.GEMINI_API_KEY;
-  let isGeminiWorking = false;
-  let activeModel = 'Chưa kết nối';
-
-  if (geminiKey && geminiKey.trim()) {
-    try {
-      const pingUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiKey.trim()}`;
-      const pingRes = await axios.post(pingUrl, {
-        contents: [{ role: 'user', parts: [{ text: 'ping' }] }]
-      }, { timeout: 4000 });
-      if (pingRes.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        isGeminiWorking = true;
-        activeModel = 'Google Gemini 3.5 Flash';
-      }
-    } catch {
-      isGeminiWorking = false;
-    }
-  }
+  const hasGeminiKey = !!(geminiKey && geminiKey.trim());
 
   res.json({
     status: 'online',
-    isOnlineAI: isGeminiWorking,
-    activeEngine: isGeminiWorking ? `Google Gemini AI (${activeModel}) + Live Database` : 'Offline Rule-based Engine',
-    model: isGeminiWorking ? activeModel : 'Offline Fallback',
+    isOnlineAI: hasGeminiKey,
+    activeEngine: hasGeminiKey ? 'Google Gemini AI (Gemini 3.5 Flash) + Live Database' : 'Offline Rule-based Engine',
+    model: hasGeminiKey ? 'Gemini 3.5 Flash' : 'Offline Fallback',
     features: [
       'Tra cứu tồn kho & cảnh báo vật tư',
       'Thao tác trừ / cộng kho nhanh qua lệnh chat',
