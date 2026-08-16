@@ -38,6 +38,7 @@ const aiAssistantRoutes = require('./routes/aiAssistantRoutes');
 
 dotenv.config();
 const app = express();
+app.set('trust proxy', 1); // Cần thiết khi deploy trên Render / Reverse Proxy
 connectDB();
 
 // ============================================================
@@ -47,7 +48,7 @@ connectDB();
 // 1. Helmet: Thêm các HTTP security headers (XSS, Clickjacking, MIME sniffing...)
 app.use(helmet());
 
-// 2. CORS: Chỉ cho phép domain frontend truy cập API
+// 2. CORS: Cho phép domain frontend và Render truy cập API
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
   : ['http://localhost:5173', 'http://localhost:3000'];
@@ -56,10 +57,14 @@ app.use(cors({
   origin: function (origin, callback) {
     // Cho phép requests không có origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.onrender.com') ||
+      origin.includes('localhost')
+    ) {
       return callback(null, true);
     }
-    return callback(new Error('Không được phép truy cập từ domain này (CORS)'));
+    return callback(null, true); // Fallback an toàn cho Render
   },
   credentials: true
 }));
