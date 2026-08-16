@@ -10,6 +10,7 @@ import {
   useGetPeriodsQuery, useCreatePeriodMutation, useClosePeriodMutation, useDeletePeriodMutation,
 } from '../../../slices/financeApiSlice';
 import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
 
@@ -48,12 +49,13 @@ const FinanceSettingsTab = () => {
   const [showCatModal, setShowCatModal] = useState(false);
   const [editCat, setEditCat] = useState(null);
   const [catForm, setCatForm] = useState({ name: '', code: '', direction: 'expense', group: 'opex', description: '' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
 
   // EMERGENCY FUND
   const { data: fund } = useGetEmergencyFundQuery();
   const [upsertFund] = useUpsertEmergencyFundMutation();
   const [addContrib] = useAddEmergencyContributionMutation();
-  const [fundForm, setFundForm] = useState({ targetMonths: 3, monthlyOPEX: '' });
+  const [fundForm, setFundForm] = useState({ targetMonths: 6, monthlyOPEX: 50000000 });
   const [contribForm, setContribForm] = useState({ amount: '', note: '' });
 
   // PERIODS
@@ -86,17 +88,37 @@ const FinanceSettingsTab = () => {
     setShowCatModal(true);
   };
 
-  const handleDeleteCat = async (id) => {
-    if (!window.confirm('Xóa danh mục này?')) return;
-    try { await deleteCat(id).unwrap(); toast.success('Đã xóa'); } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+  const handleDeleteCat = (cat) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Xác nhận xóa danh mục',
+      itemName: `${cat.name} (${cat.code})`,
+      message: 'Bạn có chắc chắn muốn xóa danh mục tài chính này không? Hành động này không thể hoàn tác.',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await deleteCat(cat._id).unwrap();
+          toast.success('Đã xóa danh mục');
+          setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+        } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+      },
+    });
   };
 
-  const handleSeed = async () => {
-    if (!window.confirm('Tạo lại 15 danh mục mặc định? Các danh mục đã có sẽ không bị thay đổi.')) return;
-    try {
-      const { created } = await seedCats().unwrap();
-      toast.success(`Đã tạo ${created} danh mục mặc định`);
-    } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+  const handleSeed = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Khôi phục danh mục mặc định',
+      message: 'Tạo lại 15 danh mục tài chính mặc định? Các danh mục đã có sẵn sẽ không bị thay đổi.',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          const { created } = await seedCats().unwrap();
+          toast.success(`Đã tạo ${created} danh mục mặc định`);
+          setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: false });
+        } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+      },
+    });
   };
 
   const handleSaveFund = async (e) => {
@@ -126,9 +148,21 @@ const FinanceSettingsTab = () => {
     } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
   };
 
-  const handleClosePeriod = async (id) => {
-    if (!window.confirm('Khóa sổ kỳ kế toán này? Không thể hoàn tác.')) return;
-    try { await closePeriod({ id }).unwrap(); toast.success('Đã khóa sổ kỳ kế toán'); } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+  const handleClosePeriod = (p) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Khóa sổ kỳ kế toán',
+      itemName: p.name,
+      message: 'Khóa sổ kỳ kế toán này? Khi đã khóa sổ thì không thể hoàn tác.',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await closePeriod({ id: p._id }).unwrap();
+          toast.success('Đã khóa sổ kỳ kế toán');
+          setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+        } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+      },
+    });
   };
 
   const SECTIONS = [
@@ -208,7 +242,7 @@ const FinanceSettingsTab = () => {
                               <FaEdit className="text-xs" />
                             </button>
                             {!cat.isSystem && (
-                              <button onClick={() => handleDeleteCat(cat._id)} className="p-1.5 text-gray-300 hover:text-red-500 transition">
+                              <button onClick={() => handleDeleteCat(cat)} className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition active:scale-95">
                                 <FaTrash className="text-xs" />
                               </button>
                             )}
@@ -320,10 +354,12 @@ const FinanceSettingsTab = () => {
                         ) : (
                           <>
                             <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold">Đang mở</span>
-                            <button onClick={() => handleClosePeriod(p._id)}
-                              className="p-1.5 text-gray-400 hover:text-red-500 transition" title="Khóa kỳ">
-                              <FaLock className="text-xs" />
-                            </button>
+                            {p.status === 'open' && (
+                              <button onClick={() => handleClosePeriod(p)}
+                                className="text-xs font-bold text-amber-600 hover:text-amber-700 hover:underline active:scale-95">
+                                Khóa sổ
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
@@ -415,6 +451,19 @@ const FinanceSettingsTab = () => {
           </button>
         </form>
       </Modal>
+
+      {/* CONFIRM MODAL */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        itemName={confirmModal.itemName}
+        isDanger={confirmModal.isDanger}
+        confirmText="Xác nhận"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
 import Sidebar from '../../components/Sidebar';
 import AdminHeader from '../../components/AdminHeader';
 import PrintableOrder from '../../components/PrintableOrder';
+import ConfirmModal from '../../components/ConfirmModal';
 import * as XLSX from 'xlsx-js-style';
 import { useImagePaste } from '../../hooks/useImagePaste';
 
@@ -494,6 +495,7 @@ const ProductionOrderScreen = () => {
   const [printingOrder, setPrintingOrder] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, orderCode: '', orderName: '' });
   // Filters
   const [printType, setPrintType] = useState('all');
   const [status, setStatus] = useState('all');
@@ -545,15 +547,25 @@ const ProductionOrderScreen = () => {
     return () => window.removeEventListener('afterprint', handleAfterPrint);
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa lệnh sản xuất này?')) return;
+  const handleDeleteClick = (order) => {
+    setDeleteModal({
+      isOpen: true,
+      id: order._id,
+      orderCode: order.orderCode,
+      orderName: order.orderName,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      await axios.delete(`/api/production-orders/${id}`, { headers: { Authorization: `Bearer ${userInfo.token}` } });
-      toast.success('Xóa thành công');
+      await axios.delete(`/api/production-orders/${deleteModal.id}`, { headers: { Authorization: `Bearer ${userInfo.token}` } });
+      toast.success('Xóa lệnh sản xuất thành công');
+      setDeleteModal({ isOpen: false, id: null, orderCode: '', orderName: '' });
       fetchData();
     } catch (err) {
-      toast.error('Có lỗi khi xóa');
+      toast.error('Có lỗi khi xóa lệnh sản xuất');
     }
   };
 
@@ -787,8 +799,8 @@ const ProductionOrderScreen = () => {
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition" title="Xem/Sửa">
                         <FaEdit size={16} />
                       </button>
-                      <button onClick={() => handleDelete(order._id)}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition" title="Xóa">
+                      <button onClick={() => handleDeleteClick(order)}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition active:scale-95" title="Xóa">
                         <FaTrash size={14} />
                       </button>
                     </div>
@@ -801,6 +813,18 @@ const ProductionOrderScreen = () => {
         </div>
 
       </div>
+
+      {/* MODAL XÁC NHẬN XÓA LỆNH SẢN XUẤT */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, orderCode: '', orderName: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa lệnh sản xuất"
+        itemName={`${deleteModal.orderCode} - ${deleteModal.orderName}`}
+        message="Bạn có chắc chắn muốn xóa lệnh sản xuất này? Toàn bộ thông tin bài in và thông số vật tư liên quan sẽ bị xóa vĩnh viễn."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

@@ -72,6 +72,7 @@ const ChemicalScreen = () => {
     // ---------- CONFIRM NHẬP KHO MODAL ----------
     const [confirmNhapModal, setConfirmNhapModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(null); // dispatch _id đang xử lý
+    const [cancelDispatchModal, setCancelDispatchModal] = useState({ isOpen: false, id: null, title: '' });
 
     // ============================================================
     // FETCH
@@ -275,8 +276,13 @@ const ChemicalScreen = () => {
     };
 
     // Hủy (xóa) phiếu xuất kho đang pending
-    const handleCancelDispatch = async (dispatchId) => {
-        if (!window.confirm('Bạn có chắc muốn hủy và xóa phiếu yêu cầu này không?')) return;
+    const handleCancelDispatchClick = (dispatchId, title) => {
+        setCancelDispatchModal({ isOpen: true, id: dispatchId, title });
+    };
+
+    const handleConfirmCancelDispatch = async () => {
+        if (!cancelDispatchModal.id) return;
+        const dispatchId = cancelDispatchModal.id;
         setActionLoading(dispatchId);
         try {
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
@@ -286,6 +292,7 @@ const ChemicalScreen = () => {
                 config
             );
             toast.success('Đã hủy và xóa phiếu yêu cầu xuất kho.');
+            setCancelDispatchModal({ isOpen: false, id: null, title: '' });
             await fetchDispatches();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Lỗi khi hủy phiếu');
@@ -1011,10 +1018,10 @@ const ChemicalScreen = () => {
                                                                                     {actionLoading === d._id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <FaCheck size={11} />}
                                                                                 </button>
                                                                                 <button
-                                                                                    onClick={() => handleCancelDispatch(d._id)}
+                                                                                    onClick={() => handleCancelDispatchClick(d._id, `Phiếu ${d.type === 'nhap' ? 'nhập' : 'xuất'} ${sttAbs}`)}
                                                                                     disabled={actionLoading === d._id}
                                                                                     title="Hủy phiếu"
-                                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition disabled:opacity-50 active:scale-95"
                                                                                 >
                                                                                     <FaBan size={11} />
                                                                                 </button>
@@ -1081,7 +1088,20 @@ const ChemicalScreen = () => {
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={deleteHandler}
                 title="Xóa hóa chất"
-                message="Hóa chất này sẽ bị xóa khỏi danh mục kho. Bạn chắc chắn chứ?"
+                itemName={selectedChemical?.name}
+                message="Hóa chất này sẽ bị xóa khỏi danh mục kho. Bạn có chắc chắn muốn tiếp tục?"
+            />
+
+            {/* MODAL XÁC NHẬN HỦY PHIẾU XUẤT */}
+            <ConfirmModal
+                isOpen={cancelDispatchModal.isOpen}
+                onClose={() => setCancelDispatchModal({ isOpen: false, id: null, title: '' })}
+                onConfirm={handleConfirmCancelDispatch}
+                title="Xác nhận hủy phiếu"
+                itemName={cancelDispatchModal.title}
+                message="Bạn có chắc chắn muốn hủy và xóa phiếu yêu cầu xuất kho này không? Hành động này không thể hoàn tác."
+                confirmText="Đồng ý hủy"
+                cancelText="Giữ lại"
             />
 
             {/* MODAL XÁC NHẬN NHẬP KHO */}

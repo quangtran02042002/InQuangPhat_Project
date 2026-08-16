@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 import {
   FaPlus, FaTimes, FaCamera, FaTrash, FaEdit, FaCheck,
   FaTimesCircle, FaClipboardCheck, FaFilter, FaEye,
@@ -38,6 +40,7 @@ const QCInspectionTab = () => {
   const [loading, setLoading] = useState(true);
   const [filterVerdict, setFilterVerdict] = useState('');
   const [hasPin, setHasPin] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, code: '', orderName: '' });
 
   // PIN modal
   const [showPinModal, setShowPinModal] = useState(false);
@@ -134,7 +137,7 @@ const QCInspectionTab = () => {
     }
     try {
       await axios.put('/api/qc-inspections/pin', { pin: newPin }, config);
-      alert('Đã cài đặt mã PIN QC thành công!');
+      toast.success('Đã cài đặt mã PIN QC thành công!');
       setShowSetupPin(false);
       setNewPin('');
       setConfirmPin('');
@@ -147,7 +150,7 @@ const QCInspectionTab = () => {
 
   const triggerCreateWithPin = () => {
     if (!hasPin) {
-      alert('Chưa cài đặt mã PIN QC. Vui lòng nhấn ⚙️ để cài đặt trước.');
+      toast.warning('Chưa cài đặt mã PIN QC. Vui lòng nhấn ⚙️ PIN để cài đặt trước.');
       return;
     }
     setPinInput('');
@@ -213,8 +216,9 @@ const QCInspectionTab = () => {
       } else {
         setFormImages(prev => [...prev, ...urls]);
       }
+      toast.success(`Đã tải lên ${files.length} ảnh`);
     } catch (err) {
-      alert('Upload ảnh thất bại: ' + (err.response?.data?.message || err.message));
+      toast.error('Upload ảnh thất bại: ' + (err.response?.data?.message || err.message));
     } finally {
       setUploadingImages([]);
       e.target.value = '';
@@ -241,24 +245,37 @@ const QCInspectionTab = () => {
 
       if (editingInspection) {
         await axios.put(`/api/qc-inspections/${editingInspection._id}`, payload, config);
+        toast.success('Đã cập nhật phiếu kiểm QC');
       } else {
-        payload.pin = pinInput || prompt('Nhập lại mã PIN để xác nhận:');
+        payload.pin = pinInput;
         await axios.post('/api/qc-inspections', payload, config);
+        toast.success('Đã tạo phiếu kiểm QC thành công');
       }
       setShowForm(false);
       fetchInspections();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi lưu phiếu QC');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Xóa phiếu kiểm QC này?')) return;
+  const handleDeleteClick = (insp) => {
+    setDeleteModal({
+      isOpen: true,
+      id: insp._id,
+      code: insp.inspectionCode,
+      orderName: insp.orderName,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      await axios.delete(`/api/qc-inspections/${id}`, config);
+      await axios.delete(`/api/qc-inspections/${deleteModal.id}`, config);
+      toast.success('Đã xóa phiếu kiểm QC');
+      setDeleteModal({ isOpen: false, id: null, code: '', orderName: '' });
       fetchInspections();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi xóa phiếu QC');
     }
   };
 
@@ -308,7 +325,7 @@ const QCInspectionTab = () => {
             <button onClick={() => openEditForm(insp)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition" title="Sửa">
               <FaEdit className="text-xs" />
             </button>
-            <button onClick={() => handleDelete(insp._id)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition" title="Xóa">
+            <button onClick={() => handleDeleteClick(insp)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition active:scale-95" title="Xóa">
               <FaTrash className="text-xs" />
             </button>
           </div>
@@ -861,6 +878,18 @@ const QCInspectionTab = () => {
 
       {/* Detail View */}
       {renderDetailView()}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, code: '', orderName: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa phiếu QC"
+        itemName={`${deleteModal.code} - ${deleteModal.orderName}`}
+        message="Bạn có chắc chắn muốn xóa phiếu kiểm tra QC này không? Hành động này không thể hoàn tác."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

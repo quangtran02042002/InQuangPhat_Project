@@ -5,6 +5,7 @@ import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
 import AdminHeader from '../../components/AdminHeader';
 import PostProcessSelector from '../../components/PostProcessSelector';
+import ConfirmModal from '../../components/ConfirmModal';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, ImageRun, Header, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } from 'docx';
@@ -182,6 +183,7 @@ const ImpositionPreview = ({ printSheetW, printSheetH, flatW, flatH, allowCheatG
 // ==========================================
 const PrintPriceCalcScreen = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, quoteCode: '', customerName: '' });
     const location = useLocation();
     const [activeTab, setActiveTab] = useState(location.state?.defaultTab || 'Tính giá');
     const navigate = useNavigate();
@@ -561,9 +563,25 @@ const PrintPriceCalcScreen = () => {
         await exportWord();
     };
 
-    const deleteQuote = async (id) => {
-        if (!window.confirm('Bạn chắc chắn muốn xóa báo giá này?')) return;
-        try { await axios.delete(`/api/admin-quotes/${id}`, authConfig); toast.success('Đã xóa'); fetchQuotes(); } catch (e) { toast.error('Lỗi xóa'); }
+    const handleDeleteClick = (q) => {
+        setDeleteModal({
+            isOpen: true,
+            id: q._id,
+            quoteCode: q.quoteCode,
+            customerName: q.customerName,
+        });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal.id) return;
+        try {
+            await axios.delete(`/api/admin-quotes/${deleteModal.id}`, authConfig);
+            toast.success('Đã xóa báo giá thành công');
+            setDeleteModal({ isOpen: false, id: null, quoteCode: '', customerName: '' });
+            fetchQuotes();
+        } catch (e) {
+            toast.error('Lỗi khi xóa báo giá');
+        }
     };
 
     // ==========================================
@@ -899,7 +917,7 @@ const PrintPriceCalcScreen = () => {
                                                     <span className="text-xl font-black text-[#006B4D]">{(q.grandTotal || 0).toLocaleString()} đ</span>
                                                     <button onClick={() => setViewingQuote(viewingQuote?._id === q._id ? null : q)} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"><FaEye /> Xem</button>
                                                     <button onClick={() => exportWord(q.items, q.customerName, q.grandTotal)} className="text-sm font-bold text-[#006B4D] hover:underline flex items-center gap-1"><FaFileWord /> Word</button>
-                                                    <button onClick={() => deleteQuote(q._id)} className="text-sm font-bold text-red-500 hover:underline"><FaTrash /></button>
+                                                    <button onClick={() => handleDeleteClick(q)} className="text-sm font-bold text-red-500 hover:underline p-1 rounded hover:bg-red-50 transition active:scale-95"><FaTrash /></button>
                                                 </div>
                                             </div>
                                             {viewingQuote?._id === q._id && (
@@ -920,6 +938,18 @@ const PrintPriceCalcScreen = () => {
                     )}
                 </main>
             </div>
+
+            {/* MODAL XÁC NHẬN XÓA BÁO GIÁ */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null, quoteCode: '', customerName: '' })}
+                onConfirm={handleConfirmDelete}
+                title="Xác nhận xóa báo giá"
+                itemName={`${deleteModal.quoteCode} - ${deleteModal.customerName}`}
+                message="Bạn có chắc chắn muốn xóa báo giá này không? Dữ liệu đã lưu sẽ bị xóa vĩnh viễn."
+                confirmText="Đồng ý xóa"
+                cancelText="Hủy bỏ"
+            />
         </div>
     );
 };

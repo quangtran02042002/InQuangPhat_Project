@@ -11,6 +11,7 @@ import { useGetCashBooksQuery as useCB } from '../../../slices/financeApiSlice';
 import { toast } from 'react-toastify';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import FinanceAttachmentUploader from '../../../components/FinanceAttachmentUploader';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
 
@@ -54,6 +55,7 @@ const ReceivableTab = () => {
   const [form, setForm] = useState({ customerName: '', totalAmount: '', issueDate: new Date().toISOString().slice(0,10), dueDate: '', paymentTermDays: 30, depositRequired: false, depositRate: 30, note: '' });
   const [payForm, setPayForm] = useState({ amount: '', cashBookId: '', method: 'cash', note: '' });
   const [payAttachments, setPayAttachments] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, customer: '' });
 
   const items = res?.items || [];
 
@@ -99,9 +101,23 @@ const ReceivableTab = () => {
     } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Xóa khoản phải thu này?')) return;
-    try { await deleteReceivable(id).unwrap(); toast.success('Đã xóa'); } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+  const handleDeleteClick = (r) => {
+    setDeleteModal({
+      isOpen: true,
+      id: r._id,
+      customer: r.counterpartyNameSnapshot,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
+    try {
+      await deleteReceivable(deleteModal.id).unwrap();
+      toast.success('Đã xóa khoản phải thu');
+      setDeleteModal({ isOpen: false, id: null, customer: '' });
+    } catch (err) {
+      toast.error(err?.data?.message || 'Lỗi');
+    }
   };
 
   // Aging pie chart data
@@ -248,10 +264,9 @@ const ReceivableTab = () => {
                               </button>
                             </>
                           )}
-                          <button onClick={() => handleDelete(rec._id)}
-                            className="p-1.5 text-gray-300 hover:text-red-500 transition">
-                            <FaTrash className="text-xs" />
-                          </button>
+                          <button onClick={() => handleDeleteClick(rec)} title="Xóa" className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition active:scale-95">
+                          <FaTrash className="text-xs" />
+                        </button>
                         </div>
                       </td>
                     </tr>
@@ -358,7 +373,17 @@ const ReceivableTab = () => {
             </button>
           </form>
         )}
-      </Modal>
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, customer: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa khoản phải thu"
+        itemName={deleteModal.customer}
+        message="Bạn có chắc chắn muốn xóa khoản phải thu này? Hành động này không thể hoàn tác."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

@@ -47,6 +47,7 @@ const PaperPriceScreen = () => {
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [configForm, setConfigForm] = useState({});
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [configDeleteModal, setConfigDeleteModal] = useState({ isOpen: false, id: null, type: '', label: '' });
 
     // ==========================================
     // FETCH TẤT CẢ DỮ LIỆU TỪ API CHUẨN
@@ -372,19 +373,24 @@ const PaperPriceScreen = () => {
         } catch (error) { toast.error('Lỗi khi thêm dữ liệu'); }
     };
 
-    const deleteConfigHandler = async (id, type) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa danh mục này?`)) {
-            try {
-                let endpoint = '';
-                if (type === 'Khổ giấy') endpoint = `/api/config/paper-sizes/${id}`;
-                else if (type === 'Định lượng') endpoint = `/api/config/paper-weights/${id}`;
-                else if (type === 'Phụ phí') endpoint = `/api/config/surcharges/${id}`;
+    const deleteConfigHandler = (id, type, label = '') => {
+        setConfigDeleteModal({ isOpen: true, id, type, label });
+    };
 
-                await axios.delete(endpoint, authConfig);
-                toast.success('Đã xóa thành công');
-                fetchAllData();
-            } catch (error) { toast.error('Lỗi khi xóa'); }
-        }
+    const confirmDeleteConfig = async () => {
+        if (!configDeleteModal.id) return;
+        const { id, type } = configDeleteModal;
+        try {
+            let endpoint = '';
+            if (type === 'Khổ giấy') endpoint = `/api/config/paper-sizes/${id}`;
+            else if (type === 'Định lượng') endpoint = `/api/config/paper-weights/${id}`;
+            else if (type === 'Phụ phí') endpoint = `/api/config/surcharges/${id}`;
+
+            await axios.delete(endpoint, authConfig);
+            toast.success('Đã xóa thành công');
+            setConfigDeleteModal({ isOpen: false, id: null, type: '', label: '' });
+            fetchAllData();
+        } catch (error) { toast.error('Lỗi khi xóa'); }
     };
 
     return (
@@ -837,6 +843,17 @@ const PaperPriceScreen = () => {
             )}
 
             <ConfirmModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={deleteHandler} title="Xóa dữ liệu" message="Bạn chắc chắn muốn xóa nhóm dữ liệu này?" />
+
+            <ConfirmModal
+                isOpen={configDeleteModal.isOpen}
+                onClose={() => setConfigDeleteModal({ isOpen: false, id: null, type: '', label: '' })}
+                onConfirm={confirmDeleteConfig}
+                title={`Xóa ${configDeleteModal.type}`}
+                itemName={configDeleteModal.label}
+                message={`Bạn có chắc chắn muốn xóa ${configDeleteModal.type?.toLowerCase()} này không?`}
+                confirmText="Đồng ý xóa"
+                cancelText="Hủy bỏ"
+            />
         </div>
     );
 };

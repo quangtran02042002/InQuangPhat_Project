@@ -12,6 +12,7 @@ import {
 } from '../../../slices/financeApiSlice';
 import { toast } from 'react-toastify';
 import FinanceAttachmentUploader from '../../../components/FinanceAttachmentUploader';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
 
@@ -60,9 +61,10 @@ const CashBookTab = () => {
   const [showTxModal, setShowTxModal] = useState(false);
   const [txType, setTxType] = useState('income');
 
-  const [bookForm, setBookForm] = useState({ name: '', type: 'cash', currency: 'VND', bankName: '', accountNumber: '', openingBalance: '' });
-  const [txForm, setTxForm] = useState({ amount: '', categoryId: '', description: '', transactionDate: new Date().toISOString().slice(0, 10), hasInvoice: false, invoiceNumber: '' });
+  const [bookForm, setBookForm] = useState({ name: '', type: 'cash', initialBalance: '', currency: 'VND', bankName: '', bankAccountNumber: '' });
+  const [txForm, setTxForm] = useState({ cashBookId: '', categoryId: '', amount: '', description: '', counterparty: '', date: new Date().toISOString().slice(0, 10), method: 'cash', hasInvoice: false, invoiceNumber: '' });
   const [attachments, setAttachments] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
 
   const handleCreateBook = async (e) => {
     e.preventDefault();
@@ -103,16 +105,25 @@ const CashBookTab = () => {
     }
   };
 
-  const handleCancelTx = async (id) => {
-    if (!window.confirm('Hủy giao dịch này? Số dư sổ quỹ sẽ được hoàn lại.')) return;
-    try {
-      await cancelTx(id).unwrap();
-      toast.success('Đã hủy giao dịch');
-      refetchTx();
-      refetchBooks();
-    } catch (err) {
-      toast.error(err?.data?.message || 'Lỗi hủy giao dịch');
-    }
+  const handleCancelTx = (id, desc) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hủy giao dịch',
+      itemName: desc || 'Giao dịch thu/chi',
+      message: 'Bạn có chắc muốn hủy giao dịch này? Số dư sổ quỹ sẽ được hoàn lại tương ứng.',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await cancelTx(id).unwrap();
+          toast.success('Đã hủy giao dịch thành công');
+          setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+          refetchTx();
+          refetchBooks();
+        } catch (err) {
+          toast.error(err?.data?.message || 'Lỗi hủy giao dịch');
+        }
+      },
+    });
   };
 
   const transactions = txData?.transactions || [];
@@ -165,22 +176,30 @@ const CashBookTab = () => {
                 </button>
 
                 <button
-                  onClick={async (e) => {
+                  onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm(`Bạn có chắc chắn muốn xóa sổ quỹ "${book.name}" không?`)) {
-                      try {
-                        await deleteBook(book._id).unwrap();
-                        toast.success('Đã xóa sổ quỹ thành công');
-                        refetchBooks();
-                        if (selectedBook?._id === book._id) {
-                          setSelectedBook(null);
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Xóa sổ quỹ',
+                      itemName: book.name,
+                      message: `Bạn có chắc chắn muốn xóa sổ quỹ "${book.name}" không?`,
+                      isDanger: true,
+                      onConfirm: async () => {
+                        try {
+                          await deleteBook(book._id).unwrap();
+                          toast.success('Đã xóa sổ quỹ thành công');
+                          setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+                          refetchBooks();
+                          if (selectedBook?._id === book._id) {
+                            setSelectedBook(null);
+                          }
+                        } catch (err) {
+                          toast.error(err?.data?.message || 'Lỗi khi xóa sổ quỹ');
                         }
-                      } catch (err) {
-                        toast.error(err?.data?.message || 'Lỗi khi xóa sổ quỹ');
-                      }
-                    }
+                      },
+                    });
                   }}
-                  className="absolute top-3 right-3 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150"
+                  className="absolute top-3 right-3 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 lg:opacity-0 lg:group-hover:opacity-100 transition duration-150 active:scale-95"
                   title="Xóa sổ quỹ"
                 >
                   <FaTrash className="text-xs" />
@@ -442,6 +461,19 @@ const CashBookTab = () => {
           </button>
         </form>
       </Modal>
+
+      {/* CONFIRM MODAL */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        itemName={confirmModal.itemName}
+        isDanger={confirmModal.isDanger}
+        confirmText="Xác nhận"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

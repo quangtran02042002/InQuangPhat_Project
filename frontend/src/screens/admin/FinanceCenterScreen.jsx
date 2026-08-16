@@ -577,17 +577,22 @@ const FinanceCenterScreen = () => {
     }
   };
 
-  const handleVoidVoucher = async (voucher) => {
-    const voidReason = window.prompt(`Nhập lý do hủy phiếu ${voucher.voucherNo}`, 'Nhập sai nghiệp vụ');
-    if (voidReason === null) return;
-
-    try {
-      await axios.patch(`/api/finance/vouchers/${voucher._id}/void`, { voidReason }, authConfig);
-      toast.success('Đã hủy phiếu giao dịch');
-      await fetchFinanceData();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Không thể hủy phiếu giao dịch');
-    }
+  const handleVoidVoucher = (voucher) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Xác nhận hủy phiếu giao dịch',
+      message: `Bạn có chắc chắn muốn hủy phiếu giao dịch ${voucher.voucherNo}? Hành động này sẽ hoàn tác số dư và không thể khôi phục.`,
+      onConfirm: async () => {
+        try {
+          await axios.patch(`/api/finance/vouchers/${voucher._id}/void`, { voidReason: 'Người dùng hủy phiếu' }, authConfig);
+          toast.success('Đã hủy phiếu giao dịch thành công');
+          setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
+          await fetchFinanceData();
+        } catch (error) {
+          toast.error(error.response?.data?.message || 'Không thể hủy phiếu giao dịch');
+        }
+      },
+    });
   };
 
   const handleOpeningBalanceSubmit = async (event) => {

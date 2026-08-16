@@ -6,6 +6,7 @@ import { FaCheckDouble, FaEye, FaPhone, FaCalendarAlt, FaSearch, FaFilter, FaTim
 import Sidebar from '../../components/Sidebar';
 import QuoteDetailModal from '../../components/QuoteDetailModal';
 import AdminHeader from '../../components/AdminHeader';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const QuoteListScreen = () => {
     const [quotes, setQuotes] = useState([]);
@@ -19,6 +20,7 @@ const QuoteListScreen = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, customerName: '', productName: '' });
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -60,13 +62,23 @@ const QuoteListScreen = () => {
     };
 
     // Hàm gọi API xóa yêu cầu báo giá
-    const deleteQuoteHandler = async (id) => {
-        if (!window.confirm('Bạn có chắc chắn muốn xóa yêu cầu báo giá này không?')) return;
+    const handleDeleteClick = (quote) => {
+        setDeleteModal({
+            isOpen: true,
+            id: quote._id,
+            customerName: quote.name,
+            productName: quote.productName,
+        });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal.id) return;
         try {
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            await axios.delete(`/api/quotes/${id}`, config);
-            setQuotes(quotes.filter(q => q._id !== id));
+            await axios.delete(`/api/quotes/${deleteModal.id}`, config);
+            setQuotes(quotes.filter(q => q._id !== deleteModal.id));
             toast.success('Đã xóa yêu cầu báo giá thành công');
+            setDeleteModal({ isOpen: false, id: null, customerName: '', productName: '' });
         } catch (error) {
             toast.error(error.response?.data?.message || 'Lỗi khi xóa yêu cầu báo giá');
         }
@@ -309,7 +321,7 @@ const QuoteListScreen = () => {
                                                         <FaEye /> Xem & Phản hồi
                                                     </button>
                                                     <button
-                                                        onClick={() => deleteQuoteHandler(quote._id)}
+                                                        onClick={() => handleDeleteClick(quote)}
                                                         className="bg-red-50 text-red-600 hover:bg-red-100 font-extrabold px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 border border-red-100 text-sm md:text-base"
                                                         title="Xóa"
                                                     >
@@ -332,6 +344,18 @@ const QuoteListScreen = () => {
                 onClose={() => setIsModalOpen(false)}
                 quote={selectedQuote}
                 onUpdateStatus={updateStatusHandler}
+            />
+
+            {/* MODAL XÁC NHẬN XÓA YÊU CẦU BÁO GIÁ */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null, customerName: '', productName: '' })}
+                onConfirm={handleConfirmDelete}
+                title="Xác nhận xóa yêu cầu báo giá"
+                itemName={`${deleteModal.customerName} (${deleteModal.productName || 'Yêu cầu báo giá'})`}
+                message="Bạn có chắc chắn muốn xóa yêu cầu báo giá này không? Dữ liệu đã xóa không thể khôi phục."
+                confirmText="Đồng ý xóa"
+                cancelText="Hủy bỏ"
             />
         </div>
     );

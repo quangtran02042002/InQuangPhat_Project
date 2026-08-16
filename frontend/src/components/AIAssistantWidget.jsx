@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import ConfirmModal from './ConfirmModal';
 import {
   FaRobot, FaTimes, FaPaperPlane, FaTrash, FaUndo,
   FaBoxes, FaExclamationTriangle, FaWallet, FaIndustry,
@@ -103,6 +105,7 @@ const AIAssistantWidget = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
   const [isOpen, setIsOpen] = useState(false);
   const [showSidePanel, setShowSidePanel] = useState(true); // Mặc định mở thanh gợi ý phụ bên cạnh
+  const [showClearModal, setShowClearModal] = useState(false);
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('ai_assistant_history');
     return saved ? JSON.parse(saved) : [INITIAL_MESSAGE];
@@ -185,10 +188,10 @@ const AIAssistantWidget = () => {
 
   // Xóa lịch sử chat
   const handleClearHistory = () => {
-    if (window.confirm('Bạn có chắc muốn xóa lịch sử trò chuyện cùng AI?')) {
-      setMessages([INITIAL_MESSAGE]);
-      localStorage.removeItem('ai_assistant_history');
-    }
+    setMessages([INITIAL_MESSAGE]);
+    localStorage.removeItem('ai_assistant_history');
+    toast.success('Đã làm mới lịch sử trò chuyện cùng AI');
+    setShowClearModal(false);
   };
 
   return (
@@ -325,7 +328,7 @@ const AIAssistantWidget = () => {
                 </button>
 
                 <button
-                  onClick={handleClearHistory}
+                  onClick={() => setShowClearModal(true)}
                   className="p-1.5 hover:bg-white/15 rounded-lg text-emerald-100 hover:text-white transition active:scale-95"
                   title="Xóa lịch sử chat"
                 >
@@ -434,6 +437,18 @@ const AIAssistantWidget = () => {
 
         </div>
       )}
+
+      {/* MODAL XÁC NHẬN LÀM MỚI CHAT */}
+      <ConfirmModal
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        onConfirm={handleClearHistory}
+        title="Làm mới cuộc trò chuyện"
+        message="Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện cùng Trợ lý AI và bắt đầu phiên mới?"
+        confirmText="Làm mới"
+        cancelText="Giữ lại"
+        isDanger={false}
+      />
     </aside>
   );
 };

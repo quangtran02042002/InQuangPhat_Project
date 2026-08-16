@@ -10,6 +10,7 @@ import {
 import { toast } from 'react-toastify';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import FinanceAttachmentUploader from '../../../components/FinanceAttachmentUploader';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
 const AGE_BADGE = {
@@ -52,6 +53,7 @@ const PayableTab = () => {
   const [form, setForm] = useState({ supplierName: '', totalAmount: '', description: '', issueDate: new Date().toISOString().slice(0,10), dueDate: '', paymentTermDays: 30 });
   const [payForm, setPayForm] = useState({ amount: '', cashBookId: '', method: 'cash', note: '' });
   const [payAttachments, setPayAttachments] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, supplier: '' });
 
   const items = res?.items || [];
   const totalOutstanding = items.reduce((s, p) => s + p.outstandingAmount, 0);
@@ -93,9 +95,23 @@ const PayableTab = () => {
     } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Xóa khoản phải trả này?')) return;
-    try { await deletePayable(id).unwrap(); toast.success('Đã xóa'); } catch (err) { toast.error(err?.data?.message || 'Lỗi'); }
+  const handleDeleteClick = (p) => {
+    setDeleteModal({
+      isOpen: true,
+      id: p._id,
+      supplier: p.counterpartyNameSnapshot,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
+    try {
+      await deletePayable(deleteModal.id).unwrap();
+      toast.success('Đã xóa khoản phải trả');
+      setDeleteModal({ isOpen: false, id: null, supplier: '' });
+    } catch (err) {
+      toast.error(err?.data?.message || 'Lỗi');
+    }
   };
 
   return (
@@ -246,7 +262,7 @@ const PayableTab = () => {
                             Trả tiền
                           </button>
                         )}
-                        <button onClick={() => handleDelete(p._id)} className="p-1.5 text-gray-300 hover:text-red-500 transition">
+                        <button onClick={() => handleDeleteClick(p)} title="Xóa" className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition active:scale-95">
                           <FaTrash className="text-xs" />
                         </button>
                       </div>
@@ -336,7 +352,17 @@ const PayableTab = () => {
             </button>
           </form>
         )}
-      </Modal>
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, supplier: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa khoản phải trả"
+        itemName={deleteModal.supplier}
+        message="Bạn có chắc chắn muốn xóa khoản phải trả này không? Hành động này không thể hoàn tác."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

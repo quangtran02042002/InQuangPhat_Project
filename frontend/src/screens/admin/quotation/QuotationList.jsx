@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FaSearch, FaFilter, FaTimes, FaEdit, FaTrash, FaFileExcel, FaEye, FaCalendarAlt, FaClock, FaLayerGroup } from 'react-icons/fa';
 import { exportQuotationExcel } from '../../../utils/quotationExcelExport';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const statusMap = {
   draft: { label: 'Nháp', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -22,6 +23,7 @@ const QuotationList = ({ onEdit }) => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [viewDetail, setViewDetail] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, code: '', customer: '' });
 
   const fetchData = async () => {
     try {
@@ -33,13 +35,23 @@ const QuotationList = ({ onEdit }) => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn chắc chắn muốn xóa báo giá này?')) return;
+  const handleDeleteClick = (q) => {
+    setDeleteModal({
+      isOpen: true,
+      id: q._id,
+      code: q.quotationCode,
+      customer: q.customerName,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id) return;
     try {
-      await axios.delete(`/api/quotations/${id}`, config);
+      await axios.delete(`/api/quotations/${deleteModal.id}`, config);
       toast.success('Đã xóa báo giá');
+      setDeleteModal({ isOpen: false, id: null, code: '', customer: '' });
       fetchData();
-    } catch { toast.error('Lỗi xóa'); }
+    } catch { toast.error('Lỗi khi xóa báo giá'); }
   };
 
   const handleExport = async (q) => {
@@ -186,7 +198,7 @@ const QuotationList = ({ onEdit }) => {
                         <button onClick={() => setViewDetail(q)} title="Xem" className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition border border-gray-200"><FaEye size={14} /></button>
                         <button onClick={() => onEdit(q)} title="Sửa" className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition border border-gray-200"><FaEdit size={14} /></button>
                         <button onClick={() => handleExport(q)} title="Excel" className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition border border-gray-200"><FaFileExcel size={14} /></button>
-                        <button onClick={() => handleDelete(q._id)} title="Xóa" className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition border border-gray-200"><FaTrash size={14} /></button>
+                        <button onClick={() => handleDeleteClick(q)} title="Xóa" className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition border border-gray-200 active:scale-95"><FaTrash size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -215,7 +227,7 @@ const QuotationList = ({ onEdit }) => {
                   <button onClick={() => setViewDetail(q)} className="flex-1 bg-blue-50 text-blue-600 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm border border-blue-200 transition active:scale-95"><FaEye /> Xem</button>
                   <button onClick={() => onEdit(q)} className="flex-1 bg-[#E6F0ED] text-[#006B4D] font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm transition active:scale-95"><FaEdit /> Sửa</button>
                   <button onClick={() => handleExport(q)} className="px-4 bg-emerald-50 text-emerald-600 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm border border-emerald-200 transition"><FaFileExcel /></button>
-                  <button onClick={() => handleDelete(q._id)} className="px-4 bg-red-50 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center text-sm border border-red-200 transition"><FaTrash /></button>
+                  <button onClick={() => handleDeleteClick(q)} className="px-4 bg-red-50 text-red-500 font-bold py-2.5 rounded-xl flex items-center justify-center text-sm border border-red-200 transition active:scale-95"><FaTrash /></button>
                 </div>
               </div>
             ))}
@@ -283,6 +295,17 @@ const QuotationList = ({ onEdit }) => {
           </div>
         </div>
       )}
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null, code: '', customer: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa bảng báo giá"
+        itemName={`${deleteModal.code} - ${deleteModal.customer}`}
+        message="Bạn có chắc chắn muốn xóa bảng báo giá này? Dữ liệu đã xóa không thể khôi phục."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };
