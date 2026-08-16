@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 import {
   FaPlus, FaTimes, FaEdit, FaTrash, FaCheck,
   FaShoppingCart, FaFilter, FaTruck,
@@ -32,6 +34,7 @@ const MaterialOrderTab = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [filterStatus, setFilterStatus] = useState('');
   const [toggling, setToggling] = useState(null);
+  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
 
   // Form
   const [form, setForm] = useState({
@@ -121,56 +124,78 @@ const MaterialOrderTab = () => {
       const payload = { ...form, createdBy: userInfo?.name || 'Admin' };
       if (editingOrder) {
         await axios.put(`/api/material-orders/${editingOrder._id}`, payload, config);
+        toast.success('Đã cập nhật đơn đặt hàng');
       } else {
         await axios.post('/api/material-orders', payload, config);
+        toast.success('Đã tạo đơn đặt hàng mới');
       }
       setShowModal(false);
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi lưu đơn');
     }
   };
 
   const handleToggleOrdered = async (order) => {
     try {
       await axios.put(`/api/material-orders/${order._id}`, { isOrdered: !order.isOrdered }, config);
+      toast.success(order.isOrdered ? 'Đã bỏ trạng thái Đã đặt' : 'Đã xác nhận Đã đặt hàng NCC');
       fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi');
     }
   };
 
-  const handleToggleDelivered = async (order) => {
-    const action = order.isDelivered
-      ? `Bỏ tick "Hàng đã về" sẽ TRỪ LẠI ${order.quantity} ${order.materialUnit} "${order.materialName}" khỏi kho. Tiếp tục?`
-      : `Tick "Hàng đã về" sẽ CỘNG ${order.quantity} ${order.materialUnit} "${order.materialName}" VÀO KHO. Tiếp tục?`;
+  const handleToggleDelivered = (order) => {
+    const actionMessage = order.isDelivered
+      ? `Bỏ tick "Hàng đã về" sẽ TRỪ LẠI ${order.quantity} ${order.materialUnit} khỏi kho vật tư.`
+      : `Xác nhận "Hàng đã về" sẽ TỰ ĐỘNG CỘNG ${order.quantity} ${order.materialUnit} VÀO KHO VẬT TƯ.`;
 
-    if (!window.confirm(action)) return;
-
-    setToggling(order._id);
-    try {
-      const { data } = await axios.put(`/api/material-orders/${order._id}/toggle-delivered`, {}, config);
-      alert(data.message || 'Thành công');
-      fetchAll();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
-    } finally {
-      setToggling(null);
-    }
+    setConfirmState({
+      isOpen: true,
+      title: order.isDelivered ? 'Xác nhận hoàn tác nhập kho' : 'Xác nhận hàng đã về kho',
+      message: actionMessage,
+      itemName: `${order.orderCode} - ${order.materialName}`,
+      isDanger: order.isDelivered,
+      onConfirm: async () => {
+        setToggling(order._id);
+        try {
+          const { data } = await axios.put(`/api/material-orders/${order._id}/toggle-delivered`, {}, config);
+          toast.success(data.message || 'Cập nhật kho thành công');
+          setConfirmState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+          fetchAll();
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Lỗi');
+        } finally {
+          setToggling(null);
+        }
+      },
+    });
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     const order = orders.find(o => o._id === id);
-    const warning = order?.isDelivered
-      ? `Đơn này đã nhận hàng! Xóa sẽ TRỪ ${order.quantity} ${order.materialUnit} khỏi kho. Xác nhận?`
-      : 'Xóa đơn đặt hàng này?';
-    if (!window.confirm(warning)) return;
-    try {
-      await axios.delete(`/api/material-orders/${id}`, config);
-      fetchAll();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
-    }
+    const warningMessage = order?.isDelivered
+      ? `Đơn này đã nhận hàng! Xóa đơn sẽ TRỪ LẠI ${order.quantity} ${order.materialUnit} khỏi kho.`
+      : 'Bạn có chắc chắn muốn xóa đơn đặt hàng này khỏi danh sách?';
+
+    setConfirmState({
+      isOpen: true,
+      title: 'Xác nhận xóa đơn đặt hàng',
+      message: warningMessage,
+      itemName: `${order?.orderCode} - ${order?.materialName}`,
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await axios.delete(`/api/material-orders/${id}`, config);
+          toast.success('Đã xóa đơn đặt hàng');
+          setConfirmState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true });
+          fetchAll();
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Lỗi khi xóa đơn');
+        }
+      },
+    });
   };
 
   const formatCurrency = (val) => {
@@ -632,6 +657,19 @@ const MaterialOrderTab = () => {
           </div>
         </div>
       )}
+
+      {/* CONFIRM MODAL */}
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState({ isOpen: false, title: '', message: '', itemName: '', onConfirm: null, isDanger: true })}
+        onConfirm={confirmState.onConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        itemName={confirmState.itemName}
+        isDanger={confirmState.isDanger}
+        confirmText="Xác nhận"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

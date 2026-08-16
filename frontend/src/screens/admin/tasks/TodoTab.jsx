@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import ConfirmModal from '../../../components/ConfirmModal';
 import {
   FaPlus, FaTimes, FaEdit, FaTrash, FaCheck, FaUndo,
   FaListAlt, FaFilter, FaCalendarAlt, FaUser,
@@ -30,6 +32,7 @@ const TodoTab = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, todo: null });
 
   // Filters
   const [filterPriority, setFilterPriority] = useState('');
@@ -98,13 +101,15 @@ const TodoTab = () => {
     try {
       if (editingTodo) {
         await axios.put(`/api/todos/${editingTodo._id}`, form, config);
+        toast.success('Đã cập nhật công việc');
       } else {
         await axios.post('/api/todos', form, config);
+        toast.success('Đã tạo công việc mới');
       }
       setShowModal(false);
       fetchTodos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi lưu công việc');
     }
   };
 
@@ -112,18 +117,24 @@ const TodoTab = () => {
     try {
       const newStatus = todo.status === 'done' ? 'in_progress' : 'done';
       await axios.put(`/api/todos/${todo._id}`, { status: newStatus }, config);
+      if (newStatus === 'done') {
+        toast.success('Đã đánh dấu hoàn thành công việc!');
+      } else {
+        toast.info('Đã hoàn tác trạng thái công việc');
+      }
       fetchTodos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi cập nhật trạng thái');
     }
   };
 
   const handleUpdateProgress = async (todo, completedQuantity) => {
     try {
       await axios.put(`/api/todos/${todo._id}`, { completedQuantity }, config);
+      toast.success('Đã cập nhật tiến độ');
       fetchTodos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi cập nhật tiến độ');
     }
   };
 
@@ -132,17 +143,23 @@ const TodoTab = () => {
       await axios.put(`/api/todos/${todo._id}`, { progress }, config);
       fetchTodos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi cập nhật tiến độ');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Xóa công việc này?')) return;
+  const handleDeleteClick = (todo) => {
+    setDeleteModal({ isOpen: true, todo });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.todo?._id) return;
     try {
-      await axios.delete(`/api/todos/${id}`, config);
+      await axios.delete(`/api/todos/${deleteModal.todo._id}`, config);
+      toast.success('Đã xóa công việc thành công');
+      setDeleteModal({ isOpen: false, todo: null });
       fetchTodos();
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi');
+      toast.error(err.response?.data?.message || 'Lỗi khi xóa công việc');
     }
   };
 
@@ -293,9 +310,9 @@ const TodoTab = () => {
               <FaEdit className="text-xs" />
             </button>
             <button
-              onClick={() => handleDelete(todo._id)}
-              title="Xóa"
-              className="p-2 rounded-xl text-red-400 hover:bg-red-50 transition"
+              onClick={() => handleDeleteClick(todo)}
+              title="Xóa công việc"
+              className="p-2 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-50 transition active:scale-95"
             >
               <FaTrash className="text-xs" />
             </button>
@@ -533,6 +550,18 @@ const TodoTab = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL XÁC NHẬN XÓA XINH ĐẸP CHUYÊN NGHIỆP */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, todo: null })}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa công việc"
+        itemName={deleteModal.todo?.title}
+        message="Bạn có chắc chắn muốn xóa công việc này khỏi danh sách? Dữ liệu đã xóa sẽ không thể phục hồi."
+        confirmText="Đồng ý xóa"
+        cancelText="Hủy bỏ"
+      />
     </div>
   );
 };

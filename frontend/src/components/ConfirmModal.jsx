@@ -1,41 +1,80 @@
 import React from 'react';
-import { FaExclamationTriangle } from 'react-icons/fa';
+import { FaTrashAlt, FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }) => {
-  // Nếu isOpen = false thì không vẽ gì ra màn hình cả (ẩn đi)
+const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = 'Xác nhận xóa',
+  message = 'Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác.',
+  itemName,
+  confirmText = 'Đồng ý xóa',
+  cancelText = 'Hủy bỏ',
+  isDanger = true,
+}) => {
   if (!isOpen) return null;
 
   return (
-    // 1. LỚP PHỦ MỜ (OVERLAY) - Che toàn màn hình
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
-      
-      {/* 2. HỘP NỘI DUNG (CONTENT BOX) */}
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all scale-100 mx-4">
-        
-        {/* Icon cảnh báo */}
-        <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-          <FaExclamationTriangle className="text-red-600 text-xl" />
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl shadow-2xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md transform transition-all border border-gray-100 text-center relative animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Nút đóng góc trên */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition active:scale-95"
+          title="Đóng"
+        >
+          <FaTimes className="text-sm" />
+        </button>
+
+        {/* Icon cảnh báo cao cấp */}
+        <div
+          className={`flex items-center justify-center w-14 h-14 mx-auto rounded-2xl mb-4 shadow-sm ${
+            isDanger
+              ? 'bg-red-50 text-red-500 ring-8 ring-red-50/60'
+              : 'bg-amber-50 text-amber-500 ring-8 ring-amber-50/60'
+          }`}
+        >
+          {isDanger ? <FaTrashAlt className="text-2xl" /> : <FaExclamationTriangle className="text-2xl" />}
         </div>
 
         {/* Tiêu đề & Nội dung */}
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-gray-800 mb-2">{title}</h3>
-          <p className="text-sm text-gray-500 mb-6">{message}</p>
-        </div>
+        <h3 className="text-base sm:text-lg font-black text-[#111827] mb-1.5">{title}</h3>
 
-        {/* Các nút bấm */}
-        <div className="flex justify-center space-x-4">
+        {itemName && (
+          <div className="bg-slate-50 border border-gray-100 rounded-xl px-3 py-2 my-2 text-xs font-bold text-gray-700 truncate max-w-full">
+            "{itemName}"
+          </div>
+        )}
+
+        <p className="text-xs text-gray-500 mb-6 leading-relaxed px-2">
+          {message}
+        </p>
+
+        {/* Nút bấm */}
+        <div className="flex items-center justify-center gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium transition focus:outline-none"
+            className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition active:scale-95"
           >
-            Hủy bỏ
+            {cancelText}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
-            className="px-5 py-2.5 rounded-lg text-white bg-red-600 hover:bg-red-700 font-bold shadow-lg shadow-red-200 transition focus:outline-none"
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white transition active:scale-95 shadow-md ${
+              isDanger
+                ? 'bg-red-600 hover:bg-red-700 shadow-red-200'
+                : 'bg-[#006B4D] hover:bg-[#00543c] shadow-emerald-200'
+            }`}
           >
-            Đồng ý xóa
+            {confirmText}
           </button>
         </div>
       </div>
