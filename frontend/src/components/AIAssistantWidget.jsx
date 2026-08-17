@@ -14,6 +14,26 @@ import {
 // Phân nhóm danh mục gợi ý tác vụ chuyên nghiệp
 const CATEGORIZED_PROMPTS = [
   {
+    category: 'Tổng Quan & Báo Cáo',
+    icon: FaTachometerAlt,
+    color: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+    items: [
+      { id: 'briefing', title: 'Tóm tắt xưởng hôm nay', query: 'Tóm tắt hôm nay', desc: 'Báo cáo nhanh SX, quỹ & kho' },
+      { id: 'profile', title: 'Hồ sơ & Quyền hạn', query: 'Hồ sơ của tôi', desc: 'Tra cứu thông tin tài khoản' },
+    ],
+  },
+  {
+    category: 'Nhiệm Vụ & Đặt NVL',
+    icon: FaTasks,
+    color: 'text-purple-600 bg-purple-50 border-purple-200',
+    items: [
+      { id: 'todo_create', title: 'Tạo công việc mới', query: 'Tạo task: Liên hệ khách hàng duyệt mẫu in (gấp)', desc: 'Thêm nhanh việc cần làm' },
+      { id: 'todo_done', title: 'Hoàn thành việc', query: 'Xong task Liên hệ khách hàng duyệt mẫu in', desc: 'Đánh dấu hoàn thành task' },
+      { id: 'material_order', title: 'Đặt mua NVL', query: 'Đặt 50 ram giấy Couche 250 từ NCC Thuận An', desc: 'Tạo đơn mua vật tư' },
+      { id: 'material_arrive', title: 'Xác nhận hàng về', query: 'Đơn giấy Couche 250 đã về', desc: 'Tự động cộng tồn kho' },
+    ],
+  },
+  {
     category: 'Kho & Vật tư',
     icon: FaBoxes,
     color: 'text-amber-600 bg-amber-50 border-amber-200',
@@ -24,31 +44,22 @@ const CATEGORIZED_PROMPTS = [
     ],
   },
   {
+    category: 'Sản xuất & Đơn hàng',
+    icon: FaIndustry,
+    color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    items: [
+      { id: 'create_lsx', title: 'Tạo Lệnh Sản Xuất', query: 'Tạo lệnh sản xuất 5000 hộp trà thảo mộc in offset', desc: 'Lập lệnh bài in mới' },
+      { id: 'production', title: 'Tiến độ Lệnh SX', query: 'Tiến độ các lệnh sản xuất gần đây', desc: 'Trạng thái bài in, công đoạn' },
+      { id: 'qc', title: 'Duyệt mẫu QC', query: 'Kết quả các phiếu duyệt mẫu QC gần đây', desc: 'Mẫu in lụa đạt / hỏng' },
+    ],
+  },
+  {
     category: 'Tài chính & Quỹ',
     icon: FaWallet,
     color: 'text-blue-600 bg-blue-50 border-blue-200',
     items: [
       { id: 'finance', title: 'Tổng số dư quỹ', query: 'Tổng tiền quỹ và số dư tài khoản hiện có bao nhiêu?', desc: 'Tiền mặt & Ngân hàng' },
       { id: 'debt', title: 'Công nợ tổng hợp', query: 'Tình hình công nợ khách hàng và nhà cung cấp', desc: 'Khoản phải thu & phải trả' },
-    ],
-  },
-  {
-    category: 'Sản xuất & Đơn hàng',
-    icon: FaIndustry,
-    color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    items: [
-      { id: 'production', title: 'Tiến độ Lệnh SX', query: 'Tiến độ các lệnh sản xuất gần đây', desc: 'Trạng thái bài in, công đoạn' },
-      { id: 'material_order', title: 'Đặt mua NVL', query: 'Đặt 50 ram giấy Couche 250', desc: 'Tạo đơn mua vật tư' },
-    ],
-  },
-  {
-    category: 'Nhiệm vụ & QC',
-    icon: FaTasks,
-    color: 'text-purple-600 bg-purple-50 border-purple-200',
-    items: [
-      { id: 'todo_create', title: 'Tạo công việc mới', query: 'Tạo task: Liên hệ khách hàng duyệt mẫu in', desc: 'Thêm nhanh việc cần làm' },
-      { id: 'todo_list', title: 'Việc chưa xong', query: 'Danh sách công việc chưa hoàn thành', desc: 'Todo list và mức ưu tiên' },
-      { id: 'qc', title: 'Duyệt mẫu QC', query: 'Kết quả các phiếu duyệt mẫu QC gần đây', desc: 'Mẫu in lụa đạt / hỏng' },
     ],
   },
   {

@@ -63,6 +63,9 @@ const getLiveDatabaseContext = async () => {
   }
 };
 
+const User = require('../models/User');
+const Quotation = require('../models/Quotation');
+
 // ============================================================================
 // HELPER: THỰC THI TÁC VỤ AI (AI ACTIONS) TRỰC TIẾP LÊN DATABASE
 // ============================================================================
@@ -95,7 +98,218 @@ const handleDirectActions = async (message, user) => {
     };
   }
 
-  // 2. Tác vụ: XUẤT KHO / TRỪ TỒN KHO VẬT TƯ
+  // 2. Tác vụ: ĐÁNH DẤU HOÀN THÀNH TASK / TODO
+  if (lower.startsWith('xong task') || lower.startsWith('hoàn thành task') || lower.startsWith('xong việc') || lower.startsWith('hoàn thành việc') || lower.startsWith('đã xong việc') || lower.startsWith('đánh dấu xong')) {
+    const taskQuery = message.replace(/^(xong task|hoàn thành task|xong việc|hoàn thành việc|đã xong việc|đánh dấu xong)[:\s]*/i, '').trim();
+    if (taskQuery.length >= 2) {
+      const todo = await Todo.findOne({
+        title: { $regex: taskQuery, $options: 'i' },
+        status: { $ne: 'done' },
+      });
+
+      if (todo) {
+        todo.status = 'done';
+        todo.progress = 100;
+        await todo.save();
+        return {
+          handled: true,
+          action: 'complete_todo',
+          data: todo,
+          response: `🎉 **Đã đánh dấu hoàn thành công việc:**\n- **Tên việc:** ${todo.title}\n- **Trạng thái:** ✅ Hoàn thành (100%)\n\n*Đã cập nhật vào [Quản lý Nhiệm vụ](/admin/tasks).*`,
+        };
+      }
+    }
+  }
+
+  // 3. Tác vụ: XÓA TASK / TODO
+  if (lower.startsWith('xóa task') || lower.startsWith('hủy task') || lower.startsWith('xóa việc') || lower.startsWith('hủy việc')) {
+    const taskQuery = message.replace(/^(xóa task|hủy task|xóa việc|hủy việc)[:\s]*/i, '').trim();
+    if (taskQuery.length >= 2) {
+      const todo = await Todo.findOneAndDelete({
+        title: { $regex: taskQuery, $options: 'i' },
+      });
+      if (todo) {
+        return {
+          handled: true,
+          action: 'delete_todo',
+          data: todo,
+          response: `🗑️ **Đã xóa công việc khỏi danh sách:**\n- **Nội dung:** ${todo.title}\n\n*Danh sách công việc đã được cập nhật.*`,
+        };
+      }
+    }
+  }
+
+  // 4. Tác vụ: TẠO ĐƠN ĐẶT NGUYÊN VẬT LIỆU
+  if (lower.startsWith('đặt nvl') || lower.startsWith('tạo đơn đặt') || lower.startsWith('đặt hàng nvl') || lower.startsWith('mua nvl') || lower.startsWith('đặt mua')) {
+    const orderText = message.replace(/^(đặt nvl|tạo đơn đặt|đặt hàng nvl|mua nvl|đặt mua)[:\s]*/i, '').trim();
+    const qtyMatch = orderText.match(/(\d+(?:\.\d+)?)/);
+    const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 10;
+    
+    // Tìm tên vật tư
+    let matName = orderText.replace(/(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn)?/i, '').replace(/(từ|ncc|của|ở).*/i, '').trim();
+    if (!matName) matName = 'Vật tư theo yêu cầu';
+
+    // Tìm nhà cung cấp nếu có
+    const suppMatch = orderText.match(/(?:từ|ncc|của)\s+([a-zA-Z0-9\s\-_]+)/i);
+    const supplierName = suppMatch ? suppMatch[1].trim() : 'NCC Chỉ định';
+
+    const newOrder = await MaterialOrder.create({
+      materialName: matName,
+      materialUnit: 'Ram',
+      quantity: qty,
+      supplier: supplierName,
+      orderDate: new Date(),
+      isOrdered: true,
+      isDelivered: false,
+      note: `Tạo tự động bởi AI Agent: ${message}`,
+      createdBy: userName,
+    });
+
+    return {
+      handled: true,
+      action: 'create_material_order',
+      data: newOrder,
+      response: `🛒 **Đã lên đơn đặt hàng NVL mới:**\n- **Mã đơn:** \`${newOrder.orderCode || 'Đang tạo'}\`\n- **Vật tư:** ${newOrder.materialName}\n- **Số lượng đặt:** ${newOrder.quantity} ${newOrder.materialUnit}\n- **Nhà cung cấp:** ${newOrder.supplier}\n- **Trạng thái:** Đã đặt hàng (Chờ hàng về)\n\n*Khi hàng về kho, bạn có thể nói "Đơn ${newOrder.materialName} đã về" để tôi tự động cộng vào tồn kho.*`,
+    };
+  }
+
+  // 5. Tác vụ: XÁC NHẬN ĐƠN NVL ĐÃ VỀ & TỰ ĐỘNG CỘNG TỒN KHO
+  if (lower.includes('hàng về') || lower.includes('đã về') || lower.includes('nhận hàng nvl') || lower.includes('xác nhận đơn nvl') || lower.includes('hàng đã về kho')) {
+    const searchTerms = lower.replace(/(hàng về|đã về|nhận hàng nvl|xác nhận đơn nvl|hàng đã về kho|đơn|giấy|vật tư|nhé|ạ|nha)/gi, '').trim();
+    
+    // Tìm đơn hàng NVL chưa giao
+    let order = null;
+    if (searchTerms.length >= 2) {
+      order = await MaterialOrder.findOne({
+        materialName: { $regex: searchTerms, $options: 'i' },
+        isDelivered: false,
+      }).sort({ createdAt: -1 });
+    } else {
+      order = await MaterialOrder.findOne({ isDelivered: false }).sort({ createdAt: -1 });
+    }
+
+    if (order) {
+      order.isDelivered = true;
+      order.actualDeliveryDate = new Date();
+      await order.save();
+
+      // Tự động tìm vật tư tương ứng trong kho để cộng dồn
+      let material = await Material.findOne({
+        name: { $regex: order.materialName, $options: 'i' },
+      });
+
+      let oldQty = 0;
+      let newQty = 0;
+
+      if (material) {
+        oldQty = material.quantity || 0;
+        newQty = oldQty + order.quantity;
+        material.quantity = newQty;
+        await material.save();
+
+        await MaterialDispatch.create({
+          material: material._id,
+          materialName: material.name,
+          quantity: order.quantity,
+          unit: material.unit || order.materialUnit || 'Ram',
+          type: 'import',
+          notes: `Nhận hàng tự động từ đơn đặt NVL ${order.orderCode || ''}`,
+          performedBy: userName,
+        }).catch(() => {});
+      }
+
+      return {
+        handled: true,
+        action: 'receive_material_order',
+        data: { order, material, oldQty, newQty },
+        response: `📥 **Đã xác nhận nhận hàng & Tự động cộng kho:**\n- **Đơn hàng NVL:** ${order.materialName} (${order.quantity} ${order.materialUnit})\n- **Trạng thái đơn:** Đã giao hàng về kho\n${material ? `- **Tồn kho vật tư "${material.name}":** ${oldQty} ➔ **${newQty} ${material.unit}** (+${order.quantity})` : '- *Chưa tìm thấy mã vật tư tương ứng để cộng tự động, bạn có thể kiểm tra kho.*'}\n\n*Đã ghi nhật ký kho thành công.*`,
+      };
+    }
+  }
+
+  // 6. Tác vụ: BÁO CÁO TÓM TẮT HÔM NAY (EXECUTIVE DASHBOARD BRIEFING)
+  if (lower.startsWith('tóm tắt hôm nay') || lower.startsWith('tình hình xưởng hôm nay') || lower.startsWith('báo cáo hôm nay') || lower.startsWith('báo cáo nhanh') || lower.startsWith('tổng quan xưởng') || lower.startsWith('dashboard hôm nay')) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [totalQuotes, activeOrders, lowMaterials, pendingTodos, accounts] = await Promise.all([
+      Quote.countDocuments(),
+      ProductionOrder.countDocuments({ status: { $ne: 'completed' } }),
+      Material.countDocuments({ quantity: { $lte: 5 } }),
+      Todo.find({ status: 'pending' }).sort({ priority: -1 }).limit(3),
+      FinanceAccount.find({ isActive: true }),
+    ]);
+
+    const totalMoney = accounts.reduce((sum, a) => sum + (a.currentBalance || 0), 0);
+
+    let briefing = `📊 **BÁO CÁO TỔNG QUAN TÌNH HÌNH XƯỞNG HÔM NAY (${new Date().toLocaleDateString('vi-VN')}):**\n\n`;
+    briefing += `1. 🏭 **Sản xuất & Đơn hàng:**\n`;
+    briefing += `   - Đang có **${activeOrders}** Lệnh sản xuất đang chạy trong xưởng.\n`;
+    briefing += `   - Tổng cộng **${totalQuotes}** yêu cầu báo giá từ khách hàng.\n\n`;
+    briefing += `2. 💰 **Tài chính & Quỹ:**\n`;
+    briefing += `   - Tổng tiền quỹ khả dụng: **${totalMoney.toLocaleString('vi-VN')} VNĐ** (${accounts.length} tài khoản).\n\n`;
+    briefing += `3. 📦 **Kho & Cảnh báo vật tư:**\n`;
+    briefing += `   - ${lowMaterials > 0 ? `⚠️ Có **${lowMaterials}** loại vật tư sắp hết hàng (tồn <= 5).` : `✅ Toàn bộ vật tư trong kho đều ở mức an toàn.`}\n\n`;
+    briefing += `4. 📝 **Nhiệm vụ cần làm hôm nay:**\n`;
+    if (pendingTodos.length === 0) {
+      briefing += `   - 🎉 Không có công việc nào đang tồn đọng!\n`;
+    } else {
+      pendingTodos.forEach((t, i) => {
+        const p = t.priority === 'urgent' ? '🔥 Khẩn cấp' : t.priority === 'high' ? '🔶 Cao' : '🔵';
+        briefing += `   - ${i + 1}. ${t.title} (${p})\n`;
+      });
+    }
+    briefing += `\n*Chúc bạn một ngày làm việc hiệu quả và thành công!*`;
+
+    return {
+      handled: true,
+      action: 'dashboard_briefing',
+      data: { totalQuotes, activeOrders, lowMaterials, totalMoney },
+      response: briefing,
+    };
+  }
+
+  // 7. Tác vụ: TRA CỨU HỒ SƠ & QUYỀN HẠN CỦA TÔI (PROFILE & ROLE)
+  if (lower.includes('hồ sơ của tôi') || lower.includes('thông tin tài khoản') || lower.includes('quyền của tôi') || lower.includes('vai trò của tôi') || lower.includes('tôi có quyền gì')) {
+    const roleLabels = {
+      director: '👑 Giám Đốc (Toàn quyền quản trị hệ thống)',
+      accountant: '💼 Kế Toán (Quản lý Kinh doanh, Báo giá, Quản lý Dòng tiền & Công nợ)',
+      production: '🏭 Quản Lý Sản Xuất (Quản lý Kho bãi, Lệnh sản xuất, Phiếu QC)',
+      user: '👤 Nhân Viên / Khách hàng',
+    };
+
+    let reply = `👤 **THÔNG TIN TÀI KHOẢN CỦA BẠN:**\n\n`;
+    reply += `- **Họ tên:** ${user?.name || 'Chưa cập nhật'}\n`;
+    reply += `- **Email:** ${user?.email || 'Chưa cập nhật'}\n`;
+    reply += `- **Số điện thoại:** ${user?.phone || 'Chưa cập nhật'}\n`;
+    reply += `- **Vai trò:** ${roleLabels[user?.role] || user?.role || 'Nhân viên'}\n`;
+    reply += `- **Quyền quản trị cấp cao (Admin):** ${user?.isAdmin ? '✅ Có' : '❌ Không'}\n\n`;
+    reply += `*Bạn có thể xem và chỉnh sửa thông tin chi tiết tại trang [Hồ sơ cá nhân](/admin/profile).*`;
+
+    return {
+      handled: true,
+      action: 'view_profile',
+      data: user,
+      response: reply,
+    };
+  }
+
+  // 8. Tác vụ: CẬP NHẬT SỐ ĐIỆN THOẠI CÁ NHÂN
+  if (lower.startsWith('cập nhật sđt') || lower.startsWith('đổi số điện thoại') || lower.startsWith('cập nhật số điện thoại') || lower.startsWith('đổi sđt')) {
+    const phoneMatch = message.match(/(0\d{9,10})/);
+    if (phoneMatch && user?._id) {
+      const newPhone = phoneMatch[1];
+      await User.findByIdAndUpdate(user._id, { phone: newPhone });
+      return {
+        handled: true,
+        action: 'update_phone',
+        data: { phone: newPhone },
+        response: `📱 **Đã cập nhật số điện thoại thành công:**\n- **Số mới:** **${newPhone}**\n\n*Thông tin đã được lưu vào hồ sơ cá nhân của bạn.*`,
+      };
+    }
+  }
+
+  // 9. Tác vụ: XUẤT KHO / TRỪ TỒN KHO VẬT TƯ
   const exportMatch = lower.match(/(?:xuất|trừ)\s+(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn|bình|cái|tờ)?\s*(?:giấy|vật tư|kho)?\s*([a-zA-Z0-9\s\-_]+)/i);
   if (exportMatch && (lower.includes('xuất') || lower.includes('trừ kho') || lower.includes('trừ tồn'))) {
     const qty = parseFloat(exportMatch[1]);
@@ -134,7 +348,7 @@ const handleDirectActions = async (message, user) => {
     }
   }
 
-  // 3. Tác vụ: NHẬP KHO / CỘNG TỒN KHO VẬT TƯ
+  // 10. Tác vụ: NHẬP KHO / CỘNG TỒN KHO VẬT TƯ
   const importMatch = lower.match(/(?:nhập|cộng|thêm)\s+(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn|bình|cái|tờ)?\s*(?:giấy|vật tư|kho)?\s*([a-zA-Z0-9\s\-_]+)/i);
   if (importMatch && (lower.includes('nhập kho') || lower.includes('cộng kho') || lower.includes('thêm kho') || lower.startsWith('nhập '))) {
     const qty = parseFloat(importMatch[1]);
@@ -172,37 +386,7 @@ const handleDirectActions = async (message, user) => {
     }
   }
 
-  // 4. Tác vụ: TẠO ĐƠN ĐẶT NGUYÊN VẬT LIỆU
-  if (lower.startsWith('đặt nvl') || lower.startsWith('tạo đơn đặt') || lower.startsWith('đặt hàng nvl') || lower.startsWith('mua nvl')) {
-    const orderText = message.replace(/^(đặt nvl|tạo đơn đặt|đặt hàng nvl|mua nvl)[:\s]*/i, '').trim();
-    const qtyMatch = orderText.match(/(\d+(?:\.\d+)?)/);
-    const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 10;
-    
-    // Tìm tên vật tư
-    let matName = orderText.replace(/(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn)?/i, '').trim();
-    if (!matName) matName = 'Vật tư theo yêu cầu';
-
-    const newOrder = await MaterialOrder.create({
-      materialName: matName,
-      materialUnit: 'Ram',
-      quantity: qty,
-      supplier: 'NCC Chỉ định',
-      orderDate: new Date(),
-      isOrdered: true,
-      isDelivered: false,
-      note: `Tạo tự động bởi AI Agent: ${message}`,
-      createdBy: userName,
-    });
-
-    return {
-      handled: true,
-      action: 'create_material_order',
-      data: newOrder,
-      response: `🛒 **Đã lên đơn đặt hàng NVL mới:**\n- **Mã đơn:** \`${newOrder.orderCode || 'Đang tạo'}\`\n- **Vật tư:** ${newOrder.materialName}\n- **Số lượng đặt:** ${newOrder.quantity} ${newOrder.materialUnit}\n- **Trạng thái:** Đã đặt hàng (Chờ hàng về)\n\n*Khi hàng về kho, bạn có thể tick xác nhận tại trang [Đặt Nguyên vật liệu](/admin/tasks) để tự động cộng vào kho.*`,
-    };
-  }
-
-  // 5. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER)
+  // 11. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER)
   if (lower.startsWith('tạo lệnh sản xuất') || lower.startsWith('tạo lệnh sx') || lower.startsWith('thêm lệnh sx') || lower.startsWith('lập lệnh sx')) {
     const rawOrder = message.replace(/^(tạo lệnh sản xuất|tạo lệnh sx|thêm lệnh sx|lập lệnh sx)[:\s]*/i, '').trim();
     const qtyMatch = rawOrder.match(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm)?/i);
@@ -247,7 +431,7 @@ const handleDirectActions = async (message, user) => {
     };
   }
 
-  // 6. Tác vụ: THÊM KHÁCH HÀNG MỚI (CUSTOMER)
+  // 12. Tác vụ: THÊM KHÁCH HÀNG MỚI (CUSTOMER)
   if (lower.startsWith('thêm khách hàng') || lower.startsWith('tạo khách hàng') || lower.startsWith('thêm khách')) {
     const rawCust = message.replace(/^(thêm khách hàng|tạo khách hàng|thêm khách)[:\s]*/i, '').trim();
     const phoneMatch = rawCust.match(/(0\d{9,10})/);
@@ -481,8 +665,17 @@ DƯỚI ĐÂY LÀ DỮ LIỆU THỰC TẾ TRONG DATABASE HỆ THỐNG HIỆN T�
 QUY TẮC TRẢ LỜI:
 1. Trả lời bằng tiếng Việt tự nhiên, lịch sự, chuyên nghiệp, súc tích và có định dạng Markdown đẹp mắt (dùng gạch đầu dòng, in đậm số liệu, emoji phù hợp).
 2. Khi người dùng hỏi về số liệu, hãy dùng chính xác số liệu trong Database ở trên.
-3. Nếu người dùng muốn xuất kho, nhập kho, tạo task hoặc đặt hàng NVL, hãy nhắc nhở cú pháp ngắn gọn (ví dụ: "Tạo task: ...", "Xuất 10 ram Couche 300").
-4. Trả lời trực tiếp vào vấn đề, không dài dòng.`;
+3. Nếu người dùng muốn thực hiện các hành động trực tiếp, hãy hướng dẫn hoặc nhắc nhở cú pháp ngắn gọn:
+   - Tạo việc Todo: "Tạo task: [Tên việc] (gấp/ưu tiên cao)"
+   - Hoàn thành việc: "Xong task [Tên việc]" hoặc "Xóa task [Tên việc]"
+   - Đặt mua NVL: "Đặt 50 ram giấy Couche 250 từ [Tên NCC]"
+   - Xác nhận hàng về: "Đơn [Tên vật tư] đã về" (AI tự động cộng kho)
+   - Lập Lệnh sản xuất: "Tạo lệnh sản xuất [Số lượng] [Tên sản phẩm] in offset / in lụa"
+   - Xuất / Nhập kho: "Xuất 10 ram Couche 300", "Nhập 20 ram Ivory 350"
+   - Thêm khách hàng: "Thêm khách hàng [Tên khách] SĐT [Số ĐT]"
+   - Báo cáo xưởng: "Tóm tắt hôm nay"
+   - Hồ sơ & Quyền hạn: "Hồ sơ của tôi", "Cập nhật SĐT [Số ĐT]"
+4. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
 
         // Danh sách model Google Gemini thế hệ mới nhất đang hoạt động
         const modelsToTry = [
