@@ -6,7 +6,7 @@ import {
   FaCogs, FaTruck, FaHome, FaFlask, FaBars, FaTimes,
   FaChevronDown, FaChevronRight, FaCopy, FaFillDrip, FaLayerGroup,
   FaMoneyCheckAlt, FaBriefcase, FaIndustry, FaGlobe, FaHandshake, FaBookOpen, FaFileAlt, FaFileInvoiceDollar,
-  FaListAlt, FaShoppingCart, FaClipboardCheck
+  FaListAlt, FaShoppingCart, FaClipboardCheck, FaTachometerAlt, FaUserCircle
 } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -112,10 +112,10 @@ const Sidebar = () => {
           {expanded.overview && (
             <div className="space-y-1 mb-4 animate-fade-in-down">
               <Link to="/admin/dashboard" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/dashboard')}`}>
-                <span className="text-sm ml-6">Thống kê chung</span>
+                <FaTachometerAlt className="mr-3 text-gray-400" /> <span className="text-sm">Thống kê chung</span>
               </Link>
               <Link to="/admin/profile" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/profile')}`}>
-                <span className="text-sm ml-6">Hồ sơ cá nhân</span>
+                <FaUserCircle className="mr-3 text-gray-400" /> <span className="text-sm">Hồ sơ cá nhân</span>
               </Link>
               <Link to="/admin/tasks" onClick={closeSidebar} className={`flex items-center px-3 py-2.5 rounded-xl transition ${isActive('/admin/tasks') || isActive('/admin/todos') || isActive('/admin/material-orders')}`}>
                 <FaClipboardList className="mr-3 text-gray-400" /> <span className="text-sm">Quản lý Nhiệm vụ</span>
