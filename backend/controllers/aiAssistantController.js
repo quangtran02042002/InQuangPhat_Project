@@ -73,28 +73,115 @@ const handleDirectActions = async (message, user) => {
   const lower = message.toLowerCase().trim();
   const userName = user?.name || 'Admin';
 
-  // 1. Tác vụ: TẠO TASK / TODO
-  if (lower.startsWith('tạo task') || lower.startsWith('tạo việc') || lower.startsWith('thêm task') || lower.startsWith('thêm việc')) {
-    let taskTitle = message.replace(/^(tạo task|tạo việc|thêm task|thêm việc)[:\s]*/i, '').trim();
-    let priority = 'medium';
-    if (lower.includes('khẩn cấp') || lower.includes('gấp') || lower.includes('urgent')) priority = 'urgent';
-    else if (lower.includes('ưu tiên cao') || lower.includes('quan trọng')) priority = 'high';
+  // 1. Tác vụ: TẠO TASK / TODO VỚI ĐẦY ĐỦ THÔNG TIN MODAL
+  if (lower.startsWith('tạo task') || lower.startsWith('tạo việc') || lower.startsWith('thêm task') || lower.startsWith('thêm việc') || lower.startsWith('lập task')) {
+    let rawText = message.replace(/^(tạo task|tạo việc|thêm task|thêm việc|lập task)[:\s]*/i, '').trim();
+    if (!rawText) rawText = 'Công việc mới cần xử lý';
 
-    if (!taskTitle) taskTitle = 'Công việc mới cần xử lý';
+    // 1.1 Trích xuất Mức độ ưu tiên (Priority)
+    let priority = 'medium';
+    if (lower.includes('khẩn cấp') || lower.includes('gấp') || lower.includes('urgent') || lower.includes('hỏa tốc')) {
+      priority = 'urgent';
+    } else if (lower.includes('ưu tiên cao') || lower.includes('quan trọng') || lower.includes('mức cao') || lower.includes('ưu tiên: cao')) {
+      priority = 'high';
+    } else if (lower.includes('ưu tiên thấp') || lower.includes('mức thấp') || lower.includes('thấp') || lower.includes('ưu tiên: thấp')) {
+      priority = 'low';
+    }
+
+    // 1.2 Trích xuất Phân loại Danh mục (Category)
+    let category = 'general';
+    if (lower.includes('sản xuất') || lower.includes('máy in') || lower.includes('in offset') || lower.includes('in lụa') || lower.includes('bài in') || lower.includes('khuôn') || lower.includes('kẽm') || lower.includes('loại: sản xuất')) {
+      category = 'production';
+    } else if (lower.includes('mua hàng') || lower.includes('đặt hàng') || lower.includes('vật tư') || lower.includes('nhà cung cấp') || lower.includes('ncc') || lower.includes('loại: mua hàng')) {
+      category = 'purchasing';
+    } else if (lower.includes('tài chính') || lower.includes('tiền') || lower.includes('thu nợ') || lower.includes('chi tiền') || lower.includes('công nợ') || lower.includes('hóa đơn') || lower.includes('loại: tài chính')) {
+      category = 'finance';
+    }
+
+    // 1.3 Trích xuất Người phụ trách (AssignedTo)
+    let assignedTo = userName;
+    const assignMatch = message.match(/(?:gán cho|giao cho|phụ trách|cho|người làm|phụ trách:)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\||,|\.|\s+ưu tiên|\s+hạn|\s+loại|\s+ngày|$)/i);
+    if (assignMatch && assignMatch[1].trim().length >= 2) {
+      assignedTo = assignMatch[1].trim();
+    }
+
+    // 1.4 Trích xuất Hạn hoàn thành (DueDate)
+    let dueDate = null;
+    const now = new Date();
+    if (lower.includes('sáng mai') || lower.includes('8h sáng mai') || lower.includes('sáng ngày mai')) {
+      dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 8, 0, 0);
+    } else if (lower.includes('chiều mai') || lower.includes('chiều ngày mai')) {
+      dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 14, 0, 0);
+    } else if (lower.includes('ngày mai') || lower.includes('hạn mai')) {
+      dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 17, 0, 0);
+    } else if (lower.includes('hôm nay') || lower.includes('trong ngày')) {
+      dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0);
+    } else {
+      const dateMatch = message.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{4}))?/);
+      if (dateMatch) {
+        const d = parseInt(dateMatch[1], 10);
+        const m = parseInt(dateMatch[2], 10) - 1;
+        const y = dateMatch[3] ? parseInt(dateMatch[3], 10) : now.getFullYear();
+        dueDate = new Date(y, m, d, 17, 0, 0);
+      }
+    }
+
+    // 1.5 Trích xuất Tiêu đề sạch (Clean Title) & Mô tả
+    let cleanTitle = rawText
+      .replace(/\|/g, ' ')
+      .replace(/(?:ưu tiên|mức độ|độ ưu tiên)[:\s]*(?:khẩn cấp|cao|trung bình|thấp|urgent|high|medium|low)/gi, '')
+      .replace(/(?:gán cho|giao cho|phụ trách)[:\s]*[a-zA-ZÀ-ỹ0-9\s]+/gi, '')
+      .replace(/(?:loại|danh mục|phân loại)[:\s]*(?:sản xuất|mua hàng|tài chính|chung)/gi, '')
+      .replace(/(?:hạn|deadline|hạn chót)[:\s]*[a-zA-Z0-9\s\/\-]+/gi, '')
+      .trim();
+
+    if (!cleanTitle || cleanTitle.length < 3) {
+      cleanTitle = rawText;
+    }
 
     const newTodo = await Todo.create({
-      title: taskTitle,
+      title: cleanTitle,
+      description: `Khởi tạo bởi AI Agent: ${message}`,
       priority,
-      category: 'general',
-      assignedTo: userName,
+      category,
+      assignedTo,
+      dueDate: dueDate || undefined,
       status: 'pending',
     });
+
+    const priorityLabel = {
+      urgent: '🔥 Khẩn cấp',
+      high: '🔶 Cao',
+      medium: '🔵 Trung bình',
+      low: '⚪ Thấp',
+    }[priority];
+
+    const categoryLabel = {
+      production: '🏭 Sản xuất & Máy in',
+      purchasing: '🛒 Mua hàng & NVL',
+      finance: '💰 Tài chính & Quỹ',
+      general: '📋 Công việc chung',
+    }[category];
+
+    const dueFormatted = dueDate
+      ? dueDate.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+      : 'Chưa đặt hạn chót';
+
+    let reply = `✅ **ĐÃ TẠO THÀNH CÔNG CÔNG VIỆC MỚI VÀO TODO LIST!**\n\n`;
+    reply += `📋 **Chi tiết thông tin đã lưu vào hệ thống:**\n`;
+    reply += `- 📌 **Tiêu đề:** **${newTodo.title}**\n`;
+    reply += `- ⏰ **Hạn hoàn thành:** ${dueFormatted}\n`;
+    reply += `- 🏷️ **Mức độ ưu tiên:** ${priorityLabel}\n`;
+    reply += `- 📂 **Phân loại danh mục:** ${categoryLabel}\n`;
+    reply += `- 👤 **Người phụ trách:** ${assignedTo}\n`;
+    reply += `- 📊 **Trạng thái:** ⏳ Đang chờ thực hiện (0%)\n\n`;
+    reply += `💡 *Mẹo: Nếu cần chỉnh sửa thêm, bạn có thể nói "Xong task [Tên]" hoặc quản lý trực tiếp tại mục [Quản lý Nhiệm vụ](/admin/tasks).*`;
 
     return {
       handled: true,
       action: 'create_todo',
       data: newTodo,
-      response: `✅ **Đã tạo thành công công việc mới:**\n- **Nội dung:** ${newTodo.title}\n- **Mức độ:** ${priority === 'urgent' ? '🔥 Khẩn cấp' : priority === 'high' ? '🔶 Cao' : '🔵 Trung bình'}\n- **Người phụ trách:** ${userName}\n\n*Bạn có thể xem chi tiết tại mục [Quản lý Nhiệm vụ](/admin/tasks).*`,
+      response: reply,
     };
   }
 
@@ -662,11 +749,18 @@ DƯỚI ĐÂY LÀ DỮ LIỆU THỰC TẾ TRONG DATABASE HỆ THỐNG HIỆN T�
 - CÔNG VIỆC CHƯA XONG (TODOS): ${JSON.stringify(liveContext.pendingTodos?.map(t => ({ tiêu_đề: t.title, ưu_tiên: t.priority, tiến_độ: t.progress })))}
 - PHIẾU QC GẦN ĐÂY: ${JSON.stringify(liveContext.recentQCs?.map(q => ({ mã: q.inspectionCode, đơn: q.orderName, kết_luận: q.verdict })))}
 
-QUY TẮC TRẢ LỜI:
+QUY TẮC TRẢ LỜI & XỬ LÝ AGENT:
 1. Trả lời bằng tiếng Việt tự nhiên, lịch sự, chuyên nghiệp, súc tích và có định dạng Markdown đẹp mắt (dùng gạch đầu dòng, in đậm số liệu, emoji phù hợp).
 2. Khi người dùng hỏi về số liệu, hãy dùng chính xác số liệu trong Database ở trên.
-3. Nếu người dùng muốn thực hiện các hành động trực tiếp, hãy hướng dẫn hoặc nhắc nhở cú pháp ngắn gọn:
-   - Tạo việc Todo: "Tạo task: [Tên việc] (gấp/ưu tiên cao)"
+3. QUY TRÌNH HỖ TRỢ TẠO CÔNG VIỆC (TODO):
+   - Khi người dùng muốn tạo việc mới (ví dụ: "Sáng mai 8h kiểm tra máy in"), hãy:
+     a) Bóc tách các thông tin đã có (Tiêu đề: Kiểm tra máy in, Hạn chót: 8h sáng mai, Phân loại: Sản xuất).
+     b) Hỏi lịch sự người dùng có muốn bổ sung thêm các thông tin còn thiếu trong Modal Todo không:
+        * 🏷️ Mức độ ưu tiên: Khẩn cấp 🔥 / Cao 🔶 / Trung bình 🔵 / Thấp ⚪ (Mặc định: Trung bình)
+        * 📂 Phân loại danh mục: Sản xuất 🏭 / Mua hàng 🛒 / Tài chính 💰 / Chung 📋 (Mặc định: Tự động nhận diện)
+        * 👤 Người phụ trách: Gán cho ai?
+     c) Hoặc hướng dẫn người dùng cú pháp tạo nhanh đầy đủ: "Tạo task: [Tiêu đề] | Hạn: [Giờ/Ngày] | Ưu tiên: [Cao/Gấp] | Phụ trách: [Tên]" để AI lập tức tạo bản ghi vào hệ thống.
+4. CÁC HÀNH ĐỘNG HỆ THỐNG TRỰC TIẾP KHÁC:
    - Hoàn thành việc: "Xong task [Tên việc]" hoặc "Xóa task [Tên việc]"
    - Đặt mua NVL: "Đặt 50 ram giấy Couche 250 từ [Tên NCC]"
    - Xác nhận hàng về: "Đơn [Tên vật tư] đã về" (AI tự động cộng kho)
@@ -675,7 +769,7 @@ QUY TẮC TRẢ LỜI:
    - Thêm khách hàng: "Thêm khách hàng [Tên khách] SĐT [Số ĐT]"
    - Báo cáo xưởng: "Tóm tắt hôm nay"
    - Hồ sơ & Quyền hạn: "Hồ sơ của tôi", "Cập nhật SĐT [Số ĐT]"
-4. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
+5. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
 
         // Danh sách model Google Gemini thế hệ mới nhất đang hoạt động
         const modelsToTry = [
