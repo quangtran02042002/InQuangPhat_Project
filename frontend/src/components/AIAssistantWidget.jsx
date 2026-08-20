@@ -8,7 +8,7 @@ import {
   FaUsers, FaTasks, FaShoppingCart, FaClipboardCheck,
   FaCalculator, FaChevronDown, FaCheckCircle, FaMinus,
   FaThLarge, FaLightbulb, FaChevronLeft, FaChevronRight,
-  FaArrowRight, FaMagic
+  FaArrowRight, FaMagic, FaCheck, FaSpinner
 } from 'react-icons/fa';
 
 // Phân nhóm danh mục gợi ý tác vụ chuyên nghiệp
@@ -115,6 +115,98 @@ const formatMarkdown = (text) => {
   });
 };
 
+// ============================================================
+// INLINE CHAT FORM: Form nhập liệu tương tác ngay trong chat bubble
+// ============================================================
+const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
+  const [formData, setFormData] = useState(() => {
+    const init = {};
+    (formFields || []).forEach(f => { init[f.key] = f.value || ''; });
+    return init;
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (key, val) => {
+    setFormData(prev => ({ ...prev, [key]: val }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Validate required fields
+    const missing = (formFields || []).filter(f => f.required && !formData[f.key]?.toString().trim());
+    if (missing.length > 0) {
+      toast.warning(`Vui lòng điền: ${missing.map(f => f.label.replace(/^[^\s]+\s/, '')).join(', ')}`);
+      return;
+    }
+    setSubmitting(true);
+    await onSubmit({ ...formData, _formAction: formAction });
+    setSubmitting(false);
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs">
+        <FaCheckCircle className="inline text-emerald-600 mr-1" />
+        <span className="font-bold text-emerald-700">Đã gửi thông tin thành công!</span>
+      </div>
+    );
+  }
+
+  // Label cho nút submit
+  const submitLabels = {
+    create_customer: '👥 Tạo khách hàng',
+    create_finance_voucher: '💰 Tạo phiếu',
+    create_quotation: '📋 Tạo báo giá',
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-2.5 space-y-2">
+      {(formFields || []).map((field) => (
+        <div key={field.key} className="space-y-0.5">
+          <label className="text-[10px] font-bold text-gray-600 flex items-center gap-1">
+            {field.label}
+            {field.required && <span className="text-red-500">*</span>}
+          </label>
+          {field.type === 'select' ? (
+            <select
+              value={formData[field.key] || ''}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              disabled={submitting}
+              className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 outline-none transition"
+            >
+              {(field.options || []).map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={field.type === 'number' ? 'number' : 'text'}
+              value={formData[field.key] || ''}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              placeholder={field.placeholder || ''}
+              disabled={submitting}
+              className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 outline-none transition placeholder:text-gray-300"
+            />
+          )}
+        </div>
+      ))}
+      <button
+        type="submit"
+        disabled={submitting || disabled}
+        className="w-full mt-1.5 py-2 px-4 bg-gradient-to-r from-[#006B4D] to-[#00875A] hover:from-[#00543c] hover:to-[#006B4D] text-white font-bold text-xs rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50"
+      >
+        {submitting ? (
+          <><FaSpinner className="animate-spin" /> Đang xử lý...</>
+        ) : (
+          <><FaCheck /> {submitLabels[formAction] || 'Xác nhận tạo'}</>
+        )}
+      </button>
+    </form>
+  );
+};
+
 const AIAssistantWidget = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
   const [isOpen, setIsOpen] = useState(false);
@@ -198,6 +290,8 @@ const AIAssistantWidget = () => {
         text: data.reply,
         engine: data.engine,
         action: data.action,
+        formFields: data.formFields || null,
+        formAction: data.formAction || null,
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -392,9 +486,25 @@ const AIAssistantWidget = () => {
                     }`}
                   >
                     {msg.sender === 'user' ? (
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      <p className="whitespace-pre-wrap">
+                        {msg.text.startsWith('__form_submit__') ? '📋 Đã gửi thông tin qua form...' : msg.text}
+                      </p>
                     ) : (
-                      <div>{formatMarkdown(msg.text)}</div>
+                      <div>
+                        {formatMarkdown(msg.text)}
+                        {/* INLINE FORM: Hiển thị form nhập liệu ngay trong chat bubble */}
+                        {msg.formFields && msg.formFields.length > 0 && (
+                          <InlineChatForm
+                            formFields={msg.formFields}
+                            formAction={msg.formAction}
+                            disabled={loading}
+                            onSubmit={async (formData) => {
+                              const payload = `__form_submit__${JSON.stringify(formData)}`;
+                              await handleSendMessage(payload);
+                            }}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 px-1">

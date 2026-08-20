@@ -65,6 +65,10 @@ const getLiveDatabaseContext = async () => {
 
 const User = require('../models/User');
 const Quotation = require('../models/Quotation');
+const FinanceVoucher = require('../models/FinanceVoucher');
+const FinanceCategory = require('../models/FinanceCategory');
+const CashBook = require('../models/CashBook');
+const AdminQuote = require('../models/AdminQuote');
 
 // ============================================================================
 // HELPER: THỰC THI TÁC VỤ AI (AI ACTIONS) TRỰC TIẾP LÊN DATABASE
@@ -518,27 +522,684 @@ const handleDirectActions = async (message, user) => {
     };
   }
 
-  // 12. Tác vụ: THÊM KHÁCH HÀNG MỚI (CUSTOMER)
-  if (lower.startsWith('thêm khách hàng') || lower.startsWith('tạo khách hàng') || lower.startsWith('thêm khách')) {
-    const rawCust = message.replace(/^(thêm khách hàng|tạo khách hàng|thêm khách)[:\s]*/i, '').trim();
-    const phoneMatch = rawCust.match(/(0\d{9,10})/);
-    const phone = phoneMatch ? phoneMatch[1] : '';
+  // 12. Tác vụ: THÊM KHÁCH HÀNG MỚI (INTERACTIVE DIALOG)
+  // Schema yêu cầu: name (required), address (required), group (required), contacts[].name, contacts[].phone (required)
+  if (lower.startsWith('thêm khách hàng') || lower.startsWith('tạo khách hàng') || lower.startsWith('thêm khách') || lower.startsWith('thêm kh')) {
+    const rawCust = message.replace(/^(thêm khách hàng|tạo khách hàng|thêm khách|thêm kh)[:\s]*/i, '').trim();
 
-    let name = rawCust.replace(/(0\d{9,10})/g, '').replace(/(sđt|số điện thoại|sdt|đt)[:\s]*/gi, '').trim();
-    if (!name) name = 'Khách hàng mới';
+    // Bóc tách các thông tin từ câu lệnh
+    let custName = '';
+    let custPhone = '';
+    let custAddress = '';
+    let custGroup = '';
+    let custTaxCode = '';
+    let custEmail = '';
 
+    // Hỗ trợ cú pháp có dấu phân cách |
+    if (rawCust.includes('|')) {
+      const parts = rawCust.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const partLower = part.toLowerCase();
+        if (partLower.startsWith('đc:') || partLower.startsWith('địa chỉ:') || partLower.startsWith('dc:')) {
+          custAddress = part.replace(/^(đc|địa chỉ|dc)[:\s]*/i, '').trim();
+        } else if (partLower.startsWith('sđt:') || partLower.startsWith('sdt:') || partLower.startsWith('đt:') || partLower.startsWith('phone:') || partLower.startsWith('số:')) {
+          custPhone = part.replace(/^(sđt|sdt|đt|phone|số)[:\s]*/i, '').trim();
+        } else if (partLower.startsWith('nhóm:') || partLower.startsWith('loại:') || partLower.startsWith('group:')) {
+          const groupVal = part.replace(/^(nhóm|loại|group)[:\s]*/i, '').trim().toLowerCase();
+          if (groupVal.includes('vải') || groupVal.includes('garment')) custGroup = 'garment';
+          else if (groupVal.includes('cả hai') || groupVal.includes('mixed')) custGroup = 'mixed';
+          else custGroup = 'offset';
+        } else if (partLower.startsWith('mst:') || partLower.startsWith('mã số thuế:') || partLower.startsWith('tax:')) {
+          custTaxCode = part.replace(/^(mst|mã số thuế|tax)[:\s]*/i, '').trim();
+        } else if (partLower.startsWith('email:')) {
+          custEmail = part.replace(/^email[:\s]*/i, '').trim();
+        } else if (!custName) {
+          custName = part;
+        }
+      });
+    } else {
+      // Regex bóc tách từ câu tự nhiên
+      const phoneMatch = rawCust.match(/(0\d{9,10})/);
+      if (phoneMatch) custPhone = phoneMatch[1];
+
+      const addrMatch = rawCust.match(/(?:địa chỉ|đc|ở|tại)\s+([^,|]+)/i);
+      if (addrMatch) custAddress = addrMatch[1].trim();
+
+      custName = rawCust
+        .replace(/(0\d{9,10})/g, '')
+        .replace(/(?:sđt|sdt|số điện thoại|đt|phone)[:\s]*/gi, '')
+        .replace(/(?:địa chỉ|đc|ở|tại)\s+[^,|]+/gi, '')
+        .replace(/(?:nhóm|loại)[:\s]*\S+/gi, '')
+        .trim();
+    }
+
+    if (!custName) custName = rawCust.split(/[,|]/)[0]?.trim() || '';
+
+    // Kiểm tra đủ thông tin bắt buộc chưa
+    const missingFields = [];
+    if (!custName || custName.length < 2) missingFields.push('name');
+    if (!custAddress) missingFields.push('address');
+    if (!custPhone) missingFields.push('phone');
+
+    if (missingFields.length > 0) {
+      // Trả về INLINE FORM để người dùng điền bổ sung
+      const formFields = [
+        { key: 'name', label: '🏢 Tên khách hàng / Công ty', type: 'text', required: true, value: custName || '', placeholder: 'VD: Công ty TNHH Bao Bì Việt' },
+        { key: 'address', label: '📍 Địa chỉ', type: 'text', required: true, value: custAddress || '', placeholder: 'VD: 45 Hùng Vương, TP Huế' },
+        { key: 'phone', label: '📞 Số điện thoại liên hệ', type: 'text', required: true, value: custPhone || '', placeholder: 'VD: 0905123456' },
+        { key: 'group', label: '🏷️ Nhóm khách hàng', type: 'select', required: true, value: custGroup || 'offset', options: [
+          { value: 'offset', label: '📄 In giấy (Offset)' },
+          { value: 'garment', label: '👕 In vải (Garment)' },
+          { value: 'mixed', label: '🔀 Cả hai (Mixed)' },
+        ]},
+        { key: 'taxCode', label: '📋 Mã số thuế', type: 'text', required: false, value: custTaxCode || '', placeholder: 'Không bắt buộc' },
+        { key: 'email', label: '📧 Email', type: 'text', required: false, value: custEmail || '', placeholder: 'Không bắt buộc' },
+      ];
+
+      const filledSummary = [];
+      if (custName) filledSummary.push(`✅ **Tên:** ${custName}`);
+      if (custPhone) filledSummary.push(`✅ **SĐT:** ${custPhone}`);
+      if (custAddress) filledSummary.push(`✅ **Địa chỉ:** ${custAddress}`);
+
+      let promptText = `📝 **TẠO HỒ SƠ KHÁCH HÀNG MỚI**\n\n`;
+      if (filledSummary.length > 0) {
+        promptText += `Tôi đã nhận diện được:\n${filledSummary.join('\n')}\n\n`;
+      }
+      promptText += `Vui lòng điền đầy đủ các thông tin bên dưới rồi bấm **"Tạo khách hàng"**:`;
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_customer',
+        formFields,
+        response: promptText,
+      };
+    }
+
+    // Đủ thông tin → Tạo luôn
     const newCustomer = await Customer.create({
-      name,
-      phone: phone || 'Chưa cập nhật',
-      address: 'Chưa cập nhật',
+      name: custName,
+      address: custAddress,
+      group: custGroup || 'offset',
+      taxCode: custTaxCode || '',
+      generalEmail: custEmail || '',
+      contacts: [{
+        name: custName,
+        phone: custPhone,
+      }],
     });
 
     return {
       handled: true,
       action: 'create_customer',
       data: newCustomer,
-      response: `👥 **Đã thêm khách hàng mới thành công:**\n- **Tên khách:** ${newCustomer.name}\n- **Số điện thoại:** ${newCustomer.phone}\n\n*Đã lưu vào danh bạ khách hàng của hệ thống.*`,
+      response: `👥 **ĐÃ TẠO HỒ SƠ KHÁCH HÀNG MỚI THÀNH CÔNG!**\n\n- 🏢 **Tên:** ${newCustomer.name}\n- 📍 **Địa chỉ:** ${newCustomer.address}\n- 📞 **SĐT:** ${custPhone}\n- 🏷️ **Nhóm:** ${newCustomer.group === 'offset' ? '📄 In giấy' : newCustomer.group === 'garment' ? '👕 In vải' : '🔀 Cả hai'}\n${custTaxCode ? `- 📋 **MST:** ${custTaxCode}\n` : ''}\n*Đã lưu vào [Danh sách Khách hàng](/admin/customerlist).*`,
     };
+  }
+
+  // ================================================================
+  // 13. Tác vụ: XỬ LÝ FORM DATA TỪ INLINE FORM (UNIVERSAL HANDLER)
+  // ================================================================
+  if (lower.startsWith('__form_submit__')) {
+    try {
+      const jsonStr = message.replace('__form_submit__', '').trim();
+      const formData = JSON.parse(jsonStr);
+      const { _formAction, ...fields } = formData;
+
+      // 13A. Tạo Khách hàng từ form
+      if (_formAction === 'create_customer') {
+        if (!fields.name || !fields.address || !fields.phone) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền đầy đủ **Tên**, **Địa chỉ** và **SĐT** để tạo khách hàng.' };
+        }
+        const newCustomer = await Customer.create({
+          name: fields.name,
+          address: fields.address,
+          group: fields.group || 'offset',
+          taxCode: fields.taxCode || '',
+          generalEmail: fields.email || '',
+          contacts: [{ name: fields.name, phone: fields.phone }],
+        });
+        return {
+          handled: true,
+          action: 'create_customer',
+          data: newCustomer,
+          response: `👥 **ĐÃ TẠO HỒ SƠ KHÁCH HÀNG MỚI THÀNH CÔNG!**\n\n- 🏢 **Tên:** ${newCustomer.name}\n- 📍 **Địa chỉ:** ${newCustomer.address}\n- 📞 **SĐT:** ${fields.phone}\n- 🏷️ **Nhóm:** ${newCustomer.group === 'offset' ? '📄 In giấy' : newCustomer.group === 'garment' ? '👕 In vải' : '🔀 Cả hai'}\n${fields.taxCode ? `- 📋 **MST:** ${fields.taxCode}\n` : ''}\n*Đã lưu vào [Danh sách Khách hàng](/admin/customerlist).*`,
+        };
+      }
+
+      // 13B. Lập phiếu Thu/Chi từ form
+      if (_formAction === 'create_finance_voucher') {
+        if (!fields.type || !fields.amount || !fields.cashBookId) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền đầy đủ **Loại phiếu**, **Số tiền** và **Tài khoản/Quỹ**.' };
+        }
+
+        const amount = parseFloat(String(fields.amount).replace(/[.,]/g, ''));
+        const cashBook = await CashBook.findById(fields.cashBookId);
+        if (!cashBook) {
+          return { handled: true, action: 'form_error', response: '❌ Không tìm thấy tài khoản/quỹ đã chọn.' };
+        }
+
+        // Tìm category nếu có
+        let categoryId = null;
+        if (fields.categoryId) {
+          categoryId = fields.categoryId;
+        }
+
+        // Tạo mã phiếu tự động
+        const now = new Date();
+        const prefix = fields.type === 'income' ? 'PT' : 'PC';
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        const voucherNo = `${prefix}-${dateStr}-${randomSuffix}`;
+
+        const voucher = await FinanceVoucher.create({
+          voucherNo,
+          type: fields.type,
+          amount,
+          fromAccountId: cashBook._id,
+          categoryId: categoryId || undefined,
+          counterpartyNameSnapshot: fields.counterpartyName || '',
+          notes: fields.notes || `Tạo bởi AI Agent`,
+          transactionDate: now,
+          createdBy: user?._id,
+        });
+
+        // Cập nhật số dư tài khoản
+        if (fields.type === 'income') {
+          cashBook.currentBalance = (cashBook.currentBalance || 0) + amount;
+        } else {
+          cashBook.currentBalance = (cashBook.currentBalance || 0) - amount;
+        }
+        await cashBook.save();
+
+        const typeLabel = fields.type === 'income' ? '📥 PHIẾU THU' : '📤 PHIẾU CHI';
+        return {
+          handled: true,
+          action: 'create_finance_voucher',
+          data: voucher,
+          response: `✅ **ĐÃ TẠO ${typeLabel} THÀNH CÔNG!**\n\n- 📄 **Mã phiếu:** \`${voucher.voucherNo}\`\n- 💰 **Số tiền:** **${amount.toLocaleString('vi-VN')} VNĐ**\n- 🏦 **Tài khoản:** ${cashBook.name}\n- 👤 **Đối tác:** ${fields.counterpartyName || 'Không chỉ định'}\n- 📝 **Ghi chú:** ${fields.notes || '—'}\n- 💵 **Số dư sau GD:** **${cashBook.currentBalance.toLocaleString('vi-VN')} VNĐ**\n\n*Đã cập nhật vào [Sổ Quỹ & Dòng tiền](/admin/finance).*`,
+        };
+      }
+
+      // 13C. Tạo Bảng Báo Giá từ form
+      if (_formAction === 'create_quotation') {
+        if (!fields.customerName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên khách hàng** để tạo báo giá.' };
+        }
+
+        const items = [];
+        if (fields.style || fields.quantity || fields.unitPrice) {
+          const qty = parseInt(String(fields.quantity || '0').replace(/[.,]/g, ''), 10) || 0;
+          const price = parseInt(String(fields.unitPrice || '0').replace(/[.,]/g, ''), 10) || 0;
+          items.push({
+            style: fields.style || '',
+            printTechnique: fields.printTechnique || '',
+            priceTiers: qty > 0 || price > 0 ? [{ quantity: qty, unitPrice: price }] : [],
+            note: fields.note || '',
+          });
+        }
+
+        const newQuotation = await Quotation.create({
+          customerName: fields.customerName,
+          items: items.length > 0 ? items : [],
+          grandTotal: items.length > 0 ? (items[0].priceTiers?.[0]?.quantity || 0) * (items[0].priceTiers?.[0]?.unitPrice || 0) : 0,
+          createdBy: user?._id,
+          status: 'draft',
+        });
+
+        return {
+          handled: true,
+          action: 'create_quotation',
+          data: newQuotation,
+          response: `📋 **ĐÃ TẠO BẢNG BÁO GIÁ MỚI THÀNH CÔNG!**\n\n- 📄 **Mã BG:** \`${newQuotation.quotationCode}\`\n- 🏢 **Khách hàng:** ${newQuotation.customerName}\n- 📦 **Số hạng mục:** ${newQuotation.items.length} sản phẩm\n- 💰 **Tổng giá trị:** ${newQuotation.grandTotal.toLocaleString('vi-VN')} VNĐ\n- 📊 **Trạng thái:** Bản nháp (Draft)\n\n*Xem và chỉnh sửa chi tiết tại [Bảng Báo Giá](/admin/quotations).*`,
+        };
+      }
+
+      return { handled: true, action: 'form_error', response: '❌ Không nhận diện được loại form. Vui lòng thử lại.' };
+    } catch (parseErr) {
+      console.error('Form parse error:', parseErr);
+      return { handled: true, action: 'form_error', response: '❌ Lỗi xử lý dữ liệu form: ' + parseErr.message };
+    }
+  }
+
+  // ================================================================
+  // 14. Tác vụ: LẬP PHIẾU THU / CHI (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('lập phiếu thu') || lower.startsWith('lập phiếu chi') || lower.startsWith('tạo phiếu thu') || lower.startsWith('tạo phiếu chi') || lower.startsWith('thu tiền') || lower.startsWith('chi tiền')) {
+    const isIncome = lower.includes('thu');
+    const typeLabel = isIncome ? 'Thu' : 'Chi';
+    const typeVal = isIncome ? 'income' : 'expense';
+
+    // Bóc tách số tiền
+    let amount = 0;
+    const amtMatch = message.match(/(\d+(?:[.,]\d+)?)\s*(?:triệu|tr|trieu)/i);
+    if (amtMatch) {
+      amount = parseFloat(amtMatch[1].replace(',', '.')) * 1000000;
+    } else {
+      const amtMatch2 = message.match(/(\d{1,3}(?:[.,]\d{3})*(?:\d+)?)\s*(?:đ|đồng|vnd)?/i);
+      if (amtMatch2) {
+        const numStr = amtMatch2[1].replace(/[.,]/g, '');
+        if (parseInt(numStr, 10) >= 10000) amount = parseInt(numStr, 10);
+      }
+    }
+
+    // Bóc tách đối tác
+    let counterpartyName = '';
+    const cpMatch = message.match(/(?:từ khách|khách hàng|khách|cho ncc|ncc|từ|cho)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\||,|\.|vào|qua|tài khoản|quỹ|$)/i);
+    if (cpMatch) counterpartyName = cpMatch[1].trim();
+
+    // Bóc tách tài khoản
+    let cashBookName = '';
+    const accMatch = message.match(/(?:vào|qua|từ|tài khoản|quỹ|tk)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\||,|\.|danh mục|$)/i);
+    if (accMatch) cashBookName = accMatch[1].trim();
+
+    // Lấy danh sách CashBook để render trong form select
+    const cashBooks = await CashBook.find({ isActive: true }).lean().catch(() => []);
+    const categories = await FinanceCategory.find({ direction: typeVal, isActive: true }).lean().catch(() => []);
+
+    // Nếu đủ thông tin cơ bản (amount + cashbook) → thử tạo trực tiếp
+    let matchedCashBook = null;
+    if (cashBookName) {
+      matchedCashBook = cashBooks.find(cb => cb.name.toLowerCase().includes(cashBookName.toLowerCase()));
+    }
+
+    if (amount > 0 && matchedCashBook) {
+      // Tạo trực tiếp
+      const now = new Date();
+      const prefix = isIncome ? 'PT' : 'PC';
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const randomSuffix = Math.floor(100 + Math.random() * 900);
+      const voucherNo = `${prefix}-${dateStr}-${randomSuffix}`;
+
+      const voucher = await FinanceVoucher.create({
+        voucherNo,
+        type: typeVal,
+        amount,
+        fromAccountId: matchedCashBook._id,
+        counterpartyNameSnapshot: counterpartyName || '',
+        notes: `Tạo bởi AI Agent: ${message}`,
+        transactionDate: now,
+        createdBy: user?._id,
+      });
+
+      if (isIncome) {
+        matchedCashBook.currentBalance = (matchedCashBook.currentBalance || 0) + amount;
+      } else {
+        matchedCashBook.currentBalance = (matchedCashBook.currentBalance || 0) - amount;
+      }
+      await CashBook.findByIdAndUpdate(matchedCashBook._id, { currentBalance: matchedCashBook.currentBalance });
+
+      return {
+        handled: true,
+        action: 'create_finance_voucher',
+        data: voucher,
+        response: `✅ **ĐÃ TẠO PHIẾU ${typeLabel.toUpperCase()} THÀNH CÔNG!**\n\n- 📄 **Mã phiếu:** \`${voucher.voucherNo}\`\n- 💰 **Số tiền:** **${amount.toLocaleString('vi-VN')} VNĐ**\n- 🏦 **Tài khoản:** ${matchedCashBook.name}\n- 👤 **Đối tác:** ${counterpartyName || 'Không chỉ định'}\n- 💵 **Số dư sau GD:** **${matchedCashBook.currentBalance.toLocaleString('vi-VN')} VNĐ**\n\n*Đã cập nhật vào [Sổ Quỹ & Dòng tiền](/admin/finance).*`,
+      };
+    }
+
+    // Thiếu thông tin → Trả inline form
+    const formFields = [
+      { key: 'type', label: '📋 Loại phiếu', type: 'select', required: true, value: typeVal, options: [
+        { value: 'income', label: '📥 Phiếu Thu (Tiền vào)' },
+        { value: 'expense', label: '📤 Phiếu Chi (Tiền ra)' },
+      ]},
+      { key: 'amount', label: '💰 Số tiền (VNĐ)', type: 'number', required: true, value: amount > 0 ? String(amount) : '', placeholder: 'VD: 15000000' },
+      { key: 'cashBookId', label: '🏦 Tài khoản / Quỹ', type: 'select', required: true, value: '', options: cashBooks.map(cb => ({
+        value: cb._id.toString(),
+        label: `${cb.type === 'bank' ? '🏦' : '💵'} ${cb.name} (${(cb.currentBalance || 0).toLocaleString('vi-VN')}đ)`,
+      }))},
+      { key: 'categoryId', label: '📂 Danh mục', type: 'select', required: false, value: '', options: [
+        { value: '', label: '— Không chọn —' },
+        ...categories.map(c => ({ value: c._id.toString(), label: c.name })),
+      ]},
+      { key: 'counterpartyName', label: '👤 Đối tác (Khách/NCC)', type: 'text', required: false, value: counterpartyName || '', placeholder: 'VD: Công ty Bao Bì Việt' },
+      { key: 'notes', label: '📝 Ghi chú', type: 'text', required: false, value: '', placeholder: 'Nội dung phiếu thu/chi' },
+    ];
+
+    const filledInfo = [];
+    if (amount > 0) filledInfo.push(`✅ **Số tiền:** ${amount.toLocaleString('vi-VN')} VNĐ`);
+    if (counterpartyName) filledInfo.push(`✅ **Đối tác:** ${counterpartyName}`);
+
+    let promptText = `📝 **LẬP PHIẾU ${typeLabel.toUpperCase()} MỚI**\n\n`;
+    if (filledInfo.length > 0) {
+      promptText += `Tôi đã nhận diện:\n${filledInfo.join('\n')}\n\n`;
+    }
+    promptText += `Vui lòng điền đầy đủ thông tin bên dưới rồi bấm **"Tạo phiếu ${typeLabel}"**:`;
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formAction: 'create_finance_voucher',
+      formFields,
+      response: promptText,
+    };
+  }
+
+  // ================================================================
+  // 15. Tác vụ: GHI NHẬN THANH TOÁN CÔNG NỢ PHẢI THU (RECEIVABLE PAYMENT)
+  // ================================================================
+  if ((lower.includes('thanh toán') || lower.includes('trả tiền') || lower.includes('trả nợ') || lower.includes('thu nợ')) && (lower.includes('khách') || lower.includes('phải thu'))) {
+    // Bóc tách tên khách hàng
+    const custMatch = message.match(/(?:khách hàng|khách|từ)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\s+thanh toán|\s+trả|\s+số|\s+\d|$)/i);
+    const custName = custMatch ? custMatch[1].trim() : '';
+
+    // Bóc tách số tiền
+    let payAmount = 0;
+    const payAmtMatch = message.match(/(\d+(?:[.,]\d+)?)\s*(?:triệu|tr)/i);
+    if (payAmtMatch) {
+      payAmount = parseFloat(payAmtMatch[1].replace(',', '.')) * 1000000;
+    } else {
+      const payAmtMatch2 = message.match(/(\d{1,3}(?:[.,]\d{3})*(?:\d+)?)\s*(?:đ|đồng|vnd)?/i);
+      if (payAmtMatch2) {
+        const numStr = payAmtMatch2[1].replace(/[.,]/g, '');
+        if (parseInt(numStr, 10) >= 10000) payAmount = parseInt(numStr, 10);
+      }
+    }
+
+    if (custName.length >= 2 && payAmount > 0) {
+      // Tìm khoản phải thu
+      const receivable = await Receivable.findOne({
+        customerName: { $regex: custName, $options: 'i' },
+        status: { $ne: 'paid' },
+      }).sort({ outstandingAmount: -1 });
+
+      if (receivable) {
+        const oldPaid = receivable.paidAmount || 0;
+        receivable.paidAmount = oldPaid + payAmount;
+        await receivable.save(); // pre('save') tự tính lại outstandingAmount & status
+
+        return {
+          handled: true,
+          action: 'receivable_payment',
+          data: receivable,
+          response: `✅ **ĐÃ GHI NHẬN THANH TOÁN CÔNG NỢ PHẢI THU!**\n\n- 🏢 **Khách hàng:** ${receivable.customerName}\n- 💰 **Số tiền thanh toán:** **${payAmount.toLocaleString('vi-VN')} VNĐ**\n- 📊 **Đã thanh toán tổng:** ${receivable.paidAmount.toLocaleString('vi-VN')} / ${receivable.totalAmount.toLocaleString('vi-VN')} VNĐ\n- 💸 **Còn nợ lại:** **${receivable.outstandingAmount.toLocaleString('vi-VN')} VNĐ**\n- 📋 **Trạng thái:** ${receivable.status === 'paid' ? '🟢 Đã thanh toán đủ' : '🟡 Thanh toán một phần'}\n\n*Đã cập nhật vào [Công nợ Phải thu](/admin/finance).*`,
+        };
+      } else {
+        return {
+          handled: true,
+          action: 'receivable_not_found',
+          response: `⚠️ Không tìm thấy khoản công nợ phải thu của khách hàng **"${custName}"** đang còn nợ.\n\nVui lòng kiểm tra lại tên khách hàng hoặc xem danh sách tại [Công nợ Phải thu](/admin/finance).`,
+        };
+      }
+    }
+  }
+
+  // ================================================================
+  // 16. Tác vụ: THANH TOÁN CÔNG NỢ PHẢI TRẢ (PAYABLE PAYMENT)
+  // ================================================================
+  if ((lower.includes('trả tiền ncc') || lower.includes('thanh toán ncc') || lower.includes('trả nợ ncc') || lower.includes('trả tiền nhà cung cấp') || lower.includes('thanh toán cho ncc')) && !lower.includes('khách')) {
+    const suppMatch = message.match(/(?:ncc|nhà cung cấp)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\s+số|\s+\d|$)/i);
+    const suppName = suppMatch ? suppMatch[1].trim() : '';
+
+    let payAmount = 0;
+    const payAmtMatch = message.match(/(\d+(?:[.,]\d+)?)\s*(?:triệu|tr)/i);
+    if (payAmtMatch) {
+      payAmount = parseFloat(payAmtMatch[1].replace(',', '.')) * 1000000;
+    } else {
+      const payAmtMatch2 = message.match(/(\d{1,3}(?:[.,]\d{3})*(?:\d+)?)\s*(?:đ|đồng|vnd)?/i);
+      if (payAmtMatch2) {
+        const numStr = payAmtMatch2[1].replace(/[.,]/g, '');
+        if (parseInt(numStr, 10) >= 10000) payAmount = parseInt(numStr, 10);
+      }
+    }
+
+    if (suppName.length >= 2 && payAmount > 0) {
+      const payable = await Payable.findOne({
+        supplierName: { $regex: suppName, $options: 'i' },
+        status: { $ne: 'paid' },
+      }).sort({ outstandingAmount: -1 });
+
+      if (payable) {
+        const oldPaid = payable.paidAmount || 0;
+        payable.paidAmount = oldPaid + payAmount;
+        await payable.save();
+
+        return {
+          handled: true,
+          action: 'payable_payment',
+          data: payable,
+          response: `✅ **ĐÃ GHI NHẬN THANH TOÁN CHO NHÀ CUNG CẤP!**\n\n- 🏭 **NCC:** ${payable.supplierName}\n- 💰 **Số tiền thanh toán:** **${payAmount.toLocaleString('vi-VN')} VNĐ**\n- 📊 **Đã trả tổng:** ${payable.paidAmount.toLocaleString('vi-VN')} / ${payable.totalAmount.toLocaleString('vi-VN')} VNĐ\n- 💸 **Còn phải trả:** **${payable.outstandingAmount.toLocaleString('vi-VN')} VNĐ**\n- 📋 **Trạng thái:** ${payable.status === 'paid' ? '🟢 Đã thanh toán đủ' : '🟡 Thanh toán một phần'}\n\n*Đã cập nhật vào [Công nợ Phải trả](/admin/finance).*`,
+        };
+      } else {
+        return {
+          handled: true,
+          action: 'payable_not_found',
+          response: `⚠️ Không tìm thấy khoản công nợ phải trả cho NCC **"${suppName}"** đang còn nợ.\n\nVui lòng kiểm tra lại tên NCC hoặc xem danh sách tại [Công nợ Phải trả](/admin/finance).`,
+        };
+      }
+    }
+  }
+
+  // ================================================================
+  // 17. Tác vụ: TẠO BẢNG BÁO GIÁ (QUOTATION) — INTERACTIVE FORM
+  // ================================================================
+  if (lower.startsWith('tạo báo giá') || lower.startsWith('lập báo giá') || lower.startsWith('tạo bảng báo giá') || lower.startsWith('lập bảng báo giá')) {
+    const rawBG = message.replace(/^(tạo bảng báo giá|lập bảng báo giá|tạo báo giá|lập báo giá)[:\s]*/i, '').trim();
+
+    let customerName = '';
+    let style = '';
+    let quantity = '';
+    let unitPrice = '';
+    let printTechnique = '';
+
+    if (rawBG.includes('|')) {
+      const parts = rawBG.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('khách:') || pLower.startsWith('kh:')) {
+          customerName = part.replace(/^(khách|kh)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('mã:') || pLower.startsWith('mã hàng:') || pLower.startsWith('style:')) {
+          style = part.replace(/^(mã|mã hàng|style)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('sl:') || pLower.startsWith('số lượng:')) {
+          quantity = part.replace(/^(sl|số lượng)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('giá:') || pLower.startsWith('đơn giá:')) {
+          unitPrice = part.replace(/^(giá|đơn giá)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('in:') || pLower.startsWith('kỹ thuật:')) {
+          printTechnique = part.replace(/^(in|kỹ thuật)[:\s]*/i, '').trim();
+        } else if (!customerName) {
+          customerName = part;
+        }
+      });
+    } else {
+      // Trích xuất từ câu tự nhiên
+      const custMatch = rawBG.match(/(?:cho khách|khách hàng|khách|cho)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\s+mã|\s+in\s|\s+\d|:|$)/i);
+      if (custMatch) customerName = custMatch[1].trim();
+      else customerName = rawBG.split(/[,|]/)[0]?.trim() || '';
+
+      const qtyMatch = rawBG.match(/(\d+(?:[.,]\d+)?)\s*(?:cái|hộp|tờ|cuốn|bộ|sp|sản phẩm|pcs)/i);
+      if (qtyMatch) quantity = qtyMatch[1];
+
+      const priceMatch = rawBG.match(/(?:đơn giá|giá)\s*(\d+(?:[.,]\d+)?)\s*(?:đ|đồng|vnd)?/i);
+      if (priceMatch) unitPrice = priceMatch[1];
+
+      if (lower.includes('in offset') || lower.includes('offset')) printTechnique = 'In Offset';
+      else if (lower.includes('in lụa') || lower.includes('lụa') || lower.includes('silk')) printTechnique = 'In Lụa';
+      else if (lower.includes('kỹ thuật số') || lower.includes('digital')) printTechnique = 'In Kỹ thuật số';
+    }
+
+    // Kiểm tra đủ thông tin tối thiểu chưa
+    if (!customerName || customerName.length < 2) {
+      const formFields = [
+        { key: 'customerName', label: '🏢 Tên khách hàng', type: 'text', required: true, value: customerName || '', placeholder: 'VD: Công ty Dược Phẩm Huế' },
+        { key: 'style', label: '🏷️ Mã hàng / Style', type: 'text', required: false, value: style || '', placeholder: 'VD: AA-123' },
+        { key: 'printTechnique', label: '🖨️ Kỹ thuật in', type: 'select', required: false, value: printTechnique || '', options: [
+          { value: '', label: '— Chưa chọn —' },
+          { value: 'In Offset', label: '🖨️ In Offset' },
+          { value: 'In Lụa', label: '🎨 In Lụa (Silk Screen)' },
+          { value: 'In Kỹ thuật số', label: '💻 In Kỹ thuật số (Digital)' },
+        ]},
+        { key: 'quantity', label: '📦 Số lượng', type: 'number', required: false, value: quantity || '', placeholder: 'VD: 10000' },
+        { key: 'unitPrice', label: '💰 Đơn giá (VNĐ)', type: 'number', required: false, value: unitPrice || '', placeholder: 'VD: 450' },
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, value: '', placeholder: 'Quy cách, kích thước...' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_quotation',
+        formFields,
+        response: `📋 **TẠO BẢNG BÁO GIÁ MỚI**\n\nVui lòng điền thông tin sản phẩm bên dưới rồi bấm **"Tạo báo giá"**:`,
+      };
+    }
+
+    // Đủ khách hàng → Tạo luôn
+    const items = [];
+    if (style || quantity || unitPrice) {
+      const qty = parseInt(String(quantity || '0').replace(/[.,]/g, ''), 10) || 0;
+      const price = parseInt(String(unitPrice || '0').replace(/[.,]/g, ''), 10) || 0;
+      items.push({
+        style: style || '',
+        printTechnique: printTechnique || '',
+        priceTiers: qty > 0 || price > 0 ? [{ quantity: qty, unitPrice: price }] : [],
+      });
+    }
+
+    const newQuotation = await Quotation.create({
+      customerName,
+      items,
+      grandTotal: items.length > 0 ? (items[0].priceTiers?.[0]?.quantity || 0) * (items[0].priceTiers?.[0]?.unitPrice || 0) : 0,
+      createdBy: user?._id,
+      status: 'draft',
+    });
+
+    return {
+      handled: true,
+      action: 'create_quotation',
+      data: newQuotation,
+      response: `📋 **ĐÃ TẠO BẢNG BÁO GIÁ MỚI THÀNH CÔNG!**\n\n- 📄 **Mã BG:** \`${newQuotation.quotationCode}\`\n- 🏢 **Khách hàng:** ${newQuotation.customerName}\n- 📦 **Số hạng mục:** ${newQuotation.items.length} sản phẩm\n- 💰 **Tổng giá trị:** ${newQuotation.grandTotal.toLocaleString('vi-VN')} VNĐ\n- 📊 **Trạng thái:** Bản nháp (Draft)\n\n*Xem và chỉnh sửa chi tiết tại [Bảng Báo Giá](/admin/quotations).*`,
+    };
+  }
+
+  // ================================================================
+  // 18. Tác vụ: ĐỔI TRẠNG THÁI YÊU CẦU BÁO GIÁ WEBSITE
+  // ================================================================
+  if (lower.includes('đã liên hệ') && (lower.includes('báo giá') || lower.includes('bg') || lower.includes('quote'))) {
+    const custMatch = message.match(/(?:khách|cho|với)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\.|,|$)/i);
+    const custName = custMatch ? custMatch[1].trim() : '';
+
+    if (custName.length >= 2) {
+      const quote = await Quote.findOne({
+        name: { $regex: custName, $options: 'i' },
+        status: { $ne: 'Done' },
+      }).sort({ createdAt: -1 });
+
+      if (quote) {
+        quote.status = 'Contacted';
+        await quote.save();
+
+        return {
+          handled: true,
+          action: 'update_quote_status',
+          data: quote,
+          response: `✅ **Đã cập nhật trạng thái yêu cầu báo giá:**\n\n- 👤 **Khách hàng:** ${quote.name}\n- 📞 **SĐT:** ${quote.phone}\n- 📦 **Sản phẩm:** ${quote.productName || '—'}\n- 📊 **Trạng thái:** Mới → **Đã liên hệ** ✅\n\n*Đã cập nhật tại [Yêu cầu Báo giá](/admin/quotes).*`,
+        };
+      }
+    }
+  }
+
+  // ================================================================
+  // 19. Tác vụ: TRA CỨU LỊCH SỬ & CÔNG NỢ KHÁCH HÀNG
+  // ================================================================
+  if (lower.includes('lịch sử khách') || lower.includes('tra cứu khách') || lower.includes('thông tin khách') || (lower.includes('khách hàng') && lower.includes('chi tiết'))) {
+    const custMatch = message.match(/(?:khách hàng|khách)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\.|,|$)/i);
+    const custName = custMatch ? custMatch[1].trim() : '';
+
+    if (custName.length >= 2) {
+      const customer = await Customer.findOne({
+        name: { $regex: custName, $options: 'i' },
+      });
+
+      if (customer) {
+        // Tìm công nợ liên quan
+        const receivables = await Receivable.find({
+          customerName: { $regex: custName, $options: 'i' },
+        }).sort({ createdAt: -1 }).limit(5).lean().catch(() => []);
+
+        const totalDebt = receivables.reduce((sum, r) => sum + (r.outstandingAmount || 0), 0);
+        const totalRevenue = receivables.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+
+        let reply = `👤 **THÔNG TIN CHI TIẾT KHÁCH HÀNG:**\n\n`;
+        reply += `- 🏢 **Tên:** ${customer.name}\n`;
+        reply += `- 📍 **Địa chỉ:** ${customer.address || 'Chưa cập nhật'}\n`;
+        reply += `- 🏷️ **Nhóm:** ${customer.group === 'offset' ? '📄 In giấy' : customer.group === 'garment' ? '👕 In vải' : '🔀 Cả hai'}\n`;
+        if (customer.contacts?.length > 0) {
+          reply += `- 📞 **Liên hệ:** ${customer.contacts[0].name} — ${customer.contacts[0].phone}\n`;
+        }
+        reply += `\n💰 **Tổng quan Công nợ & Doanh số:**\n`;
+        reply += `- Tổng doanh số: **${totalRevenue.toLocaleString('vi-VN')} VNĐ** (${receivables.length} khoản)\n`;
+        reply += `- Còn nợ: **${totalDebt.toLocaleString('vi-VN')} VNĐ**\n`;
+
+        if (receivables.length > 0) {
+          reply += `\n📋 **Các khoản phải thu gần đây:**\n`;
+          receivables.forEach((r, i) => {
+            reply += `${i + 1}. \`${r.documentCode || '—'}\` — Tổng: ${(r.totalAmount || 0).toLocaleString('vi-VN')}đ | Nợ: **${(r.outstandingAmount || 0).toLocaleString('vi-VN')}đ** (${r.status})\n`;
+          });
+        }
+
+        return {
+          handled: true,
+          action: 'customer_lookup',
+          data: { customer, receivables },
+          response: reply,
+        };
+      } else {
+        return {
+          handled: true,
+          action: 'customer_not_found',
+          response: `⚠️ Không tìm thấy khách hàng **"${custName}"** trong danh bạ.\n\nBạn có muốn tôi **thêm khách hàng mới**? Hãy nói: *"Thêm khách hàng ${custName}"*`,
+        };
+      }
+    }
+  }
+
+  // ================================================================
+  // 20. Tác vụ: CẬP NHẬT THÔNG TIN KHÁCH HÀNG
+  // ================================================================
+  if ((lower.includes('đổi sđt khách') || lower.includes('cập nhật sđt khách') || lower.includes('đổi số điện thoại khách') || lower.includes('đổi địa chỉ khách') || lower.includes('cập nhật địa chỉ khách'))) {
+    const custMatch = message.match(/(?:khách hàng|khách)\s+([a-zA-ZÀ-ỹ0-9\s]+?)(?:\s+thành|\s+sang|\s+là|\s+:\s*)/i);
+    const custName = custMatch ? custMatch[1].trim() : '';
+    const newValue = message.match(/(?:thành|sang|là|:\s*)\s*(.+)$/i);
+    const value = newValue ? newValue[1].trim() : '';
+
+    if (custName.length >= 2 && value) {
+      const customer = await Customer.findOne({
+        name: { $regex: custName, $options: 'i' },
+      });
+
+      if (customer) {
+        if (lower.includes('địa chỉ')) {
+          customer.address = value;
+          await customer.save();
+          return {
+            handled: true,
+            action: 'update_customer',
+            data: customer,
+            response: `✅ **Đã cập nhật địa chỉ khách hàng:**\n- 🏢 **Khách:** ${customer.name}\n- 📍 **Địa chỉ mới:** ${value}\n\n*Đã lưu vào [Danh sách Khách hàng](/admin/customerlist).*`,
+          };
+        } else {
+          // Cập nhật SĐT
+          const phoneVal = value.match(/(0\d{9,10})/) ? value.match(/(0\d{9,10})/)[1] : value;
+          if (customer.contacts?.length > 0) {
+            customer.contacts[0].phone = phoneVal;
+          } else {
+            customer.contacts = [{ name: customer.name, phone: phoneVal }];
+          }
+          await customer.save();
+          return {
+            handled: true,
+            action: 'update_customer',
+            data: customer,
+            response: `✅ **Đã cập nhật SĐT khách hàng:**\n- 🏢 **Khách:** ${customer.name}\n- 📞 **SĐT mới:** ${phoneVal}\n\n*Đã lưu vào [Danh sách Khách hàng](/admin/customerlist).*`,
+          };
+        }
+      } else {
+        return {
+          handled: true,
+          action: 'customer_not_found',
+          response: `⚠️ Không tìm thấy khách hàng **"${custName}"** trong danh bạ.`,
+        };
+      }
+    }
   }
 
   return { handled: false };
@@ -718,6 +1379,8 @@ const processChatMessage = async (req, res) => {
         engine: 'action_executor',
         action: actionResult.action,
         data: actionResult.data,
+        formFields: actionResult.formFields || null,
+        formAction: actionResult.formAction || null,
       });
     }
 
@@ -766,10 +1429,17 @@ QUY TẮC TRẢ LỜI & XỬ LÝ AGENT:
    - Xác nhận hàng về: "Đơn [Tên vật tư] đã về" (AI tự động cộng kho)
    - Lập Lệnh sản xuất: "Tạo lệnh sản xuất [Số lượng] [Tên sản phẩm] in offset / in lụa"
    - Xuất / Nhập kho: "Xuất 10 ram Couche 300", "Nhập 20 ram Ivory 350"
-   - Thêm khách hàng: "Thêm khách hàng [Tên khách] SĐT [Số ĐT]"
+   - Thêm khách hàng: "Thêm KH: [Tên] | ĐC: [Địa chỉ] | SĐT: [Số] | Nhóm: offset" (Nếu thiếu thông tin → AI hiện form điền)
    - Báo cáo xưởng: "Tóm tắt hôm nay"
    - Hồ sơ & Quyền hạn: "Hồ sơ của tôi", "Cập nhật SĐT [Số ĐT]"
-5. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
+5. NHÓM 2 - KINH DOANH & TÀI CHÍNH:
+   - Lập phiếu thu/chi: "Lập phiếu thu 15 triệu từ khách [Tên] vào quỹ tiền mặt" (Nếu thiếu → AI hiện form điền)
+   - Thanh toán công nợ: "Khách [Tên] thanh toán 20 triệu" hoặc "Trả tiền NCC [Tên] 10 triệu"
+   - Tạo báo giá: "Tạo báo giá cho khách [Tên KH]: mã [Style] in offset 10000 cái giá 450đ" (Nếu thiếu → AI hiện form điền)
+   - Đổi TT yêu cầu BG: "Đã liên hệ báo giá cho khách [Tên]"
+   - Tra cứu KH: "Lịch sử khách hàng [Tên]" hoặc "Thông tin khách [Tên]"
+   - Cập nhật KH: "Đổi SĐT khách [Tên] thành [Số mới]" hoặc "Đổi địa chỉ khách [Tên] thành [Địa chỉ mới]"
+6. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
 
         // Danh sách model Google Gemini thế hệ mới nhất đang hoạt động
         const modelsToTry = [
