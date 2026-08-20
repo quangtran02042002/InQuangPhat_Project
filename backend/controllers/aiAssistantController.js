@@ -69,6 +69,9 @@ const FinanceVoucher = require('../models/FinanceVoucher');
 const FinanceCategory = require('../models/FinanceCategory');
 const CashBook = require('../models/CashBook');
 const AdminQuote = require('../models/AdminQuote');
+const ChemicalDispatch = require('../models/ChemicalDispatch');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const PrintFormula = require('../models/PrintFormula');
 
 // ============================================================================
 // HELPER: THỰC THI TÁC VỤ AI (AI ACTIONS) TRỰC TIẾP LÊN DATABASE
@@ -477,26 +480,49 @@ const handleDirectActions = async (message, user) => {
     }
   }
 
-  // 11. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER)
+  // 11. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER) - INTERACTIVE DIALOG
   if (lower.startsWith('tạo lệnh sản xuất') || lower.startsWith('tạo lệnh sx') || lower.startsWith('thêm lệnh sx') || lower.startsWith('lập lệnh sx')) {
     const rawOrder = message.replace(/^(tạo lệnh sản xuất|tạo lệnh sx|thêm lệnh sx|lập lệnh sx)[:\s]*/i, '').trim();
-    const qtyMatch = rawOrder.match(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm)?/i);
-    const qty = qtyMatch ? parseInt(qtyMatch[1].replace(/[.,]/g, ''), 10) : 1000;
+
+    // Bóc tách số lượng
+    const qtyMatch = rawOrder.match(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm|pcs)?/i);
+    const qty = qtyMatch ? parseInt(qtyMatch[1].replace(/[.,]/g, ''), 10) : 0;
 
     const isSilk = lower.includes('lụa') || lower.includes('in lụa') || lower.includes('silk');
     const printType = isSilk ? 'silk' : 'offset';
 
-    // Tạo mã lệnh sản xuất tự động
+    let orderName = rawOrder
+      .replace(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm|pcs)?/i, '')
+      .replace(/(in offset|in lụa|offset|lụa)/gi, '')
+      .trim();
+
+    // Nếu người dùng không nhập tên hoặc số lượng -> Mở Inline Form
+    if (!orderName || orderName.length < 2 || qty <= 0) {
+      const formFields = [
+        { key: 'orderName', label: '🏷️ Tên đơn hàng / Lệnh SX', type: 'text', required: true, value: orderName || '', placeholder: 'VD: Hộp Trà Oolong Thảo Mộc' },
+        { key: 'totalQuantity', label: '📊 Tổng số lượng sản phẩm', type: 'number', required: true, value: qty > 0 ? String(qty) : '1000', placeholder: 'VD: 5000' },
+        { key: 'printType', label: '🖨️ Kỹ thuật in', type: 'select', required: true, value: printType, options: [
+          { value: 'offset', label: '🖨️ In Offset' },
+          { value: 'silk', label: '🎨 In Lụa (Silk Screen)' },
+        ]},
+        { key: 'printColors', label: '🎨 Màu in quy cách', type: 'text', required: false, value: isSilk ? 'In lụa 1 màu' : 'In Offset 4 màu CMYK', placeholder: 'VD: In 4 màu CMYK' },
+        { key: 'notes', label: '📝 Ghi chú bài in', type: 'text', required: false, value: '', placeholder: 'Quy cách cán màng, bế dán...' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_production_order',
+        formFields,
+        response: `🏭 **TẠO LỆNH SẢN XUẤT MỚI**\n\nVui lòng điền thông tin đơn hàng bên dưới rồi bấm **"Tạo Lệnh Sản Xuất"**:`,
+      };
+    }
+
+    // Đủ thông tin -> Tạo ngay
     const today = new Date();
     const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     const orderCode = `LSX-${dateStr}-${randomSuffix}`;
-
-    let orderName = rawOrder
-      .replace(/(\d+(?:[.,]\d+)?)\s*(hộp|cái|tờ|cuốn|bộ|sp|sản phẩm)?/i, '')
-      .replace(/(in offset|in lụa|offset|lụa)/gi, '')
-      .trim();
-    if (!orderName) orderName = 'Đơn hàng in ấn mới';
 
     const newProdOrder = await ProductionOrder.create({
       orderCode,
@@ -512,13 +538,14 @@ const handleDirectActions = async (message, user) => {
         },
       ],
       status: 'pending',
+      createdBy: user?._id,
     });
 
     return {
       handled: true,
       action: 'create_production_order',
       data: newProdOrder,
-      response: `🏭 **Đã tạo thành công Lệnh Sản Xuất mới:**\n- **Mã lệnh:** \`${newProdOrder.orderCode}\`\n- **Tên đơn:** ${newProdOrder.orderName}\n- **Số lượng:** ${newProdOrder.totalQuantity.toLocaleString('vi-VN')} SP\n- **Kỹ thuật in:** ${printType === 'offset' ? '🖨️ In Offset' : '🎨 In Lụa'}\n\n*Bạn có thể xem và quản lý chi tiết tại trang [Lệnh Sản Xuất](/admin/production-orders).*`,
+      response: `🏭 **ĐÃ TẠO THÀNH CÔNG LỆNH SẢN XUẤT MỚI!**\n\n- 📄 **Mã lệnh:** \`${newProdOrder.orderCode}\`\n- 🏷️ **Tên đơn:** **${newProdOrder.orderName}**\n- 📊 **Số lượng:** **${newProdOrder.totalQuantity.toLocaleString('vi-VN')}** SP\n- 🖨️ **Kỹ thuật in:** ${printType === 'offset' ? '🖨️ In Offset' : '🎨 In Lụa'}\n\n*Bạn có thể xem và quản lý chi tiết tại trang [Lệnh Sản Xuất](/admin/production-orders).*`,
     };
   }
 
@@ -752,6 +779,182 @@ const handleDirectActions = async (message, user) => {
           action: 'create_quotation',
           data: newQuotation,
           response: `📋 **ĐÃ TẠO BẢNG BÁO GIÁ MỚI THÀNH CÔNG!**\n\n- 📄 **Mã BG:** \`${newQuotation.quotationCode}\`\n- 🏢 **Khách hàng:** ${newQuotation.customerName}\n- 📦 **Số hạng mục:** ${newQuotation.items.length} sản phẩm\n- 💰 **Tổng giá trị:** ${newQuotation.grandTotal.toLocaleString('vi-VN')} VNĐ\n- 📊 **Trạng thái:** Bản nháp (Draft)\n\n*Xem và chỉnh sửa chi tiết tại [Bảng Báo Giá](/admin/quotations).*`,
+        };
+      }
+
+      // 13D. Thêm Vật Tư Mới từ form (Materials)
+      if (_formAction === 'create_material') {
+        if (!fields.name || !fields.unit) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền **Tên vật tư** và **Đơn vị tính**.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '0').replace(/[.,]/g, '')) || 0;
+        const minStock = parseFloat(String(fields.minStock || '5').replace(/[.,]/g, '')) || 5;
+        const newMat = await Material.create({
+          name: fields.name,
+          unit: fields.unit,
+          quantity: qty,
+          specification: fields.specification || '',
+          minStock,
+          supplier: fields.supplier || '',
+        });
+        return {
+          handled: true,
+          action: 'create_material',
+          data: newMat,
+          response: `📦 **ĐÃ THÊM VẬT TƯ MỚI VÀO KHO THÀNH CÔNG!**\n\n- 📄 **Tên vật tư:** **${newMat.name}**\n- 📏 **Đơn vị:** ${newMat.unit}\n- 📊 **Tồn kho ban đầu:** ${newMat.quantity} ${newMat.unit}\n- 📐 **Quy cách:** ${newMat.specification || 'Chuẩn'}\n- ⚠️ **Mức cảnh báo tồn:** <= ${newMat.minStock} ${newMat.unit}\n- 🏢 **NCC:** ${newMat.supplier || 'Chưa cập nhật'}\n\n*Đã lưu vào [Kho Vật tư (Giấy/Kẽm)](/admin/materials).*`,
+        };
+      }
+
+      // 13E. Thêm Hóa Chất / Mực Mới từ form (Chemicals)
+      if (_formAction === 'create_chemical') {
+        if (!fields.name || !fields.unit) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền **Tên hóa chất/mực** và **Đơn vị tính**.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '0').replace(/[.,]/g, '')) || 0;
+        const minStock = parseFloat(String(fields.minStock || '5').replace(/[.,]/g, '')) || 5;
+        const newChem = await Chemical.create({
+          name: fields.name,
+          unit: fields.unit,
+          quantity: qty,
+          minStock,
+          supplier: fields.supplier || '',
+          safetyNote: fields.safetyNote || '',
+        });
+        return {
+          handled: true,
+          action: 'create_chemical',
+          data: newChem,
+          response: `🧪 **ĐÃ THÊM HÓA CHẤT / MỰC MỚI THÀNH CÔNG!**\n\n- 🧪 **Tên:** **${newChem.name}**\n- 📏 **Đơn vị:** ${newChem.unit}\n- 📊 **Tồn ban đầu:** ${newChem.quantity} ${newChem.unit}\n- ⚠️ **Mức cảnh báo:** <= ${newChem.minStock} ${newChem.unit}\n- 🏢 **NCC:** ${newChem.supplier || '—'}\n- 🛡️ **Lưu ý an toàn:** ${newChem.safetyNote || 'Bảo quản nơi khô mát'}\n\n*Đã lưu vào [Kho Hóa chất & Mực](/admin/chemicals).*`,
+        };
+      }
+
+      // 13F. Lập Phiếu BTP (Xuất Nhập Bán Thành Phẩm) từ form
+      if (_formAction === 'create_inventory_transaction') {
+        if (!fields.type || !fields.factoryName || !fields.itemName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền **Loại phiếu**, **Nhà may/Kho** và **Tên sản phẩm BTP**.' };
+        }
+        const qty = parseInt(String(fields.quantity || '1').replace(/[.,]/g, ''), 10) || 1;
+        const newTx = await InventoryTransaction.create({
+          type: fields.type,
+          factoryName: fields.factoryName,
+          orderCustomer: fields.orderCustomer || '',
+          reason: fields.reason || '',
+          deliveryAddress: fields.deliveryAddress || '',
+          items: [
+            {
+              itemCode: fields.itemCode || 'BTP-ITEM',
+              itemName: fields.itemName,
+              color: fields.color || 'Mặc định',
+              unit: fields.unit || 'Cái',
+              quantity: qty,
+              note: fields.note || '',
+            }
+          ],
+          date: new Date(),
+        });
+        const typeLabel = fields.type === 'import' ? '📥 PHIẾU NHẬP BTP' : '📤 PHIẾU XUẤT BTP';
+        return {
+          handled: true,
+          action: 'create_inventory_transaction',
+          data: newTx,
+          response: `📦 **ĐÃ LẬP ${typeLabel} THÀNH CÔNG!**\n\n- 🏢 **Nhà may / Đối tác:** ${newTx.factoryName}\n- 👥 **Khách hàng:** ${newTx.orderCustomer || '—'}\n- 🏷️ **Mã hàng:** \`${fields.itemCode || '—'}\`\n- 👕 **Sản phẩm:** ${fields.itemName} (${fields.color || 'Mặc định'})\n- 📊 **Số lượng:** **${qty.toLocaleString('vi-VN')} ${fields.unit || 'Cái'}**\n- 📝 **Lý do/Ghi chú:** ${fields.reason || '—'}\n\n*Đã lưu vào [Xuất Nhập Hàng BTP](/admin/inventory).*`,
+        };
+      }
+
+      // 13G. Tạo Hồ Sơ Mẫu In (PrintFormula) từ form
+      if (_formAction === 'create_print_formula') {
+        if (!fields.name || !fields.printType) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng điền **Tên mẫu** và **Kỹ thuật in**.' };
+        }
+        const year = new Date().getFullYear();
+        const count = await PrintFormula.countDocuments();
+        const formulaCode = `PTM-${year}-${String(count + 1).padStart(3, '0')}`;
+        const newFormula = await PrintFormula.create({
+          formulaCode,
+          name: fields.name,
+          printType: fields.printType,
+          customer: fields.customer || '',
+          product: fields.product || '',
+          sampleGroup: formulaCode,
+          version: 1,
+          status: 'draft',
+        });
+        return {
+          handled: true,
+          action: 'create_print_formula',
+          data: newFormula,
+          response: `📑 **ĐÃ TẠO HỒ SƠ PHÁT TRIỂN MẪU IN THÀNH CÔNG!**\n\n- 📄 **Mã mẫu:** \`${newFormula.formulaCode}\`\n- 🎨 **Tên mẫu:** **${newFormula.name}**\n- 🖨️ **Kỹ thuật:** ${newFormula.printType === 'offset' ? 'In Offset' : 'In Lụa'}\n- 👥 **Khách hàng:** ${newFormula.customer || '—'}\n- 📦 **Sản phẩm:** ${newFormula.product || '—'}\n- 📊 **Trạng thái:** Bản nháp (Draft v1)\n\n*Xem và cấu hình bài in tại [Phát triển Mẫu](/admin/print-formulas).*`,
+        };
+      }
+
+      // 13H. Tạo Lệnh Sản Xuất từ form (ProductionOrder)
+      if (_formAction === 'create_production_order') {
+        if (!fields.orderName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên đơn hàng / Lệnh SX**.' };
+        }
+        const qty = parseInt(String(fields.totalQuantity || '1000').replace(/[.,]/g, ''), 10) || 1000;
+        const printType = fields.printType || 'offset';
+        const today = new Date();
+        const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        const orderCode = `LSX-${dateStr}-${randomSuffix}`;
+        const newProdOrder = await ProductionOrder.create({
+          orderCode,
+          orderName: fields.orderName,
+          totalQuantity: qty,
+          printType,
+          printJobs: [
+            {
+              jobName: fields.orderName,
+              quantity: qty,
+              printColors: fields.printColors || (printType === 'silk' ? 'In lụa' : 'In Offset 4 màu CMYK'),
+              notes: fields.notes || 'Khởi tạo từ AI Agent Form',
+            }
+          ],
+          status: 'pending',
+          createdBy: user?._id,
+        });
+        return {
+          handled: true,
+          action: 'create_production_order',
+          data: newProdOrder,
+          response: `🏭 **ĐÃ TẠO THÀNH CÔNG LỆNH SẢN XUẤT MỚI!**\n\n- 📄 **Mã lệnh:** \`${newProdOrder.orderCode}\`\n- 🏷️ **Tên đơn:** **${newProdOrder.orderName}**\n- 📊 **Số lượng:** **${newProdOrder.totalQuantity.toLocaleString('vi-VN')}** SP\n- 🖨️ **Kỹ thuật in:** ${printType === 'offset' ? '🖨️ In Offset' : '🎨 In Lụa'}\n- 🎨 **Màu in:** ${fields.printColors || (printType === 'silk' ? 'In lụa' : 'In Offset 4 màu CMYK')}\n- ⏳ **Trạng thái:** Chờ sản xuất\n\n*Quản lý chi tiết tại [Lệnh Sản Xuất](/admin/production-orders).*`,
+        };
+      }
+
+      // 13I. Lập Phiếu Duyệt Mẫu QC từ form (QCInspection)
+      if (_formAction === 'create_qc_inspection') {
+        if (!fields.orderName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên đơn hàng** cần duyệt QC.' };
+        }
+        const today = new Date();
+        const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        const inspectionCode = `QC-${dateStr}-${randomSuffix}`;
+        const verdict = fields.verdict || 'approved';
+        const newQC = await QCInspection.create({
+          inspectionCode,
+          orderName: fields.orderName,
+          sampleType: fields.sampleType || 'first_off',
+          inspector: fields.inspector || userName,
+          verdict,
+          checklist: {
+            colorAccuracy: fields.colorAccuracy || (verdict === 'approved' ? 'pass' : 'fail'),
+            registration: fields.registration || (verdict === 'approved' ? 'pass' : 'fail'),
+            printClarity: fields.printClarity || (verdict === 'approved' ? 'pass' : 'fail'),
+            cuttingAccuracy: fields.cuttingAccuracy || (verdict === 'approved' ? 'pass' : 'fail'),
+            printPosition: 'pass',
+            packaging: 'pass',
+          },
+          notes: fields.notes || 'Duyệt bởi AI Agent Form',
+          inspectionDate: today,
+        });
+        const vLabel = verdict === 'approved' ? '🟢 ĐẠT (Approved)' : verdict === 'rejected' ? '🔴 KHÔNG ĐẠT (Rejected)' : '🟡 CÓ ĐIỀU KIỆN';
+        return {
+          handled: true,
+          action: 'create_qc_inspection',
+          data: newQC,
+          response: `🔍 **ĐÃ LẬP PHIẾU KIỂM TRA QC THÀNH CÔNG!**\n\n- 📄 **Mã phiếu:** \`${newQC.inspectionCode}\`\n- 🏭 **Đơn hàng:** **${newQC.orderName}**\n- ⏱️ **Giai đoạn:** ${newQC.sampleType === 'first_off' ? 'Đầu chuyền' : newQC.sampleType === 'inline' ? 'Giữa chuyền' : 'Hoàn thiện'}\n- 👤 **Người kiểm:** ${newQC.inspector}\n- 🏆 **Kết luận:** **${vLabel}**\n\n*Xem chi tiết phiếu tại [Duyệt mẫu QC](/admin/qc-inspection).*`,
         };
       }
 
@@ -1194,12 +1397,628 @@ const handleDirectActions = async (message, user) => {
         }
       } else {
         return {
+  // ================================================================
+  // 21. Tác vụ: THÊM VẬT TƯ MỚI VÀO KHO (INTERACTIVE DIALOG)
+  // ================================================================
+  if (
+    (lower.startsWith('thêm vật tư') || lower.startsWith('tạo vật tư') || lower.startsWith('thêm giấy mới') || lower.startsWith('tạo giấy mới') || lower.startsWith('thêm kẽm mới')) &&
+    !lower.includes('xuất') && !lower.includes('nhập kho')
+  ) {
+    const rawText = message.replace(/^(thêm vật tư|tạo vật tư|thêm giấy mới|tạo giấy mới|thêm kẽm mới)[:\s]*/i, '').trim();
+
+    let matName = '';
+    let matUnit = 'Ram';
+    let matQty = 0;
+    let matSpec = '';
+    let minStock = 5;
+    let supplier = '';
+
+    if (rawText.includes('|')) {
+      const parts = rawText.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('tên:') || pLower.startsWith('vật tư:')) {
+          matName = part.replace(/^(tên|vật tư)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('đơn vị:') || pLower.startsWith('đv:')) {
+          matUnit = part.replace(/^(đơn vị|đv)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('tồn:') || pLower.startsWith('số lượng:') || pLower.startsWith('sl:')) {
+          matQty = parseFloat(part.replace(/^(tồn|số lượng|sl)[:\s]*/i, '').trim()) || 0;
+        } else if (pLower.startsWith('quy cách:') || pLower.startsWith('khổ:')) {
+          matSpec = part.replace(/^(quy cách|khổ)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('tối thiểu:') || pLower.startsWith('cảnh báo:')) {
+          minStock = parseFloat(part.replace(/^(tối thiểu|cảnh báo)[:\s]*/i, '').trim()) || 5;
+        } else if (pLower.startsWith('ncc:') || pLower.startsWith('nhà cung cấp:')) {
+          supplier = part.replace(/^(ncc|nhà cung cấp)[:\s]*/i, '').trim();
+        } else if (!matName) {
+          matName = part;
+        }
+      });
+    } else {
+      matName = rawText.split(/[,|]/)[0]?.trim() || '';
+      const qtyMatch = rawText.match(/(\d+(?:[.,]\d+)?)\s*(ram|tờ|cuộn|kg|hộp|tấm|cái)?/i);
+      if (qtyMatch) {
+        matQty = parseFloat(qtyMatch[1]);
+        if (qtyMatch[2]) matUnit = qtyMatch[2];
+      }
+    }
+
+    if (!matName || matName.length < 2) {
+      const formFields = [
+        { key: 'name', label: '📄 Tên vật tư (Giấy / Kẽm)', type: 'text', required: true, value: matName || '', placeholder: 'VD: Giấy Couche 300 Gsm' },
+        { key: 'unit', label: '📏 Đơn vị tính', type: 'select', required: true, value: matUnit || 'Ram', options: [
+          { value: 'Ram', label: 'Ram (Giấy)' },
+          { value: 'Tờ', label: 'Tờ (Giấy rời)' },
+          { value: 'Cuộn', label: 'Cuộn (Màng/Decal)' },
+          { value: 'Tấm', label: 'Tấm (Kẽm CTP)' },
+          { value: 'Kg', label: 'Kg (Vật liệu)' },
+        ]},
+        { key: 'quantity', label: '📊 Tồn kho ban đầu', type: 'number', required: true, value: String(matQty || 0), placeholder: 'VD: 50' },
+        { key: 'specification', label: '📐 Quy cách / Kích thước', type: 'text', required: false, value: matSpec || '', placeholder: 'VD: 65 x 86 cm' },
+        { key: 'minStock', label: '⚠️ Ngưỡng cảnh báo sắp hết', type: 'number', required: false, value: String(minStock || 5), placeholder: 'VD: 5' },
+        { key: 'supplier', label: '🏢 Nhà cung cấp mặc định', type: 'text', required: false, value: supplier || '', placeholder: 'VD: Giấy Thuận An' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_material',
+        formFields,
+        response: `📦 **THÊM VẬT TƯ MỚI VÀO KHO**\n\nVui lòng điền thông số vật tư bên dưới rồi bấm **"Thêm vật tư vào kho"**:`,
+      };
+    }
+
+    const newMat = await Material.create({
+      name: matName,
+      unit: matUnit,
+      quantity: matQty,
+      specification: matSpec,
+      minStock,
+      supplier,
+    });
+
+    return {
+      handled: true,
+      action: 'create_material',
+      data: newMat,
+      response: `📦 **ĐÃ THÊM VẬT TƯ MỚI VÀO KHO THÀNH CÔNG!**\n\n- 📄 **Tên vật tư:** **${newMat.name}**\n- 📏 **Đơn vị:** ${newMat.unit}\n- 📊 **Tồn ban đầu:** ${newMat.quantity} ${newMat.unit}\n- 📐 **Quy cách:** ${newMat.specification || 'Chuẩn'}\n- ⚠️ **Cảnh báo tồn:** <= ${newMat.minStock} ${newMat.unit}\n\n*Đã lưu vào [Kho Vật tư](/admin/materials).*`,
+    };
+  }
+
+  // ================================================================
+  // 22. Tác vụ: THÊM HÓA CHẤT / MỰC MỚI (INTERACTIVE DIALOG)
+  // ================================================================
+  if (
+    (lower.startsWith('thêm hóa chất') || lower.startsWith('tạo hóa chất') || lower.startsWith('thêm mực mới') || lower.startsWith('tạo mực mới')) &&
+    !lower.includes('xuất') && !lower.includes('nhập kho')
+  ) {
+    const rawText = message.replace(/^(thêm hóa chất|tạo hóa chất|thêm mực mới|tạo mực mới)[:\s]*/i, '').trim();
+
+    let chemName = '';
+    let chemUnit = 'Can';
+    let chemQty = 0;
+    let minStock = 5;
+    let safetyNote = '';
+    let supplier = '';
+
+    if (rawText.includes('|')) {
+      const parts = rawText.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('tên:') || pLower.startsWith('hóa chất:')) {
+          chemName = part.replace(/^(tên|hóa chất)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('đơn vị:') || pLower.startsWith('đv:')) {
+          chemUnit = part.replace(/^(đơn vị|đv)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('tồn:') || pLower.startsWith('sl:')) {
+          chemQty = parseFloat(part.replace(/^(tồn|sl)[:\s]*/i, '').trim()) || 0;
+        } else if (pLower.startsWith('an toàn:') || pLower.startsWith('lưu ý:')) {
+          safetyNote = part.replace(/^(an toàn|lưu ý)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('ncc:')) {
+          supplier = part.replace(/^ncc[:\s]*/i, '').trim();
+        } else if (!chemName) {
+          chemName = part;
+        }
+      });
+    } else {
+      chemName = rawText.split(/[,|]/)[0]?.trim() || '';
+    }
+
+    if (!chemName || chemName.length < 2) {
+      const formFields = [
+        { key: 'name', label: '🧪 Tên hóa chất / mực in', type: 'text', required: true, value: chemName || '', placeholder: 'VD: Cồn lau bản CTP' },
+        { key: 'unit', label: '📏 Đơn vị tính', type: 'select', required: true, value: chemUnit || 'Can', options: [
+          { value: 'Can', label: 'Can' },
+          { value: 'Lít', label: 'Lít' },
+          { value: 'Bình', label: 'Bình' },
+          { value: 'Kg', label: 'Kg (Mực in)' },
+          { value: 'Thùng', label: 'Thùng' },
+          { value: 'Hộp', label: 'Hộp' },
+        ]},
+        { key: 'quantity', label: '📊 Tồn kho ban đầu', type: 'number', required: true, value: String(chemQty || 0), placeholder: 'VD: 10' },
+        { key: 'minStock', label: '⚠️ Ngưỡng cảnh báo sắp hết', type: 'number', required: false, value: String(minStock || 5), placeholder: 'VD: 3' },
+        { key: 'supplier', label: '🏢 Nhà cung cấp', type: 'text', required: false, value: supplier || '', placeholder: 'VD: Hóa chất Miền Trung' },
+        { key: 'safetyNote', label: '🛡️ Ghi chú an toàn', type: 'text', required: false, value: safetyNote || '', placeholder: 'VD: Dễ cháy, tránh ánh nắng' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_chemical',
+        formFields,
+        response: `🧪 **THÊM HÓA CHẤT / MỰC MỚI VÀO KHO**\n\nVui lòng điền thông tin bên dưới rồi bấm **"Thêm hóa chất / mực"**:`,
+      };
+    }
+
+    const newChem = await Chemical.create({
+      name: chemName,
+      unit: chemUnit,
+      quantity: chemQty,
+      minStock,
+      supplier,
+      safetyNote,
+    });
+
+    return {
+      handled: true,
+      action: 'create_chemical',
+      data: newChem,
+      response: `🧪 **ĐÃ THÊM HÓA CHẤT / MỰC MỚI THÀNH CÔNG!**\n\n- 🧪 **Tên:** **${newChem.name}**\n- 📏 **Đơn vị:** ${newChem.unit}\n- 📊 **Tồn ban đầu:** ${newChem.quantity} ${newChem.unit}\n- ⚠️ **Mức cảnh báo:** <= ${newChem.minStock} ${newChem.unit}\n\n*Đã lưu vào [Kho Hóa chất & Mực](/admin/chemicals).*`,
+    };
+  }
+
+  // ================================================================
+  // 23. Tác vụ: XUẤT / NHẬP HÓA CHẤT & MỰC (NLP DIRECT)
+  // ================================================================
+  const chemExportMatch = lower.match(/(?:xuất|trừ)\s+(\d+(?:\.\d+)?)\s*(can|lít|bình|kg|thùng|hộp)?\s*(?:hóa chất|mực|cồn)?\s*([a-zA-ZÀ-ỹ0-9\s\-_]+)/i);
+  if (chemExportMatch && (lower.includes('hóa chất') || lower.includes('mực') || lower.includes('cồn') || lower.includes('nước rửa') || lower.includes('keo'))) {
+    const qty = parseFloat(chemExportMatch[1]);
+    const unit = chemExportMatch[2] || '';
+    const chemQuery = chemExportMatch[3].replace(/(cho|máy|xưởng|nhé|nha|ạ).*/i, '').trim();
+
+    if (qty > 0 && chemQuery.length >= 2) {
+      const chem = await Chemical.findOne({
+        name: { $regex: chemQuery, $options: 'i' },
+      });
+
+      if (chem) {
+        const oldQty = chem.quantity || 0;
+        const newQty = Math.max(0, oldQty - qty);
+        chem.quantity = newQty;
+        await chem.save();
+
+        await ChemicalDispatch.create({
+          type: 'xuat',
+          items: [{
+            chemical: chem._id,
+            chemicalName: chem.name,
+            chemicalUnit: chem.unit || unit || 'Can',
+            quantity: qty,
+            quantityAfter: newQty,
+          }],
+          recipient: userName,
+          note: `AI Agent xuất kho hóa chất: ${message}`,
+          createdBy: userName,
+          status: 'approved',
+          approvedBy: userName,
+          approvedAt: new Date(),
+        }).catch(() => {});
+
+        return {
           handled: true,
-          action: 'customer_not_found',
-          response: `⚠️ Không tìm thấy khách hàng **"${custName}"** trong danh bạ.`,
+          action: 'export_chemical',
+          data: { chem, oldQty, newQty, qty },
+          response: `🧪 **ĐÃ XUẤT KHO HÓA CHẤT / MỰC THÀNH CÔNG!**\n\n- 🧪 **Tên:** ${chem.name}\n- 📉 **Số lượng xuất:** ${qty} ${chem.unit}\n- 📊 **Tồn trước:** ${oldQty} ${chem.unit}\n- 📦 **Tồn hiện tại:** **${newQty} ${chem.unit}**\n\n*Đã ghi nhật ký vào [Kho Hóa chất & Mực](/admin/chemicals).*`,
         };
       }
     }
+  }
+
+  // ================================================================
+  // 24. Tác vụ: LẬP PHIẾU BTP (XUẤT NHẬP BÁN THÀNH PHẨM) (INTERACTIVE DIALOG)
+  // ================================================================
+  if (lower.startsWith('lập phiếu btp') || lower.startsWith('tạo phiếu btp') || lower.startsWith('nhập btp') || lower.startsWith('xuất btp') || lower.startsWith('phiếu btp')) {
+    const isExport = lower.includes('xuất');
+    const typeVal = isExport ? 'export' : 'import';
+    const typeLabel = isExport ? 'Xuất' : 'Nhập';
+
+    const rawText = message.replace(/^(lập phiếu btp|tạo phiếu btp|nhập btp|xuất btp|phiếu btp)[:\s]*/i, '').trim();
+
+    let factoryName = '';
+    let orderCustomer = '';
+    let itemCode = '';
+    let itemName = '';
+    let color = '';
+    let quantity = 0;
+
+    if (rawText.includes('|')) {
+      const parts = rawText.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('nhà may:') || pLower.startsWith('xưởng:') || pLower.startsWith('kho:')) {
+          factoryName = part.replace(/^(nhà may|xưởng|kho)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('khách:') || pLower.startsWith('brand:')) {
+          orderCustomer = part.replace(/^(khách|brand)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('mã:') || pLower.startsWith('mã hàng:') || pLower.startsWith('po:')) {
+          itemCode = part.replace(/^(mã|mã hàng|po)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('tên:') || pLower.startsWith('sp:') || pLower.startsWith('hàng:')) {
+          itemName = part.replace(/^(tên|sp|hàng)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('màu:')) {
+          color = part.replace(/^màu[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('sl:') || pLower.startsWith('số lượng:')) {
+          quantity = parseInt(part.replace(/^(sl|số lượng)[:\s]*/i, '').trim().replace(/[.,]/g, ''), 10) || 0;
+        } else if (!factoryName) {
+          factoryName = part;
+        }
+      });
+    }
+
+    if (!factoryName || !itemName || quantity <= 0) {
+      const formFields = [
+        { key: 'type', label: '📋 Loại phiếu BTP', type: 'select', required: true, value: typeVal, options: [
+          { value: 'import', label: '📥 Phiếu Nhập BTP (Nhận từ nhà may)' },
+          { value: 'export', label: '📤 Phiếu Xuất BTP (Giao trả nhà may)' },
+        ]},
+        { key: 'factoryName', label: '🏢 Nhà may / Xưởng đối tác', type: 'text', required: true, value: factoryName || '', placeholder: 'VD: May Nhà Bè / May Thuận Tiến' },
+        { key: 'orderCustomer', label: '👥 Khách hàng / Brand', type: 'text', required: false, value: orderCustomer || '', placeholder: 'VD: Nike, Adidas, Owen' },
+        { key: 'itemCode', label: '🏷️ Mã hàng / PO', type: 'text', required: false, value: itemCode || '', placeholder: 'VD: PO-2026-08' },
+        { key: 'itemName', label: '👕 Tên bán thành phẩm', type: 'text', required: true, value: itemName || '', placeholder: 'VD: Thân trước áo Polo' },
+        { key: 'color', label: '🎨 Màu sắc', type: 'text', required: false, value: color || 'Trắng', placeholder: 'VD: Đen, Trắng, Xanh Navy' },
+        { key: 'quantity', label: '📊 Số lượng (Cái/SP)', type: 'number', required: true, value: quantity > 0 ? String(quantity) : '500', placeholder: 'VD: 1000' },
+        { key: 'reason', label: '📝 Lý do / Ghi chú', type: 'text', required: false, value: '', placeholder: 'VD: In lụa 2 màu ngực áo' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_inventory_transaction',
+        formFields,
+        response: `📦 **LẬP PHIẾU ${typeLabel.toUpperCase()} BÁN THÀNH PHẨM (BTP)**\n\nVui lòng điền thông tin chi tiết bên dưới rồi bấm **"Lập phiếu BTP"**:`,
+      };
+    }
+
+    const newTx = await InventoryTransaction.create({
+      type: typeVal,
+      factoryName,
+      orderCustomer,
+      items: [{
+        itemCode: itemCode || 'BTP-ITEM',
+        itemName,
+        color: color || 'Mặc định',
+        unit: 'Cái',
+        quantity,
+      }],
+      date: new Date(),
+    });
+
+    return {
+      handled: true,
+      action: 'create_inventory_transaction',
+      data: newTx,
+      response: `📦 **ĐÃ LẬP PHIẾU ${typeLabel.toUpperCase()} BTP THÀNH CÔNG!**\n\n- 🏢 **Nhà may:** ${newTx.factoryName}\n- 👕 **Hàng hóa:** ${itemName} (${quantity} Cái)\n- 🏷️ **Mã hàng:** ${itemCode || '—'}\n\n*Đã lưu vào [Xuất Nhập Hàng BTP](/admin/inventory).*`,
+    };
+  }
+
+  // ================================================================
+  // 25. Tác vụ: TẠO CÔNG THỨC MẪU IN (PRINT FORMULA) (INTERACTIVE DIALOG)
+  // ================================================================
+  if (lower.startsWith('tạo công thức mẫu') || lower.startsWith('tạo mẫu in') || lower.startsWith('thêm mẫu in') || lower.startsWith('phát triển mẫu')) {
+    const rawText = message.replace(/^(tạo công thức mẫu|tạo mẫu in|thêm mẫu in|phát triển mẫu)[:\s]*/i, '').trim();
+
+    let formulaName = '';
+    let printType = 'offset';
+    let customer = '';
+    let product = '';
+
+    if (rawText.includes('|')) {
+      const parts = rawText.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('tên:') || pLower.startsWith('mẫu:')) {
+          formulaName = part.replace(/^(tên|mẫu)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('loại:') || pLower.startsWith('in:')) {
+          const typeStr = part.replace(/^(loại|in)[:\s]*/i, '').trim().toLowerCase();
+          printType = (typeStr.includes('lụa') || typeStr.includes('silk')) ? 'silk' : 'offset';
+        } else if (pLower.startsWith('khách:') || pLower.startsWith('kh:')) {
+          customer = part.replace(/^(khách|kh)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('sp:') || pLower.startsWith('sản phẩm:')) {
+          product = part.replace(/^(sp|sản phẩm)[:\s]*/i, '').trim();
+        } else if (!formulaName) {
+          formulaName = part;
+        }
+      });
+    } else {
+      formulaName = rawText.split(/[,|]/)[0]?.trim() || '';
+      if (lower.includes('lụa') || lower.includes('silk')) printType = 'silk';
+    }
+
+    if (!formulaName || formulaName.length < 2) {
+      const formFields = [
+        { key: 'name', label: '📑 Tên công thức mẫu in', type: 'text', required: true, value: formulaName || '', placeholder: 'VD: Hộp Trà Oolong Cao Cấp' },
+        { key: 'printType', label: '🖨️ Kỹ thuật in', type: 'select', required: true, value: printType, options: [
+          { value: 'offset', label: '🖨️ In Offset' },
+          { value: 'silk', label: '🎨 In Lụa (Silk Screen)' },
+        ]},
+        { key: 'customer', label: '👥 Khách hàng', type: 'text', required: false, value: customer || '', placeholder: 'VD: Trà Việt Hùng' },
+        { key: 'product', label: '📦 Dòng sản phẩm', type: 'text', required: false, value: product || '', placeholder: 'VD: Hộp cứng âm dương' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_print_formula',
+        formFields,
+        response: `📑 **TẠO HỒ SƠ PHÁT TRIỂN MẪU IN MỚI**\n\nVui lòng điền thông tin mẫu in bên dưới rồi bấm **"Tạo công thức mẫu in"**:`,
+      };
+    }
+
+    const year = new Date().getFullYear();
+    const count = await PrintFormula.countDocuments();
+    const formulaCode = `PTM-${year}-${String(count + 1).padStart(3, '0')}`;
+    const newFormula = await PrintFormula.create({
+      formulaCode,
+      name: formulaName,
+      printType,
+      customer,
+      product,
+      sampleGroup: formulaCode,
+      version: 1,
+      status: 'draft',
+    });
+
+    return {
+      handled: true,
+      action: 'create_print_formula',
+      data: newFormula,
+      response: `📑 **ĐÃ TẠO HỒ SƠ PHÁT TRIỂN MẪU IN THÀNH CÔNG!**\n\n- 📄 **Mã mẫu:** \`${newFormula.formulaCode}\`\n- 🎨 **Tên mẫu:** **${newFormula.name}**\n- 🖨️ **Kỹ thuật:** ${newFormula.printType === 'offset' ? 'In Offset' : 'In Lụa'}\n- 👥 **Khách hàng:** ${newFormula.customer || '—'}\n\n*Xem và cấu hình bài in tại [Phát triển Mẫu](/admin/print-formulas).*`,
+    };
+  }
+
+  // ================================================================
+  // 26. Tác vụ: TRA CỨU & DUYỆT CÔNG THỨC MẪU IN (NLP DIRECT)
+  // ================================================================
+  if (lower.startsWith('tra cứu mẫu') || lower.startsWith('tìm mẫu in') || lower.startsWith('công thức in') || lower.startsWith('duyệt mẫu in') || lower.startsWith('duyệt công thức')) {
+    if (lower.startsWith('duyệt')) {
+      const codeOrName = message.replace(/^(duyệt mẫu in|duyệt công thức|duyệt ptm)[:\s]*/i, '').trim();
+      if (codeOrName.length >= 2) {
+        const formula = await PrintFormula.findOne({
+          $or: [
+            { formulaCode: { $regex: codeOrName, $options: 'i' } },
+            { name: { $regex: codeOrName, $options: 'i' } },
+          ],
+        });
+
+        if (formula) {
+          formula.status = 'approved';
+          await formula.save();
+          return {
+            handled: true,
+            action: 'approve_print_formula',
+            data: formula,
+            response: `✅ **ĐÃ PHÊ DUYỆT CÔNG THỨC MẪU IN!**\n\n- 📄 **Mã:** \`${formula.formulaCode}\`\n- 🎨 **Tên:** **${formula.name}**\n- 📊 **Trạng thái mới:** 🟢 **Đã duyệt (Approved)**\n\n*Mẫu in đã sẵn sàng áp dụng cho Lệnh Sản Xuất.*`,
+          };
+        }
+      }
+    } else {
+      // Tra cứu mẫu in
+      const searchTerms = message.replace(/^(tra cứu mẫu in|tra cứu mẫu|tìm mẫu in|công thức in)[:\s]*/i, '').trim();
+      if (searchTerms.length >= 2) {
+        const formula = await PrintFormula.findOne({
+          $or: [
+            { formulaCode: { $regex: searchTerms, $options: 'i' } },
+            { name: { $regex: searchTerms, $options: 'i' } },
+          ],
+        });
+
+        if (formula) {
+          let reply = `📑 **THÔNG TIN CÔNG THỨC MẪU IN:**\n\n`;
+          reply += `- 📄 **Mã mẫu:** \`${formula.formulaCode}\`\n`;
+          reply += `- 🎨 **Tên bài in:** **${formula.name}** (v${formula.version || 1})\n`;
+          reply += `- 🖨️ **Kỹ thuật in:** ${formula.printType === 'offset' ? 'In Offset' : 'In Lụa'}\n`;
+          reply += `- 👥 **Khách hàng:** ${formula.customer || '—'}\n`;
+          reply += `- 📊 **Trạng thái:** ${formula.status === 'approved' ? '🟢 Đã duyệt' : '🟡 Bản nháp'}\n`;
+          return {
+            handled: true,
+            action: 'lookup_print_formula',
+            data: formula,
+            response: reply,
+          };
+        }
+      }
+    }
+  }
+
+  // ================================================================
+  // 27. Tác vụ: CẬP NHẬT TRẠNG THÁI & CHECKLIST LỆNH SẢN XUẤT (NLP DIRECT)
+  // ================================================================
+  if (
+    lower.includes('đã in xong') || lower.includes('hoàn thành lệnh sx') || lower.includes('xong lệnh sx') ||
+    lower.includes('bắt đầu in') || lower.includes('đang in lệnh sx') ||
+    lower.includes('đã đặt giấy') || lower.includes('đã ra kẽm') || lower.includes('đã căng khung')
+  ) {
+    const searchTerms = message.replace(/(đã in xong|hoàn thành lệnh sx|xong lệnh sx|bắt đầu in|đang in lệnh sx|đã đặt giấy cho|đã đặt giấy|đã ra kẽm cho|đã ra kẽm|đã căng khung cho|đã căng khung|đơn|lệnh|lsx|nhé|nha|ạ)/gi, '').trim();
+
+    if (searchTerms.length >= 2) {
+      const order = await ProductionOrder.findOne({
+        $or: [
+          { orderCode: { $regex: searchTerms, $options: 'i' } },
+          { orderName: { $regex: searchTerms, $options: 'i' } },
+        ],
+      }).sort({ createdAt: -1 });
+
+      if (order) {
+        if (lower.includes('đã in xong') || lower.includes('hoàn thành')) {
+          order.status = 'completed';
+          await order.save();
+          return {
+            handled: true,
+            action: 'update_production_order_status',
+            data: order,
+            response: `🎉 **ĐÃ HOÀN THÀNH LỆNH SẢN XUẤT!**\n\n- 📄 **Mã lệnh:** \`${order.orderCode}\`\n- 🏭 **Tên đơn:** **${order.orderName}**\n- 📊 **Số lượng:** ${order.totalQuantity.toLocaleString('vi-VN')} SP\n- 🟢 **Trạng thái:** Hoàn thành (100%)\n\n*Đã cập nhật tại [Lệnh Sản Xuất](/admin/production-orders).*`,
+          };
+        } else if (lower.includes('bắt đầu in') || lower.includes('đang in')) {
+          order.status = 'in_progress';
+          await order.save();
+          return {
+            handled: true,
+            action: 'update_production_order_status',
+            data: order,
+            response: `🖨️ **ĐÃ BẮT ĐẦU CHẠY IN LỆNH SẢN XUẤT!**\n\n- 📄 **Mã lệnh:** \`${order.orderCode}\`\n- 🏭 **Tên đơn:** **${order.orderName}**\n- 🔵 **Trạng thái:** Đang in (In progress)\n\n*Đã cập nhật tại [Lệnh Sản Xuất](/admin/production-orders).*`,
+          };
+        } else if (lower.includes('đặt giấy')) {
+          order.isPaperOrdered = true;
+          await order.save();
+          return {
+            handled: true,
+            action: 'update_production_order_checklist',
+            data: order,
+            response: `✅ **Đã đánh dấu ĐÃ ĐẶT GIẤY cho Lệnh SX:**\n- 📄 **Mã lệnh:** \`${order.orderCode}\` — ${order.orderName}`,
+          };
+        } else if (lower.includes('ra kẽm')) {
+          order.isPlateOutput = true;
+          await order.save();
+          return {
+            handled: true,
+            action: 'update_production_order_checklist',
+            data: order,
+            response: `✅ **Đã đánh dấu ĐÃ XUẤT KẼM (CTP) cho Lệnh SX:**\n- 📄 **Mã lệnh:** \`${order.orderCode}\` — ${order.orderName}`,
+          };
+        } else if (lower.includes('căng khung')) {
+          order.isSilkFrame = true;
+          await order.save();
+          return {
+            handled: true,
+            action: 'update_production_order_checklist',
+            data: order,
+            response: `✅ **Đã đánh dấu ĐÃ CĂNG KHUNG LỤA cho Lệnh SX:**\n- 📄 **Mã lệnh:** \`${order.orderCode}\` — ${order.orderName}`,
+          };
+        }
+      }
+    }
+  }
+
+  // ================================================================
+  // 28. Tác vụ: LẬP PHIẾU DUYỆT MẪU QC (INTERACTIVE DIALOG)
+  // ================================================================
+  if (lower.startsWith('lập phiếu qc') || lower.startsWith('tạo phiếu qc') || lower.startsWith('duyệt mẫu qc') || lower.startsWith('kiểm tra qc')) {
+    const rawText = message.replace(/^(lập phiếu qc|tạo phiếu qc|duyệt mẫu qc|kiểm tra qc)[:\s]*/i, '').trim();
+
+    let orderName = '';
+    let inspector = userName;
+    let verdict = 'approved';
+    let sampleType = 'first_off';
+
+    if (rawText.includes('|')) {
+      const parts = rawText.split('|').map(p => p.trim());
+      parts.forEach(part => {
+        const pLower = part.toLowerCase();
+        if (pLower.startsWith('đơn:') || pLower.startsWith('tên:')) {
+          orderName = part.replace(/^(đơn|tên)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('người kiểm:') || pLower.startsWith('qc:')) {
+          inspector = part.replace(/^(người kiểm|qc)[:\s]*/i, '').trim();
+        } else if (pLower.startsWith('kết luận:') || pLower.startsWith('kết quả:')) {
+          const vStr = part.replace(/^(kết luận|kết quả)[:\s]*/i, '').trim().toLowerCase();
+          if (vStr.includes('hỏng') || vStr.includes('không đạt') || vStr.includes('fail') || vStr.includes('reject')) verdict = 'rejected';
+          else if (vStr.includes('điều kiện')) verdict = 'conditional';
+          else verdict = 'approved';
+        } else if (pLower.startsWith('giai đoạn:')) {
+          const gStr = part.replace(/^giai đoạn[:\s]*/i, '').trim().toLowerCase();
+          if (gStr.includes('giữa')) sampleType = 'inline';
+          else if (gStr.includes('hoàn thiện') || gStr.includes('cuối')) sampleType = 'final';
+          else sampleType = 'first_off';
+        } else if (!orderName) {
+          orderName = part;
+        }
+      });
+    } else {
+      orderName = rawText.split(/[,|]/)[0]?.trim() || '';
+      if (lower.includes('không đạt') || lower.includes('hỏng') || lower.includes('fail')) verdict = 'rejected';
+    }
+
+    if (!orderName || orderName.length < 2) {
+      const formFields = [
+        { key: 'orderName', label: '🏭 Tên đơn hàng / Bài in duyệt QC', type: 'text', required: true, value: orderName || '', placeholder: 'VD: Hộp Bánh Pía Sầu Riêng' },
+        { key: 'sampleType', label: '⏱️ Giai đoạn kiểm tra', type: 'select', required: true, value: sampleType, options: [
+          { value: 'first_off', label: '🟢 Đầu chuyền (First-off sample)' },
+          { value: 'inline', label: '🟡 Giữa chuyền (In-line inspection)' },
+          { value: 'final', label: '🔵 Hoàn thiện đóng gói (Final audit)' },
+        ]},
+        { key: 'inspector', label: '👤 Người kiểm tra (QC)', type: 'text', required: true, value: inspector || userName, placeholder: 'VD: Anh Tuấn QC' },
+        { key: 'verdict', label: '🏆 Kết luận đánh giá', type: 'select', required: true, value: verdict, options: [
+          { value: 'approved', label: '🟢 ĐẠT (Approved) — Cho phép in hàng loạt' },
+          { value: 'rejected', label: '🔴 KHÔNG ĐẠT (Rejected) — Dừng máy chỉnh màu' },
+          { value: 'conditional', label: '🟡 CHẤP NHẬN CÓ ĐIỀU KIỆN (Conditional)' },
+        ]},
+        { key: 'notes', label: '📝 Ghi chú / Lỗi phát hiện', type: 'text', required: false, value: '', placeholder: 'VD: Lệch màu nhẹ 5%, đã cân chỉnh lại' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_qc_inspection',
+        formFields,
+        response: `🔍 **LẬP PHIẾU DUYỆT MẪU QC ĐẦU CHUYỀN**\n\nVui lòng đánh giá kết quả kiểm tra bên dưới rồi bấm **"Lập phiếu duyệt QC"**:`,
+      };
+    }
+
+    const today = new Date();
+    const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const inspectionCode = `QC-${dateStr}-${randomSuffix}`;
+
+    const newQC = await QCInspection.create({
+      inspectionCode,
+      orderName,
+      sampleType,
+      inspector: inspector || userName,
+      verdict,
+      checklist: {
+        colorAccuracy: verdict === 'approved' ? 'pass' : 'fail',
+        registration: verdict === 'approved' ? 'pass' : 'fail',
+        printClarity: verdict === 'approved' ? 'pass' : 'fail',
+        cuttingAccuracy: verdict === 'approved' ? 'pass' : 'fail',
+        printPosition: 'pass',
+        packaging: 'pass',
+      },
+      notes: `Tạo nhanh bởi AI Agent: ${message}`,
+      inspectionDate: today,
+    });
+
+    const vLabel = verdict === 'approved' ? '🟢 ĐẠT (Approved)' : verdict === 'rejected' ? '🔴 KHÔNG ĐẠT (Rejected)' : '🟡 CÓ ĐIỀU KIỆN';
+    return {
+      handled: true,
+      action: 'create_qc_inspection',
+      data: newQC,
+      response: `🔍 **ĐÃ LẬP PHIẾU KIỂM TRA QC THÀNH CÔNG!**\n\n- 📄 **Mã phiếu:** \`${newQC.inspectionCode}\`\n- 🏭 **Đơn hàng:** **${newQC.orderName}**\n- 👤 **Người kiểm:** ${newQC.inspector}\n- 🏆 **Kết luận:** **${vLabel}**\n\n*Xem chi tiết phiếu tại [Duyệt mẫu QC](/admin/qc-inspection).*`,
+    };
+  }
+
+  // ================================================================
+  // 29. Tác vụ: BÁO CÁO DUYỆT MẪU QC HÔM NAY (NLP DIRECT)
+  // ================================================================
+  if (lower.startsWith('báo cáo qc') || lower.startsWith('tình hình qc') || lower.startsWith('kết quả qc hôm nay')) {
+    const qcs = await QCInspection.find({}).sort({ createdAt: -1 }).limit(6).lean().catch(() => []);
+    if (qcs.length === 0) {
+      return {
+        handled: true,
+        action: 'report_qc_today',
+        response: `🔍 Hiện tại chưa có phiếu duyệt mẫu QC nào trong hệ thống.`,
+      };
+    }
+
+    let reply = `🔍 **BÁO CÁO KẾT QUẢ DUYỆT MẪU QC GẦN ĐÂY:**\n\n`;
+    qcs.forEach((q, idx) => {
+      const vIcon = q.verdict === 'approved' ? '🟢 ĐẠT' : q.verdict === 'rejected' ? '🔴 HỎNG' : '🟡 CÓ ĐIỀU KIỆN';
+      reply += `${idx + 1}. **[${q.inspectionCode}] ${q.orderName}**\n`;
+      reply += `   - Kết luận: **${vIcon}** | Người kiểm: ${q.inspector || '—'}\n`;
+      if (q.notes) reply += `   - Ghi chú: *${q.notes}*\n`;
+    });
+    reply += `\n*Xem chi tiết toàn bộ biên bản tại [Duyệt mẫu QC](/admin/qc-inspection).*`;
+
+    return {
+      handled: true,
+      action: 'report_qc_today',
+      data: qcs,
+      response: reply,
+    };
   }
 
   return { handled: false };
@@ -1439,7 +2258,16 @@ QUY TẮC TRẢ LỜI & XỬ LÝ AGENT:
    - Đổi TT yêu cầu BG: "Đã liên hệ báo giá cho khách [Tên]"
    - Tra cứu KH: "Lịch sử khách hàng [Tên]" hoặc "Thông tin khách [Tên]"
    - Cập nhật KH: "Đổi SĐT khách [Tên] thành [Số mới]" hoặc "Đổi địa chỉ khách [Tên] thành [Địa chỉ mới]"
-6. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
+6. NHÓM 3 - SẢN XUẤT & KHO:
+   - Thêm vật tư: "Thêm vật tư" (Mở form tạo giấy/kẽm mới)
+   - Thêm hóa chất: "Thêm hóa chất" (Mở form tạo hóa chất/mực mới)
+   - Xuất hóa chất: "Xuất 2 can cồn lau bản" (AI tự động trừ kho & lưu phiếu)
+   - Lập phiếu BTP: "Lập phiếu BTP" (Mở form nhập/xuất bán thành phẩm)
+   - Tạo Lệnh SX: "Tạo lệnh sản xuất" (Mở form nhập chi tiết bài in)
+   - Cập nhật Lệnh SX: "Đã in xong lệnh [Tên/Mã]", "Bắt đầu in lệnh [Tên/Mã]", "Đã đặt giấy cho [Tên/Mã]"
+   - Phát triển Mẫu In: "Tạo công thức mẫu in" (Mở form PTM), "Duyệt mẫu in [Mã]"
+   - Duyệt mẫu QC: "Lập phiếu QC" (Mở form đánh giá 6 tiêu chí), "Báo cáo QC hôm nay"
+7. Trả lời trực tiếp vào vấn đề, súc tích, không dài dòng.`;
 
         // Danh sách model Google Gemini thế hệ mới nhất đang hoạt động
         const modelsToTry = [

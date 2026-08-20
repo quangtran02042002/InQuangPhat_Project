@@ -34,23 +34,29 @@ const CATEGORIZED_PROMPTS = [
     ],
   },
   {
-    category: 'Kho & Vật tư',
+    category: 'Kho & Vật tư & Hóa chất',
     icon: FaBoxes,
     color: 'text-amber-600 bg-amber-50 border-amber-200',
     items: [
+      { id: 'add_mat', title: 'Thêm vật tư mới', query: 'Thêm vật tư', desc: 'Mở form tạo vật tư giấy/kẽm' },
+      { id: 'add_chem', title: 'Thêm hóa chất / mực', query: 'Thêm hóa chất', desc: 'Mở form thêm hóa chất mới' },
       { id: 'stock', title: 'Tồn kho giấy & mực', query: 'Kiểm tra tồn kho các loại giấy chính', desc: 'Tra cứu số lượng giấy, kẽm, mực' },
       { id: 'low_stock', title: 'Cảnh báo sắp hết', query: 'Những vật tư nào sắp hết hàng?', desc: 'Vật tư dưới ngưỡng an toàn' },
-      { id: 'quick_export', title: 'Lệnh xuất kho nhanh', query: 'Xuất 10 ram Couche 300', desc: 'Mẫu lệnh trừ tồn kho' },
+      { id: 'quick_export', title: 'Xuất kho giấy', query: 'Xuất 10 ram Couche 300', desc: 'Lệnh trừ tồn kho giấy' },
+      { id: 'chem_export', title: 'Xuất hóa chất/mực', query: 'Xuất 2 can Cồn lau bản', desc: 'Lệnh trừ tồn hóa chất' },
     ],
   },
   {
-    category: 'Sản xuất & Đơn hàng',
+    category: 'Sản xuất, BTP & QC',
     icon: FaIndustry,
     color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     items: [
-      { id: 'create_lsx', title: 'Tạo Lệnh Sản Xuất', query: 'Tạo lệnh sản xuất 5000 hộp trà thảo mộc in offset', desc: 'Lập lệnh bài in mới' },
+      { id: 'create_lsx', title: 'Tạo Lệnh Sản Xuất', query: 'Tạo lệnh sản xuất', desc: 'Mở form lập lệnh bài in mới' },
+      { id: 'btp_create', title: 'Lập phiếu BTP', query: 'Lập phiếu BTP', desc: 'Mở form nhập/xuất bán thành phẩm' },
+      { id: 'formula_create', title: 'Tạo công thức mẫu in', query: 'Tạo công thức mẫu in', desc: 'Mở form lưu quy cách bài in' },
+      { id: 'qc_create', title: 'Lập phiếu duyệt QC', query: 'Lập phiếu QC', desc: 'Mở form đánh giá 6 tiêu chí QC' },
+      { id: 'qc_report', title: 'Báo cáo QC hôm nay', query: 'Báo cáo QC hôm nay', desc: 'Kết quả kiểm tra chất lượng' },
       { id: 'production', title: 'Tiến độ Lệnh SX', query: 'Tiến độ các lệnh sản xuất gần đây', desc: 'Trạng thái bài in, công đoạn' },
-      { id: 'qc', title: 'Duyệt mẫu QC', query: 'Kết quả các phiếu duyệt mẫu QC gần đây', desc: 'Mẫu in lụa đạt / hỏng' },
     ],
   },
   {
@@ -157,8 +163,14 @@ const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
   // Label cho nút submit
   const submitLabels = {
     create_customer: '👥 Tạo khách hàng',
-    create_finance_voucher: '💰 Tạo phiếu',
+    create_finance_voucher: '💰 Tạo phiếu thu/chi',
     create_quotation: '📋 Tạo báo giá',
+    create_material: '📦 Thêm vật tư vào kho',
+    create_chemical: '🧪 Thêm hóa chất / mực',
+    create_inventory_transaction: '📦 Lập phiếu BTP',
+    create_print_formula: '📑 Tạo công thức mẫu in',
+    create_production_order: '🏭 Tạo Lệnh Sản Xuất',
+    create_qc_inspection: '🔍 Lập phiếu duyệt QC',
   };
 
   return (
