@@ -80,10 +80,38 @@ const handleDirectActions = async (message, user) => {
   const lower = message.toLowerCase().trim();
   const userName = user?.name || 'Admin';
 
-  // 1. Tác vụ: TẠO TASK / TODO VỚI ĐẦY ĐỦ THÔNG TIN MODAL
+  // 1. Tác vụ: TẠO TASK / TODO (INTERACTIVE DIALOG)
   if (lower.startsWith('tạo task') || lower.startsWith('tạo việc') || lower.startsWith('thêm task') || lower.startsWith('thêm việc') || lower.startsWith('lập task')) {
     let rawText = message.replace(/^(tạo task|tạo việc|thêm task|thêm việc|lập task)[:\s]*/i, '').trim();
-    if (!rawText) rawText = 'Công việc mới cần xử lý';
+
+    // Nếu người dùng chỉ gõ "Tạo task" hoặc không có tiêu đề rõ ràng -> Mở Inline Form
+    if (!rawText || rawText.length < 3) {
+      const formFields = [
+        { key: 'title', label: '📌 Tiêu đề công việc', type: 'text', required: true, value: '', placeholder: 'VD: Kiểm tra máy in số 2 lúc 8h sáng' },
+        { key: 'priority', label: '🏷️ Mức độ ưu tiên', type: 'select', required: true, value: 'medium', options: [
+          { value: 'urgent', label: '🔥 Khẩn cấp' },
+          { value: 'high', label: '🔶 Cao' },
+          { value: 'medium', label: '🔵 Trung bình' },
+          { value: 'low', label: '⚪ Thấp' },
+        ]},
+        { key: 'category', label: '📂 Phân loại danh mục', type: 'select', required: true, value: 'general', options: [
+          { value: 'production', label: '🏭 Sản xuất & Máy in' },
+          { value: 'purchasing', label: '🛒 Mua hàng & NVL' },
+          { value: 'finance', label: '💰 Tài chính & Quỹ' },
+          { value: 'general', label: '📋 Công việc chung' },
+        ]},
+        { key: 'assignedTo', label: '👤 Người phụ trách', type: 'text', required: false, value: userName, placeholder: 'VD: Anh Nam, Anh Hùng' },
+        { key: 'description', label: '📝 Ghi chú chi tiết', type: 'text', required: false, value: '', placeholder: 'Nội dung chi tiết cần thực hiện' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_todo',
+        formFields,
+        response: `📝 **TẠO CÔNG VIỆC MỚI VÀO TODO LIST**\n\nVui lòng điền thông tin công việc bên dưới rồi bấm **"Tạo công việc vào Todo"**:`,
+      };
+    }
 
     // 1.1 Trích xuất Mức độ ưu tiên (Priority)
     let priority = 'medium';
@@ -233,23 +261,59 @@ const handleDirectActions = async (message, user) => {
     }
   }
 
-  // 4. Tác vụ: TẠO ĐƠN ĐẶT NGUYÊN VẬT LIỆU
-  if (lower.startsWith('đặt nvl') || lower.startsWith('tạo đơn đặt') || lower.startsWith('đặt hàng nvl') || lower.startsWith('mua nvl') || lower.startsWith('đặt mua')) {
-    const orderText = message.replace(/^(đặt nvl|tạo đơn đặt|đặt hàng nvl|mua nvl|đặt mua)[:\s]*/i, '').trim();
+  // 4. Tác vụ: TẠO ĐƠN ĐẶT NGUYÊN VẬT LIỆU (INTERACTIVE DIALOG)
+  if (lower.startsWith('đặt ') || lower.startsWith('tạo đơn đặt') || lower.startsWith('đặt nvl') || lower.startsWith('mua nvl') || lower.startsWith('đặt mua') || lower.startsWith('đặt hàng')) {
+    const orderText = message.replace(/^(đặt nvl|tạo đơn đặt|đặt hàng nvl|mua nvl|đặt mua|đặt hàng|đặt)[:\s]*/i, '').trim();
     const qtyMatch = orderText.match(/(\d+(?:\.\d+)?)/);
-    const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 10;
+    const qty = qtyMatch ? parseFloat(qtyMatch[1]) : 0;
     
+    // Tìm đơn vị
+    let unit = 'Ram';
+    const unitMatch = orderText.match(/(ram|kg|thùng|hộp|cuộn|tờ|tấm)/i);
+    if (unitMatch) unit = unitMatch[1];
+
     // Tìm tên vật tư
-    let matName = orderText.replace(/(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn)?/i, '').replace(/(từ|ncc|của|ở).*/i, '').trim();
-    if (!matName) matName = 'Vật tư theo yêu cầu';
+    let matName = orderText
+      .replace(/(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn|tờ|tấm)?/i, '')
+      .replace(/(?:từ|ncc|của|ở)\s+([a-zA-Z0-9\s\-_]+)/i, '')
+      .trim();
 
     // Tìm nhà cung cấp nếu có
     const suppMatch = orderText.match(/(?:từ|ncc|của)\s+([a-zA-Z0-9\s\-_]+)/i);
-    const supplierName = suppMatch ? suppMatch[1].trim() : 'NCC Chỉ định';
+    const supplierName = suppMatch ? suppMatch[1].trim() : '';
 
+    // Nếu tên vật tư chung chung (như "giấy", "vật tư", "nvl" hoặc rỗng) hoặc thiếu NCC -> Trả Inline Form
+    const isGenericName = !matName || matName.length < 3 || ['giấy', 'vật tư', 'nvl', 'hàng', 'mực', 'giay', 'vat tu'].includes(matName.toLowerCase());
+
+    if (isGenericName || !supplierName || qty <= 0) {
+      const formFields = [
+        { key: 'materialName', label: '📄 Tên loại vật tư cần đặt', type: 'text', required: true, value: isGenericName ? '' : matName, placeholder: 'VD: Giấy Couche 250 Gsm (Khổ 65x86)' },
+        { key: 'quantity', label: '📊 Số lượng đặt mua', type: 'number', required: true, value: qty > 0 ? String(qty) : '50', placeholder: 'VD: 50' },
+        { key: 'materialUnit', label: '📏 Đơn vị tính', type: 'select', required: true, value: unit, options: [
+          { value: 'Ram', label: 'Ram (Giấy in)' },
+          { value: 'Cuộn', label: 'Cuộn (Màng/Decal)' },
+          { value: 'Tấm', label: 'Tấm (Kẽm CTP)' },
+          { value: 'Kg', label: 'Kg (Mực/Vật liệu)' },
+          { value: 'Thùng', label: 'Thùng' },
+          { value: 'Tờ', label: 'Tờ (Giấy rời)' },
+        ]},
+        { key: 'supplier', label: '🏢 Nhà cung cấp (NCC)', type: 'text', required: false, value: supplierName || '', placeholder: 'VD: Giấy Thuận An / Ánh Sáng' },
+        { key: 'note', label: '📝 Ghi chú đơn đặt', type: 'text', required: false, value: '', placeholder: 'Giao gấp buổi sáng, giao tại xưởng...' },
+      ];
+
+      return {
+        handled: true,
+        action: 'form_collect',
+        formAction: 'create_material_order',
+        formFields,
+        response: `🛒 **TẠO ĐƠN ĐẶT HÀNG NGUYÊN VẬT LIỆU**\n\nTôi đã nhận diện số lượng: **${qty > 0 ? qty : 50} ${unit}**.\nVui lòng điền cụ thể tên vật tư và nhà cung cấp bên dưới rồi bấm **"Tạo đơn đặt NVL"**:`,
+      };
+    }
+
+    // Đủ thông tin -> Tạo ngay
     const newOrder = await MaterialOrder.create({
       materialName: matName,
-      materialUnit: 'Ram',
+      materialUnit: unit,
       quantity: qty,
       supplier: supplierName,
       orderDate: new Date(),
@@ -263,7 +327,7 @@ const handleDirectActions = async (message, user) => {
       handled: true,
       action: 'create_material_order',
       data: newOrder,
-      response: `🛒 **Đã lên đơn đặt hàng NVL mới:**\n- **Mã đơn:** \`${newOrder.orderCode || 'Đang tạo'}\`\n- **Vật tư:** ${newOrder.materialName}\n- **Số lượng đặt:** ${newOrder.quantity} ${newOrder.materialUnit}\n- **Nhà cung cấp:** ${newOrder.supplier}\n- **Trạng thái:** Đã đặt hàng (Chờ hàng về)\n\n*Khi hàng về kho, bạn có thể nói "Đơn ${newOrder.materialName} đã về" để tôi tự động cộng vào tồn kho.*`,
+      response: `🛒 **ĐÃ LẬP ĐƠN ĐẶT HÀNG NVL MỚI!**\n\n- 📄 **Mã đơn:** \`${newOrder.orderCode || 'PO-NEW'}\`\n- 📦 **Vật tư:** **${newOrder.materialName}**\n- 📊 **Số lượng đặt:** **${newOrder.quantity} ${newOrder.materialUnit}**\n- 🏢 **Nhà cung cấp:** **${newOrder.supplier}**\n- ⏳ **Trạng thái:** Đã đặt hàng (Chờ hàng về)\n\n*Khi hàng về kho, bạn có thể nói "Đơn ${newOrder.materialName} đã về" để tôi tự động cộng vào tồn kho.*`,
     };
   }
 
@@ -955,6 +1019,53 @@ const handleDirectActions = async (message, user) => {
           action: 'create_qc_inspection',
           data: newQC,
           response: `🔍 **ĐÃ LẬP PHIẾU KIỂM TRA QC THÀNH CÔNG!**\n\n- 📄 **Mã phiếu:** \`${newQC.inspectionCode}\`\n- 🏭 **Đơn hàng:** **${newQC.orderName}**\n- ⏱️ **Giai đoạn:** ${newQC.sampleType === 'first_off' ? 'Đầu chuyền' : newQC.sampleType === 'inline' ? 'Giữa chuyền' : 'Hoàn thiện'}\n- 👤 **Người kiểm:** ${newQC.inspector}\n- 🏆 **Kết luận:** **${vLabel}**\n\n*Xem chi tiết phiếu tại [Duyệt mẫu QC](/admin/qc-inspection).*`,
+        };
+      }
+
+      // 13J. Tạo Todo Task từ form
+      if (_formAction === 'create_todo') {
+        if (!fields.title) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tiêu đề công việc**.' };
+        }
+        const newTodo = await Todo.create({
+          title: fields.title,
+          priority: fields.priority || 'medium',
+          category: fields.category || 'general',
+          assignedTo: fields.assignedTo || userName,
+          dueDate: fields.dueDate ? new Date(fields.dueDate) : undefined,
+          description: fields.description || 'Tạo từ AI Agent Form',
+          status: 'pending',
+        });
+        return {
+          handled: true,
+          action: 'create_todo',
+          data: newTodo,
+          response: `✅ **ĐÃ TẠO CÔNG VIỆC MỚI VÀO TODO LIST THÀNH CÔNG!**\n\n- 📌 **Tiêu đề:** **${newTodo.title}**\n- 🏷️ **Ưu tiên:** ${newTodo.priority}\n- 📂 **Danh mục:** ${newTodo.category}\n- 👤 **Người làm:** ${newTodo.assignedTo}\n\n*Đã cập nhật vào [Quản lý Nhiệm vụ](/admin/tasks).*`,
+        };
+      }
+
+      // 13K. Tạo Đơn Đặt NVL từ form
+      if (_formAction === 'create_material_order') {
+        if (!fields.materialName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng chọn hoặc nhập **Tên vật tư** cần đặt.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '10').replace(/[.,]/g, '')) || 10;
+        const newOrder = await MaterialOrder.create({
+          materialName: fields.materialName,
+          materialUnit: fields.materialUnit || 'Ram',
+          quantity: qty,
+          supplier: fields.supplier || 'NCC Chỉ định',
+          orderDate: new Date(),
+          isOrdered: true,
+          isDelivered: false,
+          note: fields.note || 'Tạo bởi AI Agent Form',
+          createdBy: userName,
+        });
+        return {
+          handled: true,
+          action: 'create_material_order',
+          data: newOrder,
+          response: `🛒 **ĐÃ LẬP ĐƠN ĐẶT HÀNG NVL THÀNH CÔNG!**\n\n- 📄 **Mã đơn:** \`${newOrder.orderCode || 'PO-NEW'}\`\n- 📦 **Vật tư:** **${newOrder.materialName}**\n- 📊 **Số lượng:** **${newOrder.quantity} ${newOrder.materialUnit}**\n- 🏢 **Nhà cung cấp:** **${newOrder.supplier}**\n- ⏳ **Trạng thái:** Đã đặt hàng (Chờ hàng về)\n\n*Khi hàng về kho, bạn chỉ cần chat "Đơn ${newOrder.materialName} đã về" để AI tự động cộng kho.*`,
         };
       }
 

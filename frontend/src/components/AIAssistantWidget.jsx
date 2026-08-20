@@ -162,6 +162,8 @@ const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
 
   // Label cho nút submit
   const submitLabels = {
+    create_todo: '📝 Tạo công việc vào Todo',
+    create_material_order: '🛒 Tạo đơn đặt NVL',
     create_customer: '👥 Tạo khách hàng',
     create_finance_voucher: '💰 Tạo phiếu thu/chi',
     create_quotation: '📋 Tạo báo giá',
