@@ -1397,6 +1397,14 @@ const handleDirectActions = async (message, user) => {
         }
       } else {
         return {
+          handled: true,
+          action: 'customer_not_found',
+          response: `⚠️ Không tìm thấy khách hàng **"${custName}"** trong danh bạ.`,
+        };
+      }
+    }
+  }
+
   // ================================================================
   // 21. Tác vụ: THÊM VẬT TƯ MỚI VÀO KHO (INTERACTIVE DIALOG)
   // ================================================================
