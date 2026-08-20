@@ -8,7 +8,7 @@ import {
   FaUsers, FaTasks, FaShoppingCart, FaClipboardCheck,
   FaCalculator, FaChevronDown, FaCheckCircle, FaMinus,
   FaThLarge, FaLightbulb, FaChevronLeft, FaChevronRight,
-  FaArrowRight, FaMagic, FaCheck, FaSpinner
+  FaArrowRight, FaMagic, FaCheck, FaSpinner, FaTachometerAlt
 } from 'react-icons/fa';
 
 // Phân nhóm danh mục gợi ý tác vụ chuyên nghiệp
