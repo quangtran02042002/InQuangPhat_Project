@@ -505,6 +505,26 @@ const handleDirectActions = async (message, user) => {
       }
     }
   }
+  // 9B. Fallback form khi NLP không bóc tách đủ info xuất kho
+  if ((lower.includes('xuất kho') || lower.includes('trừ kho') || lower.includes('trừ tồn kho')) && !exportMatch) {
+    const partialQty = (message.match(/(\d+)/)||[])[1] || '';
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'materialName', label: '📦 Tên vật tư', type: 'text', required: true, placeholder: 'VD: Couche 250gsm, Ivory 300...' },
+        { key: 'quantity', label: '📊 Số lượng xuất', type: 'number', required: true, value: partialQty, placeholder: 'VD: 50' },
+        { key: 'unit', label: '📐 Đơn vị', type: 'select', required: false, options: [
+          { value: 'Ram', label: 'Ram' }, { value: 'Kg', label: 'Kg' }, { value: 'Cuộn', label: 'Cuộn' },
+          { value: 'Thùng', label: 'Thùng' }, { value: 'Hộp', label: 'Hộp' }, { value: 'Bình', label: 'Bình' },
+          { value: 'Tờ', label: 'Tờ' }, { value: 'Cái', label: 'Cái' },
+        ]},
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: Xuất cho đơn ABC' },
+      ],
+      formAction: 'export_material',
+      response: '📦 **XUẤT KHO VẬT TƯ** — Vui lòng điền thông tin bên dưới:',
+    };
+  }
 
   // 10. Tác vụ: NHẬP KHO / CỘNG TỒN KHO VẬT TƯ
   const importMatch = lower.match(/(?:nhập|cộng|thêm)\s+(\d+(?:\.\d+)?)\s*(ram|kg|thùng|hộp|cuộn|bình|cái|tờ)?\s*(?:giấy|vật tư|kho)?\s*([a-zA-Z0-9\s\-_]+)/i);
@@ -542,6 +562,27 @@ const handleDirectActions = async (message, user) => {
         };
       }
     }
+  }
+
+  // 10B. Fallback form khi NLP không bóc tách đủ info nhập kho
+  if ((lower.includes('nhập kho') || lower.includes('cộng kho') || lower.includes('cộng tồn kho')) && !importMatch) {
+    const partialQty = (message.match(/(\d+)/)||[])[1] || '';
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'materialName', label: '📦 Tên vật tư', type: 'text', required: true, placeholder: 'VD: Couche 250gsm, Ivory 300...' },
+        { key: 'quantity', label: '📊 Số lượng nhập', type: 'number', required: true, value: partialQty, placeholder: 'VD: 100' },
+        { key: 'unit', label: '📐 Đơn vị', type: 'select', required: false, options: [
+          { value: 'Ram', label: 'Ram' }, { value: 'Kg', label: 'Kg' }, { value: 'Cuộn', label: 'Cuộn' },
+          { value: 'Thùng', label: 'Thùng' }, { value: 'Hộp', label: 'Hộp' }, { value: 'Bình', label: 'Bình' },
+          { value: 'Tờ', label: 'Tờ' }, { value: 'Cái', label: 'Cái' },
+        ]},
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: Nhập từ NCC Thuận An' },
+      ],
+      formAction: 'import_material',
+      response: '📥 **NHẬP KHO VẬT TƯ** — Vui lòng điền thông tin bên dưới:',
+    };
   }
 
   // 11. Tác vụ: TẠO LỆNH SẢN XUẤT (PRODUCTION ORDER) - INTERACTIVE DIALOG
@@ -1069,6 +1110,143 @@ const handleDirectActions = async (message, user) => {
         };
       }
 
+      // 13L. Xuất kho vật tư từ form
+      if (_formAction === 'export_material') {
+        if (!fields.materialName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên vật tư** cần xuất.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '0').replace(/[.,]/g, '')) || 0;
+        if (qty <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Số lượng xuất** phải lớn hơn 0.' };
+        }
+        const material = await Material.findOne({ name: { $regex: fields.materialName, $options: 'i' } });
+        if (!material) {
+          return { handled: true, action: 'form_error', response: `❌ Không tìm thấy vật tư **"${fields.materialName}"** trong kho. Vui lòng kiểm tra lại tên.` };
+        }
+        const oldQty = material.quantity || 0;
+        const newQty = Math.max(0, oldQty - qty);
+        material.quantity = newQty;
+        await material.save();
+        await MaterialDispatch.create({
+          material: material._id, materialName: material.name,
+          quantity: qty, unit: fields.unit || material.unit || 'Ram',
+          type: 'export', notes: fields.note || 'Xuất kho qua AI Form',
+          performedBy: userName,
+        }).catch(() => {});
+        return {
+          handled: true, action: 'export_material', data: { material, oldQty, newQty, qty },
+          response: `📦 **ĐÃ XUẤT KHO VẬT TƯ THÀNH CÔNG!**\n\n- 📦 **Vật tư:** **${material.name}**\n- 📉 **Số lượng xuất:** ${qty} ${material.unit}\n- 📊 **Tồn kho trước:** ${oldQty} ${material.unit}\n- 📦 **Tồn kho hiện tại:** **${newQty} ${material.unit}**\n\n*Đã ghi nhật ký xuất kho tại [Kho Vật tư](/admin/materials).*`,
+        };
+      }
+
+      // 13M. Nhập kho vật tư từ form
+      if (_formAction === 'import_material') {
+        if (!fields.materialName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên vật tư** cần nhập kho.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '0').replace(/[.,]/g, '')) || 0;
+        if (qty <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Số lượng nhập** phải lớn hơn 0.' };
+        }
+        const material = await Material.findOne({ name: { $regex: fields.materialName, $options: 'i' } });
+        if (!material) {
+          return { handled: true, action: 'form_error', response: `❌ Không tìm thấy vật tư **"${fields.materialName}"** trong kho. Vui lòng kiểm tra lại tên hoặc tạo mới vật tư trước.` };
+        }
+        const oldQty = material.quantity || 0;
+        const newQty = oldQty + qty;
+        material.quantity = newQty;
+        await material.save();
+        await MaterialDispatch.create({
+          material: material._id, materialName: material.name,
+          quantity: qty, unit: fields.unit || material.unit || 'Ram',
+          type: 'import', notes: fields.note || 'Nhập kho qua AI Form',
+          performedBy: userName,
+        }).catch(() => {});
+        return {
+          handled: true, action: 'import_material', data: { material, oldQty, newQty, qty },
+          response: `📥 **ĐÃ NHẬP KHO VẬT TƯ THÀNH CÔNG!**\n\n- 📦 **Vật tư:** **${material.name}**\n- 📈 **Số lượng nhập:** +${qty} ${material.unit}\n- 📊 **Tồn kho trước:** ${oldQty} ${material.unit}\n- 📦 **Tồn kho hiện tại:** **${newQty} ${material.unit}**\n\n*Đã ghi nhật ký nhập kho tại [Kho Vật tư](/admin/materials).*`,
+        };
+      }
+
+      // 13N. Ghi nhận thanh toán công nợ phải thu từ form
+      if (_formAction === 'receivable_payment') {
+        if (!fields.customerName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên khách hàng**.' };
+        }
+        const payAmount = parseFloat(String(fields.amount || '0').replace(/[.,]/g, '')) || 0;
+        if (payAmount <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Số tiền thanh toán** phải lớn hơn 0.' };
+        }
+        const receivable = await Receivable.findOne({
+          customerName: { $regex: fields.customerName, $options: 'i' },
+          status: { $ne: 'paid' },
+        }).sort({ outstandingAmount: -1 });
+        if (!receivable) {
+          return { handled: true, action: 'form_error', response: `⚠️ Không tìm thấy khoản công nợ phải thu của **"${fields.customerName}"** đang còn nợ.\n\nVui lòng kiểm tra tại [Công nợ Phải thu](/admin/finance).` };
+        }
+        const oldPaid = receivable.paidAmount || 0;
+        receivable.paidAmount = oldPaid + payAmount;
+        await receivable.save();
+        return {
+          handled: true, action: 'receivable_payment', data: receivable,
+          response: `✅ **ĐÃ GHI NHẬN THANH TOÁN CÔNG NỢ PHẢI THU!**\n\n- 🏢 **Khách hàng:** ${receivable.customerName}\n- 💰 **Số tiền TT:** **${payAmount.toLocaleString('vi-VN')} VNĐ**\n- 📊 **Đã TT tổng:** ${receivable.paidAmount.toLocaleString('vi-VN')} / ${receivable.totalAmount.toLocaleString('vi-VN')} VNĐ\n- 💸 **Còn nợ:** **${receivable.outstandingAmount.toLocaleString('vi-VN')} VNĐ**\n- 📋 **Trạng thái:** ${receivable.status === 'paid' ? '🟢 Đã thanh toán đủ' : '🟡 Thanh toán một phần'}\n\n*Đã cập nhật [Công nợ Phải thu](/admin/finance).*`,
+        };
+      }
+
+      // 13O. Thanh toán công nợ phải trả từ form
+      if (_formAction === 'payable_payment') {
+        if (!fields.supplierName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên nhà cung cấp**.' };
+        }
+        const payAmount = parseFloat(String(fields.amount || '0').replace(/[.,]/g, '')) || 0;
+        if (payAmount <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Số tiền thanh toán** phải lớn hơn 0.' };
+        }
+        const payable = await Payable.findOne({
+          supplierName: { $regex: fields.supplierName, $options: 'i' },
+          status: { $ne: 'paid' },
+        }).sort({ outstandingAmount: -1 });
+        if (!payable) {
+          return { handled: true, action: 'form_error', response: `⚠️ Không tìm thấy khoản công nợ phải trả cho NCC **"${fields.supplierName}"** đang còn nợ.\n\nVui lòng kiểm tra tại [Công nợ Phải trả](/admin/finance).` };
+        }
+        const oldPaid = payable.paidAmount || 0;
+        payable.paidAmount = oldPaid + payAmount;
+        await payable.save();
+        return {
+          handled: true, action: 'payable_payment', data: payable,
+          response: `✅ **ĐÃ GHI NHẬN THANH TOÁN CHO NHÀ CUNG CẤP!**\n\n- 🏭 **NCC:** ${payable.supplierName}\n- 💰 **Số tiền TT:** **${payAmount.toLocaleString('vi-VN')} VNĐ**\n- 📊 **Đã trả tổng:** ${payable.paidAmount.toLocaleString('vi-VN')} / ${payable.totalAmount.toLocaleString('vi-VN')} VNĐ\n- 💸 **Còn phải trả:** **${payable.outstandingAmount.toLocaleString('vi-VN')} VNĐ**\n- 📋 **Trạng thái:** ${payable.status === 'paid' ? '🟢 Đã thanh toán đủ' : '🟡 Thanh toán một phần'}\n\n*Đã cập nhật [Công nợ Phải trả](/admin/finance).*`,
+        };
+      }
+
+      // 13P. Xuất kho hóa chất / mực từ form
+      if (_formAction === 'export_chemical') {
+        if (!fields.chemicalName) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên hóa chất / mực** cần xuất.' };
+        }
+        const qty = parseFloat(String(fields.quantity || '0').replace(/[.,]/g, '')) || 0;
+        if (qty <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Số lượng xuất** phải lớn hơn 0.' };
+        }
+        const chem = await Chemical.findOne({ name: { $regex: fields.chemicalName, $options: 'i' } });
+        if (!chem) {
+          return { handled: true, action: 'form_error', response: `❌ Không tìm thấy hóa chất **"${fields.chemicalName}"** trong kho. Vui lòng kiểm tra lại tên.` };
+        }
+        const oldQty = chem.quantity || 0;
+        const newQty = Math.max(0, oldQty - qty);
+        chem.quantity = newQty;
+        await chem.save();
+        await ChemicalDispatch.create({
+          type: 'xuat',
+          items: [{ chemical: chem._id, chemicalName: chem.name, chemicalUnit: fields.unit || chem.unit || 'Can', quantity: qty, quantityAfter: newQty }],
+          recipient: userName, note: fields.note || 'Xuất kho qua AI Form',
+          createdBy: userName, status: 'approved', approvedBy: userName, approvedAt: new Date(),
+        }).catch(() => {});
+        return {
+          handled: true, action: 'export_chemical', data: { chem, oldQty, newQty, qty },
+          response: `🧪 **ĐÃ XUẤT KHO HÓA CHẤT / MỰC THÀNH CÔNG!**\n\n- 🧪 **Tên:** ${chem.name}\n- 📉 **Số lượng xuất:** ${qty} ${chem.unit}\n- 📊 **Tồn trước:** ${oldQty} ${chem.unit}\n- 📦 **Tồn hiện tại:** **${newQty} ${chem.unit}**\n\n*Đã ghi nhật ký xuất kho tại [Kho Hóa chất & Mực](/admin/chemicals).*`,
+        };
+      }
+
       return { handled: true, action: 'form_error', response: '❌ Không nhận diện được loại form. Vui lòng thử lại.' };
     } catch (parseErr) {
       console.error('Form parse error:', parseErr);
@@ -1237,6 +1415,25 @@ const handleDirectActions = async (message, user) => {
       }
     }
   }
+  // 15B. Fallback form khi NLP không bóc tách đủ info thanh toán phải thu
+  if ((lower.includes('thanh toán') || lower.includes('thu nợ') || lower.includes('trả nợ')) && (lower.includes('khách') || lower.includes('phải thu')) && !((lower.includes('thanh toán') || lower.includes('trả tiền') || lower.includes('trả nợ') || lower.includes('thu nợ')) && custName && custName.length >= 2)) {
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'customerName', label: '🏢 Tên khách hàng', type: 'text', required: true, placeholder: 'VD: Công ty TNHH ABC' },
+        { key: 'amount', label: '💰 Số tiền thanh toán (VNĐ)', type: 'number', required: true, placeholder: 'VD: 5000000' },
+        { key: 'paymentMethod', label: '💳 Hình thức thanh toán', type: 'select', required: false, options: [
+          { value: 'bank_transfer', label: 'Chuyển khoản' },
+          { value: 'cash', label: 'Tiền mặt' },
+          { value: 'other', label: 'Khác' },
+        ]},
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: TT đợt 1 đơn hàng XYZ' },
+      ],
+      formAction: 'receivable_payment',
+      response: '💰 **GHI NHẬN THANH TOÁN NỢ PHẢI THU** — Vui lòng điền thông tin bên dưới:',
+    };
+  }
 
   // ================================================================
   // 16. Tác vụ: THANH TOÁN CÔNG NỢ PHẢI TRẢ (PAYABLE PAYMENT)
@@ -1282,6 +1479,25 @@ const handleDirectActions = async (message, user) => {
         };
       }
     }
+  }
+  // 16B. Fallback form khi NLP không bóc tách đủ info thanh toán phải trả
+  if ((lower.includes('trả tiền ncc') || lower.includes('thanh toán ncc') || lower.includes('trả nợ ncc') || lower.includes('thanh toán nhà cung cấp') || lower.includes('trả tiền nhà cung cấp') || lower.includes('thanh toán cho ncc') || lower.includes('phải trả')) && !lower.includes('khách')) {
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'supplierName', label: '🏭 Tên nhà cung cấp', type: 'text', required: true, placeholder: 'VD: NCC Thuận An, NCC Ánh Sáng...' },
+        { key: 'amount', label: '💰 Số tiền thanh toán (VNĐ)', type: 'number', required: true, placeholder: 'VD: 10000000' },
+        { key: 'paymentMethod', label: '💳 Hình thức thanh toán', type: 'select', required: false, options: [
+          { value: 'bank_transfer', label: 'Chuyển khoản' },
+          { value: 'cash', label: 'Tiền mặt' },
+          { value: 'other', label: 'Khác' },
+        ]},
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: TT lô giấy tháng 8' },
+      ],
+      formAction: 'payable_payment',
+      response: '💸 **THANH TOÁN CÔNG NỢ NHÀ CUNG CẤP** — Vui lòng điền thông tin bên dưới:',
+    };
   }
 
   // ================================================================
@@ -1729,6 +1945,26 @@ const handleDirectActions = async (message, user) => {
         };
       }
     }
+  }
+
+  // 23B. Fallback form khi NLP không bóc tách đủ info xuất hóa chất
+  if ((lower.includes('xuất hóa chất') || lower.includes('xuất mực') || lower.includes('xuất cồn') || lower.includes('xuất keo') || lower.includes('trừ hóa chất') || lower.includes('trừ mực')) && !chemExportMatch) {
+    const partialQty = (message.match(/(\d+)/)||[])[1] || '';
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'chemicalName', label: '🧪 Tên hóa chất / mực', type: 'text', required: true, placeholder: 'VD: Mực đen offset, Cồn IPA, Keo phủ UV...' },
+        { key: 'quantity', label: '📊 Số lượng xuất', type: 'number', required: true, value: partialQty, placeholder: 'VD: 5' },
+        { key: 'unit', label: '📐 Đơn vị', type: 'select', required: false, options: [
+          { value: 'Can', label: 'Can' }, { value: 'Lít', label: 'Lít' }, { value: 'Bình', label: 'Bình' },
+          { value: 'Kg', label: 'Kg' }, { value: 'Thùng', label: 'Thùng' }, { value: 'Hộp', label: 'Hộp' },
+        ]},
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: Xuất cho máy 1' },
+      ],
+      formAction: 'export_chemical',
+      response: '🧪 **XUẤT KHO HÓA CHẤT / MỰC** — Vui lòng điền thông tin bên dưới:',
+    };
   }
 
   // ================================================================

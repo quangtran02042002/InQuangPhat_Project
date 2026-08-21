@@ -173,6 +173,11 @@ const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
     create_print_formula: '📑 Tạo công thức mẫu in',
     create_production_order: '🏭 Tạo Lệnh Sản Xuất',
     create_qc_inspection: '🔍 Lập phiếu duyệt QC',
+    export_material: '📦 Xuất kho vật tư',
+    import_material: '📥 Nhập kho vật tư',
+    receivable_payment: '💰 Ghi nhận thanh toán',
+    payable_payment: '💸 Thanh toán cho NCC',
+    export_chemical: '🧪 Xuất kho hóa chất / mực',
   };
 
   return (
