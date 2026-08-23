@@ -15,6 +15,10 @@ const Supplier = require('../models/Supplier');
 const Product = require('../models/Product');
 const Machine = require('../models/Machine');
 const News = require('../models/News');
+const PaperPrice = require('../models/PaperPrice');
+const InkPrice = require('../models/InkPrice');
+const MaterialPrice = require('../models/MaterialPrice');
+const FinishingPrice = require('../models/FinishingPrice');
 
 // ============================================================================
 // HELPER: LẤY TOÀN BỘ NGỮ CẢNH DỮ LIỆU THỰC TẾ TỪ DATABASE (LIVE CONTEXT)
@@ -1365,6 +1369,130 @@ const handleDirectActions = async (message, user) => {
           action: 'create_user',
           data: { _id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role },
           response: `👤 **ĐÃ TẠO TÀI KHOẢN NHÂN VIÊN MỚI THÀNH CÔNG!**\n\n- 👤 **Họ tên:** **${newUser.name}**\n- 📧 **Email đăng nhập:** \`${newUser.email}\`\n- 🔑 **Mật khẩu khởi tạo:** \`${rawPassword}\`\n- 🛡️ **Vai trò:** **${roleLabels[newUser.role] || newUser.role}**\n- 📞 **SĐT:** ${newUser.phone || 'Chưa cập nhật'}\n\n*Quản lý phân quyền tại [Tài khoản & Phân quyền](/admin/users).*`,
+        };
+      }
+
+      // 13U. Thêm Nhà Cung Cấp mới từ form
+      if (_formAction === 'create_supplier') {
+        if (!fields.name || !fields.phone) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên NCC** và **Số điện thoại**.' };
+        }
+        let creatorId = user?._id;
+        if (!creatorId) {
+          const firstAdmin = await User.findOne({}).lean();
+          creatorId = firstAdmin ? firstAdmin._id : null;
+        }
+        if (!creatorId) {
+          return { handled: true, action: 'form_error', response: '❌ Không xác định được tài khoản tạo NCC.' };
+        }
+
+        const newSupplier = await Supplier.create({
+          name: fields.name.trim(),
+          phone: fields.phone.trim(),
+          contactName: fields.contactName || '',
+          productsProvided: fields.productsProvided || 'Vật tư in ấn',
+          address: fields.address || '',
+          note: fields.note || 'Tạo từ AI Agent Form',
+          user: creatorId,
+        });
+
+        return {
+          handled: true,
+          action: 'create_supplier',
+          data: newSupplier,
+          response: `🚚 **ĐÃ THÊM NHÀ CUNG CẤP MỚI THÀNH CÔNG!**\n\n- 🏢 **Tên NCC:** **${newSupplier.name}**\n- 📞 **Hotline/SĐT:** **${newSupplier.phone}**\n- 👤 **Người phụ trách:** ${newSupplier.contactName || 'Chưa cập nhật'}\n- 📦 **Mặt hàng cung cấp:** ${newSupplier.productsProvided}\n- 📍 **Địa chỉ:** ${newSupplier.address || 'Chưa cập nhật'}\n\n*Quản lý danh bạ NCC tại [Nhà Cung Cấp](/admin/supplierlist).*`,
+        };
+      }
+
+      // 13V. Lưu Bảng Giá Giấy In từ form
+      if (_formAction === 'create_paper_price') {
+        if (!fields.paperType || !fields.dimensions) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Loại giấy** và **Khổ giấy**.' };
+        }
+        const priceNum = parseFloat(String(fields.price || '0').replace(/[.,]/g, '')) || 0;
+        if (priceNum <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Đơn giá giấy** phải lớn hơn 0.' };
+        }
+        const dim = fields.dimensions.trim();
+        const unit = fields.unit || 'đ/tờ';
+        const supplier = fields.supplier || 'Chung';
+
+        let paperDoc = await PaperPrice.findOne({ paperType: { $regex: `^${fields.paperType.trim()}$`, $options: 'i' } });
+        if (paperDoc) {
+          const existingSizeIdx = paperDoc.sizes.findIndex(s => s.dimensions.toLowerCase() === dim.toLowerCase());
+          if (existingSizeIdx >= 0) {
+            paperDoc.sizes[existingSizeIdx].price = priceNum;
+            paperDoc.sizes[existingSizeIdx].unit = unit;
+          } else {
+            paperDoc.sizes.push({ dimensions: dim, price: priceNum, unit });
+          }
+          if (fields.supplier) paperDoc.supplier = supplier;
+          await paperDoc.save();
+        } else {
+          paperDoc = await PaperPrice.create({
+            paperType: fields.paperType.trim(),
+            supplier,
+            sizes: [{ dimensions: dim, price: priceNum, unit }],
+          });
+        }
+
+        return {
+          handled: true,
+          action: 'create_paper_price',
+          data: paperDoc,
+          response: `📑 **ĐÃ CẬP NHẬT BẢNG GIÁ GIẤY IN THÀNH CÔNG!**\n\n- 📄 **Loại giấy:** **${paperDoc.paperType}**\n- 📐 **Khổ giấy:** \`${dim}\`\n- 💰 **Đơn giá:** **${priceNum.toLocaleString('vi-VN')} ${unit}**\n- 🏢 **Nguồn nhập/NCC:** ${paperDoc.supplier || 'Chung'}\n\n*Xem bảng giá đầy đủ tại [Bảng giá Giấy](/admin/paper-prices).*`,
+        };
+      }
+
+      // 13W. Lưu Bảng Giá Mực In từ form
+      if (_formAction === 'create_ink_price') {
+        if (!fields.inkType || !fields.brand) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Loại mực** và **Hãng sản xuất**.' };
+        }
+        const priceNum = parseFloat(String(fields.price || '0').replace(/[.,]/g, '')) || 0;
+        if (priceNum <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Đơn giá mực** phải lớn hơn 0.' };
+        }
+        const unit = fields.unit || 'đ/kg';
+        const newInk = await InkPrice.create({
+          inkType: fields.inkType.trim(),
+          brand: fields.brand.trim(),
+          price: priceNum,
+          unit,
+          supplier: fields.supplier || 'Chung',
+          note: fields.note || 'AI Form cập nhật',
+        });
+        return {
+          handled: true,
+          action: 'create_ink_price',
+          data: newInk,
+          response: `🧪 **ĐÃ LƯU BẢNG GIÁ MỰC IN THÀNH CÔNG!**\n\n- 🎨 **Loại mực:** **${newInk.inkType}**\n- 🏷️ **Hãng sản xuất:** **${newInk.brand}**\n- 💰 **Đơn giá:** **${priceNum.toLocaleString('vi-VN')} ${unit}**\n- 🏢 **Nhà cung cấp:** ${newInk.supplier}\n\n*Quản lý bảng giá tại [Bảng giá Mực](/admin/ink-prices).*`,
+        };
+      }
+
+      // 13X. Lưu Bảng Giá Vật Liệu Phụ Trợ từ form
+      if (_formAction === 'create_material_price') {
+        if (!fields.name) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên vật liệu**.' };
+        }
+        const priceNum = parseFloat(String(fields.price || '0').replace(/[.,]/g, '')) || 0;
+        if (priceNum <= 0) {
+          return { handled: true, action: 'form_error', response: '❌ **Đơn giá vật liệu** phải lớn hơn 0.' };
+        }
+        const unit = fields.unit || 'đ/cái';
+        const newMatPrice = await MaterialPrice.create({
+          name: fields.name.trim(),
+          category: fields.category || 'Vật liệu phụ',
+          price: priceNum,
+          unit,
+          supplier: fields.supplier || 'Chung',
+          note: fields.note || 'AI Form cập nhật',
+        });
+        return {
+          handled: true,
+          action: 'create_material_price',
+          data: newMatPrice,
+          response: `📦 **ĐÃ LƯU BẢNG GIÁ VẬT LIỆU PHỤ TRỢ THÀNH CÔNG!**\n\n- 📦 **Tên vật liệu:** **${newMatPrice.name}**\n- 📂 **Phân loại:** \`${newMatPrice.category}\`\n- 💰 **Đơn giá:** **${priceNum.toLocaleString('vi-VN')} ${unit}**\n- 🏢 **NCC:** ${newMatPrice.supplier || 'Chung'}\n\n*Xem bảng giá tại [Vật liệu khác](/admin/material-prices).*`,
         };
       }
 
@@ -2790,6 +2918,268 @@ const handleDirectActions = async (message, user) => {
       handled: true,
       action: 'list_users',
       data: users,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 39. Tác vụ: THÊM NHÀ CUNG CẤP MỚI (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm ncc') || lower.startsWith('tạo ncc') || lower.startsWith('thêm nhà cung cấp') || lower.startsWith('tạo nhà cung cấp') || lower.startsWith('thêm đối tác')) {
+    const rawSupp = message.replace(/^(thêm ncc|tạo ncc|thêm nhà cung cấp|tạo nhà cung cấp|thêm đối tác)[:\s]*/i, '').trim();
+    const phoneMatch = rawSupp.match(/(0\d{9,10})/);
+    const phone = phoneMatch ? phoneMatch[1] : '';
+    const name = rawSupp.replace(/(0\d{9,10})/g, '').replace(/(sđt|số điện thoại|sdt|đt|hotline)[:\s]*/gi, '').trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'name', label: '🏢 Tên nhà cung cấp', type: 'text', required: true, value: name || '', placeholder: 'VD: Công ty TNHH Giấy Thuận An' },
+        { key: 'phone', label: '📞 Số điện thoại / Hotline', type: 'text', required: true, value: phone || '', placeholder: 'VD: 0903123456' },
+        { key: 'contactName', label: '👤 Người liên hệ / Sales', type: 'text', required: false, placeholder: 'VD: Anh Nam (Sales)' },
+        { key: 'productsProvided', label: '📦 Mặt hàng cung cấp', type: 'text', required: false, placeholder: 'VD: Giấy Couche, Ivory, Duplex, Mực in...' },
+        { key: 'address', label: '📍 Địa chỉ kho / VP', type: 'text', required: false, placeholder: 'VD: KCN Tân Bình, TP.HCM' },
+        { key: 'note', label: '📝 Ghi chú đánh giá', type: 'text', required: false, placeholder: 'VD: Giao nhanh trong 2h, hỗ trợ công nợ 30 ngày' },
+      ],
+      formAction: 'create_supplier',
+      response: '🚚 **THÊM NHÀ CUNG CẤP MỚI VÀO DANH BẠ** — Vui lòng hoàn tất thông tin:',
+    };
+  }
+
+  // ================================================================
+  // 40. Tác vụ: TRA CỨU NHÀ CUNG CẤP & MẶT HÀNG (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('nhà cung cấp') || lower.includes('ncc') || lower.includes('đối tác cung ứng')) && (lower.includes('tìm') || lower.includes('xem') || lower.includes('danh sách') || lower.includes('bán') || lower.includes('cung cấp') || lower.includes('sđt') || lower.includes('liên hệ') || lower.includes('thông tin') || lower.startsWith('nhà cung cấp') || lower.startsWith('danh sách ncc'))) {
+    const queryTerm = lower.replace(/(tìm|xem|danh sách|có những|bên nào|nhà cung cấp|ncc|đối tác|sđt|thông tin|bán|cung cấp|ạ|nhé)/gi, '').trim();
+    let filter = {};
+    if (queryTerm.length >= 2) {
+      filter = {
+        $or: [
+          { name: { $regex: queryTerm, $options: 'i' } },
+          { productsProvided: { $regex: queryTerm, $options: 'i' } },
+          { contactName: { $regex: queryTerm, $options: 'i' } },
+        ],
+      };
+    }
+    const suppliers = await Supplier.find(filter).sort({ createdAt: -1 }).limit(8).lean().catch(() => []);
+    if (suppliers.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_supplier',
+        response: `🚚 Không tìm thấy nhà cung cấp nào phù hợp với từ khóa **"${queryTerm}"**.\n\n*Xem toàn bộ tại [Nhà Cung Cấp](/admin/supplierlist).*`,
+      };
+    }
+
+    let reply = `🚚 **DANH BẠ NHÀ CUNG CẤP (${suppliers.length} đối tác):**\n\n`;
+    suppliers.forEach((s, idx) => {
+      reply += `${idx + 1}. **${s.name}**\n`;
+      reply += `   - 📞 Hotline: **${s.phone}** | 👤 Người phụ trách: ${s.contactName || '—'}\n`;
+      if (s.productsProvided) reply += `   - 📦 Cung ứng: *${s.productsProvided}*\n`;
+      if (s.address) reply += `   - 📍 Địa chỉ: ${s.address}\n`;
+    });
+    reply += `\n*Xem danh bạ và công nợ tại [Nhà Cung Cấp](/admin/supplierlist).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_supplier',
+      data: suppliers,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 41. Tác vụ: THÊM / CẬP NHẬT GIÁ GIẤY IN (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm giá giấy') || lower.startsWith('cập nhật giá giấy') || lower.startsWith('lưu giá giấy') || lower.startsWith('tạo giá giấy') || lower.startsWith('đổi giá giấy')) {
+    const rawPaper = message.replace(/^(thêm giá giấy|cập nhật giá giấy|lưu giá giấy|tạo giá giấy|đổi giá giấy)[:\s]*/i, '').trim();
+
+    // Bóc tách kích thước nếu có
+    const dimMatch = rawPaper.match(/(\d{3,4}\s*[xX*]\s*\d{3,4})/);
+    const dimensions = dimMatch ? dimMatch[1].replace(/\s+/g, '').toLowerCase() : '';
+
+    // Bóc tách giá nếu có
+    const priceMatch = rawPaper.match(/(\d+(?:[.,]\d+)?)\s*(?:đ|k|đồng|vnd)?/i);
+    const price = priceMatch ? priceMatch[1].replace(/[.,]/g, '') : '';
+
+    const paperType = rawPaper
+      .replace(/(\d{3,4}\s*[xX*]\s*\d{3,4})/g, '')
+      .replace(/(\d+(?:[.,]\d+)?)\s*(?:đ|k|đồng|vnd)?/gi, '')
+      .replace(/(giá|khổ|loại|cho|ạ|nhé)/gi, '')
+      .trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'paperType', label: '📄 Loại giấy & Định lượng', type: 'text', required: true, value: paperType || '', placeholder: 'VD: Couche 300gsm, Ivory 250gsm...' },
+        { key: 'dimensions', label: '📐 Khổ giấy (kích thước)', type: 'text', required: true, value: dimensions || '650x860', placeholder: 'VD: 650x860 hoặc 790x1090' },
+        { key: 'price', label: '💰 Đơn giá nhập', type: 'number', required: true, value: price || '', placeholder: 'VD: 1950' },
+        { key: 'unit', label: '📏 Đơn vị tính', type: 'select', required: true, options: [
+          { value: 'đ/tờ', label: 'đ/tờ (Tờ in)' },
+          { value: 'đ/ram', label: 'đ/ram (500 tờ)' },
+          { value: 'đ/kg', label: 'đ/kg (Kilogram)' },
+        ]},
+        { key: 'supplier', label: '🏢 Nguồn nhập / NCC', type: 'text', required: false, placeholder: 'VD: NCC Thuận An hoặc Chung' },
+      ],
+      formAction: 'create_paper_price',
+      response: '📑 **CẬP NHẬT BẢNG GIÁ GIẤY IN** — Vui lòng hoàn tất thông số bên dưới:',
+    };
+  }
+
+  // ================================================================
+  // 42. Tác vụ: TRA CỨU BẢNG GIÁ GIẤY IN (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('giá giấy') || lower.includes('bảng giá giấy') || lower.includes('giá ram') || lower.includes('giấy bao nhiêu')) && (lower.includes('xem') || lower.includes('tra cứu') || lower.includes('tìm') || lower.includes('bảng giá') || lower.includes('khổ') || lower.includes('hiện tại') || lower.startsWith('giá giấy') || lower.startsWith('bảng giá giấy'))) {
+    const queryTerm = lower.replace(/(giá giấy|bảng giá giấy|giá ram|giấy bao nhiêu|tra cứu|tìm|xem|bảng giá|hiện tại|ạ|nhé)/gi, '').trim();
+    let filter = {};
+    if (queryTerm.length >= 2) {
+      filter = { paperType: { $regex: queryTerm, $options: 'i' } };
+    }
+    const paperPrices = await PaperPrice.find(filter).sort({ paperType: 1 }).limit(8).lean().catch(() => []);
+    if (paperPrices.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_paper_price',
+        response: `📑 Không tìm thấy bảng giá cho loại giấy **"${queryTerm}"**.\n\n*Xem tất cả tại [Bảng giá Giấy](/admin/paper-prices).*`,
+      };
+    }
+
+    let reply = `📑 **BẢNG GIÁ GIẤY IN HIỆN HÀNH (${paperPrices.length} loại):**\n\n`;
+    paperPrices.forEach((p, idx) => {
+      reply += `${idx + 1}. **${p.paperType}** (Nguồn: ${p.supplier || 'Chung'})\n`;
+      (p.sizes || []).forEach(s => {
+        reply += `   - Khổ \`${s.dimensions}\`: **${(s.price || 0).toLocaleString('vi-VN')} ${s.unit || 'đ/tờ'}**\n`;
+      });
+    });
+    reply += `\n*Quản lý và tính giá in tại [Bảng giá Giấy](/admin/paper-prices).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_paper_price',
+      data: paperPrices,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 43. Tác vụ: THÊM / CẬP NHẬT GIÁ MỰC IN (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm giá mực') || lower.startsWith('cập nhật giá mực') || lower.startsWith('lưu giá mực') || lower.startsWith('tạo giá mực')) {
+    const rawInk = message.replace(/^(thêm giá mực|cập nhật giá mực|lưu giá mực|tạo giá mực)[:\s]*/i, '').trim();
+    let brand = '';
+    if (lower.includes('toyo')) brand = 'Toyo';
+    else if (lower.includes('dic')) brand = 'DIC';
+    else if (lower.includes('sakata')) brand = 'Sakata';
+    else if (lower.includes('flint')) brand = 'Flint';
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'inkType', label: '🎨 Loại mực in', type: 'text', required: true, value: rawInk || '', placeholder: 'VD: Mực Offset CMYK, Mực Nhũ Vàng, Mực UV...' },
+        { key: 'brand', label: '🏷️ Hãng sản xuất', type: 'text', required: true, value: brand || '', placeholder: 'VD: Toyo, DIC, Sakata, Flint...' },
+        { key: 'price', label: '💰 Đơn giá', type: 'number', required: true, placeholder: 'VD: 135000' },
+        { key: 'unit', label: '📏 Đơn vị tính', type: 'select', required: true, options: [
+          { value: 'đ/kg', label: 'đ/kg (Kilogram)' },
+          { value: 'đ/lon', label: 'đ/lon (Hộp)' },
+          { value: 'đ/thùng', label: 'đ/thùng' },
+        ]},
+        { key: 'supplier', label: '🏢 Nhà cung cấp', type: 'text', required: false, placeholder: 'VD: NCC Minh Phát' },
+        { key: 'note', label: '📝 Ghi chú', type: 'text', required: false, placeholder: 'VD: Dùng cho bài in Offset cao cấp' },
+      ],
+      formAction: 'create_ink_price',
+      response: '🧪 **LƯU BẢNG GIÁ MỰC IN** — Vui lòng hoàn tất thông số:',
+    };
+  }
+
+  // ================================================================
+  // 44. Tác vụ: TRA CỨU BẢNG GIÁ MỰC IN (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('giá mực') || lower.includes('bảng giá mực') || lower.includes('mực bao nhiêu')) && (lower.includes('xem') || lower.includes('tra cứu') || lower.includes('bảng giá') || lower.includes('tìm') || lower.startsWith('giá mực') || lower.startsWith('bảng giá mực'))) {
+    const queryTerm = lower.replace(/(giá mực|bảng giá mực|mực bao nhiêu|tra cứu|tìm|xem|bảng giá|hiện tại|ạ|nhé)/gi, '').trim();
+    let filter = {};
+    if (queryTerm.length >= 2) {
+      filter = { $or: [{ inkType: { $regex: queryTerm, $options: 'i' } }, { brand: { $regex: queryTerm, $options: 'i' } }] };
+    }
+    const inkPrices = await InkPrice.find(filter).sort({ brand: 1, inkType: 1 }).limit(8).lean().catch(() => []);
+    if (inkPrices.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_ink_price',
+        response: `🧪 Không tìm thấy bảng giá mực nào phù hợp với từ khóa **"${queryTerm}"**.\n\n*Xem tất cả tại [Bảng giá Mực](/admin/ink-prices).*`,
+      };
+    }
+
+    let reply = `🧪 **BẢNG GIÁ MỰC IN HIỆN HÀNH (${inkPrices.length} loại):**\n\n`;
+    inkPrices.forEach((ink, idx) => {
+      reply += `${idx + 1}. **${ink.inkType}** (${ink.brand})\n`;
+      reply += `   - 💰 Đơn giá: **${(ink.price || 0).toLocaleString('vi-VN')} ${ink.unit || 'đ/kg'}** | NCC: ${ink.supplier || 'Chung'}\n`;
+    });
+    reply += `\n*Quản lý bảng giá tại [Bảng giá Mực](/admin/ink-prices).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_ink_price',
+      data: inkPrices,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 45. Tác vụ: THÊM BẢNG GIÁ VẬT LIỆU PHỤ TRỢ (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm giá vật liệu') || lower.startsWith('cập nhật giá vật liệu') || lower.startsWith('thêm giá phụ liệu')) {
+    const rawMat = message.replace(/^(thêm giá vật liệu|cập nhật giá vật liệu|thêm giá phụ liệu)[:\s]*/i, '').trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'name', label: '📦 Tên vật liệu', type: 'text', required: true, value: rawMat || '', placeholder: 'VD: Màn in lụa 120T, Màng BOPP mờ...' },
+        { key: 'category', label: '📂 Phân loại vật liệu', type: 'text', required: false, placeholder: 'VD: Màn lụa, Keo dán, Màng cán, Dây túi...' },
+        { key: 'price', label: '💰 Đơn giá', type: 'number', required: true, placeholder: 'VD: 45000' },
+        { key: 'unit', label: '📏 Đơn vị tính', type: 'text', required: false, value: 'đ/cuộn', placeholder: 'VD: đ/cuộn, đ/cái, đ/kg' },
+        { key: 'supplier', label: '🏢 Nhà cung cấp', type: 'text', required: false, placeholder: 'VD: NCC Ánh Sáng' },
+      ],
+      formAction: 'create_material_price',
+      response: '📦 **LƯU BẢNG GIÁ VẬT LIỆU PHỤ TRỢ** — Vui lòng hoàn tất:',
+    };
+  }
+
+  // ================================================================
+  // 46. Tác vụ: TRA CỨU ĐƠN GIÁ GIA CÔNG SAU IN & VẬT LIỆU (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('giá gia công') || lower.includes('cán màng') || lower.includes('ép kim') || lower.includes('bế hộp') || lower.includes('phủ uv') || lower.includes('dán hộp') || lower.includes('bảng giá vật liệu')) && (lower.includes('giá') || lower.includes('bao nhiêu') || lower.includes('bảng giá') || lower.includes('chi phí') || lower.includes('tính như thế nào') || lower.startsWith('giá gia công') || lower.startsWith('bảng giá gia công'))) {
+    const [finishingPrices, matPrices] = await Promise.all([
+      FinishingPrice.find({ isActive: true }).sort({ category: 1 }).lean().catch(() => []),
+      MaterialPrice.find({}).sort({ category: 1 }).limit(6).lean().catch(() => []),
+    ]);
+
+    let reply = `✨ **BẢNG ĐƠN GIÁ GIA CÔNG HOÀN THIỆN SAU IN:**\n\n`;
+    if (finishingPrices.length > 0) {
+      finishingPrices.forEach((f, idx) => {
+        reply += `${idx + 1}. **${f.name}** (\`${f.categoryName || f.category}\`)\n`;
+        reply += `   - 💰 Đơn giá: **${(f.price || 0).toLocaleString('vi-VN')} ${f.unit || 'đ/SP'}**\n`;
+        if (f.description) reply += `   - 📝 Mô tả: *${f.description}*\n`;
+      });
+    } else {
+      reply += `• *Các công đoạn chuẩn: Cán màng (~350đ/mặt), Ép kim (~1.200đ/vị trí), Bế demi (~250đ/tờ), Dán hộp tự động (~300đ/cái).*\n`;
+    }
+
+    if (matPrices.length > 0) {
+      reply += `\n📦 **Đơn giá vật liệu phụ trợ liên quan:**\n`;
+      matPrices.forEach(m => {
+        reply += `• **${m.name}**: ${(m.price || 0).toLocaleString('vi-VN')} ${m.unit || 'đ/cái'} (NCC: ${m.supplier || 'Chung'})\n`;
+      });
+    }
+
+    reply += `\n*Xem bảng giá gia công chi tiết tại [Đơn Giá Gia Công](/admin/finishing-prices).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_finishing_price',
+      data: { finishingPrices, matPrices },
       response: reply,
     };
   }

@@ -9,7 +9,7 @@ import {
   FaCalculator, FaChevronDown, FaCheckCircle, FaMinus,
   FaThLarge, FaLightbulb, FaChevronLeft, FaChevronRight,
   FaArrowRight, FaMagic, FaCheck, FaSpinner, FaTachometerAlt,
-  FaGlobe, FaCogs, FaNewspaper
+  FaGlobe, FaCogs, FaNewspaper, FaHandshake
 } from 'react-icons/fa';
 
 // Phân nhóm danh mục gợi ý tác vụ chuyên nghiệp
@@ -90,6 +90,20 @@ const CATEGORIZED_PROMPTS = [
       { id: 'add_news', title: 'Đăng Bài Viết', query: 'Đăng bài viết mới', desc: 'Mở form tạo tin tức web' },
       { id: 'add_user', title: 'Tạo Tài Khoản', query: 'Tạo tài khoản nhân viên mới', desc: 'Cấp quyền truy cập hệ thống' },
       { id: 'list_users', title: 'Nhân Sự Công Ty', query: 'Danh sách nhân viên công ty', desc: 'Tra cứu tài khoản & vai trò' },
+    ],
+  },
+  {
+    category: 'Đối Tác & Bảng Giá',
+    icon: FaHandshake,
+    color: 'text-amber-600 bg-amber-50 border-amber-200',
+    items: [
+      { id: 'add_supplier', title: 'Thêm Nhà Cung Cấp', query: 'Thêm nhà cung cấp mới', desc: 'Mở form lưu đối tác cung ứng' },
+      { id: 'lookup_supplier', title: 'Danh Bạ Đối Tác', query: 'Danh sách tất cả nhà cung cấp', desc: 'Tra cứu SĐT & mặt hàng NCC' },
+      { id: 'add_paper_price', title: 'Cập Nhật Giá Giấy', query: 'Cập nhật giá giấy in', desc: 'Mở form lưu giá theo khổ' },
+      { id: 'lookup_paper_price', title: 'Bảng Giá Giấy In', query: 'Bảng giá giấy Couche và Ivory', desc: 'Tra cứu giá giấy hiện hành' },
+      { id: 'add_ink_price', title: 'Cập Nhật Giá Mực', query: 'Thêm giá mực in', desc: 'Mở form lưu đơn giá mực' },
+      { id: 'lookup_ink_price', title: 'Bảng Giá Mực In', query: 'Bảng giá mực in Toyo và DIC', desc: 'Xem giá các hãng mực' },
+      { id: 'lookup_finishing', title: 'Giá Gia Công Sau In', query: 'Bảng giá các công đoạn gia công sau in', desc: 'Đơn giá cán, ép kim, bế...' },
     ],
   },
 ];
@@ -197,6 +211,10 @@ const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
     create_machine: '🖨️ Thêm máy móc thiết bị',
     create_news: '📰 Đăng bài viết tin tức',
     create_user: '👤 Tạo tài khoản nhân viên',
+    create_supplier: '🚚 Thêm Nhà Cung Cấp',
+    create_paper_price: '📑 Lưu Bảng Giá Giấy',
+    create_ink_price: '🧪 Lưu Bảng Giá Mực',
+    create_material_price: '📦 Lưu Bảng Giá Vật Liệu',
   };
 
   return (
