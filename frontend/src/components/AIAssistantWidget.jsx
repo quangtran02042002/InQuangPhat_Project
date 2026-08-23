@@ -8,7 +8,8 @@ import {
   FaUsers, FaTasks, FaShoppingCart, FaClipboardCheck,
   FaCalculator, FaChevronDown, FaCheckCircle, FaMinus,
   FaThLarge, FaLightbulb, FaChevronLeft, FaChevronRight,
-  FaArrowRight, FaMagic, FaCheck, FaSpinner, FaTachometerAlt
+  FaArrowRight, FaMagic, FaCheck, FaSpinner, FaTachometerAlt,
+  FaGlobe, FaCogs, FaNewspaper
 } from 'react-icons/fa';
 
 // Phân nhóm danh mục gợi ý tác vụ chuyên nghiệp
@@ -75,6 +76,20 @@ const CATEGORIZED_PROMPTS = [
     items: [
       { id: 'calc_cut', title: 'Chia khổ giấy in', query: 'Khổ in 65x86 cm chia được bao nhiêu con A4?', desc: 'Tùy chỉnh kích thước để tính' },
       { id: 'calc_price', title: 'Ước tính giá in', query: 'Tính giá in 1000 tờ rơi A4 Couche 150 cán màng', desc: 'Ước lượng chi phí bài in' },
+    ],
+  },
+  {
+    category: 'Nội Dung & Hệ Thống',
+    icon: FaGlobe,
+    color: 'text-teal-600 bg-teal-50 border-teal-200',
+    items: [
+      { id: 'add_product', title: 'Thêm SP Website', query: 'Thêm sản phẩm mới lên web', desc: 'Mở form đăng sản phẩm web' },
+      { id: 'lookup_product', title: 'Xem SP Website', query: 'Danh sách sản phẩm trên web', desc: 'Tra cứu danh mục sản phẩm' },
+      { id: 'add_machine', title: 'Thêm Máy Móc', query: 'Thêm máy in mới', desc: 'Mở form thêm thiết bị xưởng' },
+      { id: 'lookup_machine', title: 'Hồ sơ Thiết bị', query: 'Danh sách máy móc thiết bị hiện tại', desc: 'Xem năng lực máy in & bế' },
+      { id: 'add_news', title: 'Đăng Bài Viết', query: 'Đăng bài viết mới', desc: 'Mở form tạo tin tức web' },
+      { id: 'add_user', title: 'Tạo Tài Khoản', query: 'Tạo tài khoản nhân viên mới', desc: 'Cấp quyền truy cập hệ thống' },
+      { id: 'list_users', title: 'Nhân Sự Công Ty', query: 'Danh sách nhân viên công ty', desc: 'Tra cứu tài khoản & vai trò' },
     ],
   },
 ];
@@ -178,6 +193,10 @@ const InlineChatForm = ({ formFields, formAction, onSubmit, disabled }) => {
     receivable_payment: '💰 Ghi nhận thanh toán',
     payable_payment: '💸 Thanh toán cho NCC',
     export_chemical: '🧪 Xuất kho hóa chất / mực',
+    create_product: '📦 Đăng sản phẩm Website',
+    create_machine: '🖨️ Thêm máy móc thiết bị',
+    create_news: '📰 Đăng bài viết tin tức',
+    create_user: '👤 Tạo tài khoản nhân viên',
   };
 
   return (

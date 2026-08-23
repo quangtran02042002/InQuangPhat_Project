@@ -12,6 +12,9 @@ const QCInspection = require('../models/QCInspection');
 const Quote = require('../models/Quote');
 const Customer = require('../models/Customer');
 const Supplier = require('../models/Supplier');
+const Product = require('../models/Product');
+const Machine = require('../models/Machine');
+const News = require('../models/News');
 
 // ============================================================================
 // HELPER: LẤY TOÀN BỘ NGỮ CẢNH DỮ LIỆU THỰC TẾ TỪ DATABASE (LIVE CONTEXT)
@@ -1247,6 +1250,124 @@ const handleDirectActions = async (message, user) => {
         };
       }
 
+      // 13Q. Đăng Sản phẩm mới lên Website từ form
+      if (_formAction === 'create_product') {
+        if (!fields.name) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên sản phẩm**.' };
+        }
+        let creatorId = user?._id;
+        if (!creatorId) {
+          const firstAdmin = await User.findOne({}).lean();
+          creatorId = firstAdmin ? firstAdmin._id : null;
+        }
+        if (!creatorId) {
+          return { handled: true, action: 'form_error', response: '❌ Không xác định được tài khoản tạo sản phẩm.' };
+        }
+
+        const newProduct = await Product.create({
+          user: creatorId,
+          name: fields.name,
+          group: fields.group || 'offset',
+          category: fields.category || 'Bao bì & In ấn',
+          description: fields.description || 'Sản phẩm in ấn chất lượng cao từ Xưởng In Quang Phát.',
+          images: [{ url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80' }],
+          priceTable: [
+            { minQuantity: 100, price: fields.price || 'Liên hệ' }
+          ],
+        });
+
+        const grpLabel = newProduct.group === 'garment' ? '🎨 In May Mặc (Lụa)' : '🖨️ In Offset';
+        return {
+          handled: true,
+          action: 'create_product',
+          data: newProduct,
+          response: `📦 **ĐÃ ĐĂNG SẢN PHẨM MỚI LÊN WEBSITE THÀNH CÔNG!**\n\n- 🏷️ **Tên SP:** **${newProduct.name}**\n- 📂 **Nhóm:** ${grpLabel}\n- 📑 **Danh mục:** ${newProduct.category}\n- 💰 **Đơn giá:** ${fields.price || 'Liên hệ báo giá'}\n- 📝 **Mô tả:** ${newProduct.description}\n\n*Xem và chỉnh sửa chi tiết tại [Sản phẩm Website](/admin/productlist).*`,
+        };
+      }
+
+      // 13R. Thêm Máy Móc / Thiết Bị mới từ form
+      if (_formAction === 'create_machine') {
+        if (!fields.name) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tên máy móc / thiết bị**.' };
+        }
+        const newMachine = await Machine.create({
+          name: fields.name,
+          category: fields.category || 'Máy In Offset',
+          description: fields.description || 'Thiết bị sản xuất tại xưởng in Quang Phát.',
+          images: [],
+          videos: [],
+        });
+        return {
+          handled: true,
+          action: 'create_machine',
+          data: newMachine,
+          response: `🖨️ **ĐÃ THÊM THIẾT BỊ VÀO HỒ SƠ XƯỞNG THÀNH CÔNG!**\n\n- ⚙️ **Tên máy:** **${newMachine.name}**\n- 📂 **Phân loại:** **${newMachine.category}**\n- 📝 **Năng lực / Quy cách:** ${newMachine.description}\n\n*Quản lý danh mục máy tại [Năng lực Máy móc](/admin/machinelist).*`,
+        };
+      }
+
+      // 13S. Đăng Tin Tức / Bài Viết mới từ form
+      if (_formAction === 'create_news') {
+        if (!fields.title) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập **Tiêu đề bài viết**.' };
+        }
+        let creatorId = user?._id;
+        if (!creatorId) {
+          const firstAdmin = await User.findOne({}).lean();
+          creatorId = firstAdmin ? firstAdmin._id : null;
+        }
+        if (!creatorId) {
+          return { handled: true, action: 'form_error', response: '❌ Không xác định được tài khoản tác giả.' };
+        }
+
+        const newNews = await News.create({
+          user: creatorId,
+          title: fields.title,
+          image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80',
+          description: fields.description || fields.title,
+          content: fields.content ? `<p>${fields.content.replace(/\n/g, '<br/>')}</p>` : `<p>${fields.title}</p>`,
+          views: 0,
+        });
+        return {
+          handled: true,
+          action: 'create_news',
+          data: newNews,
+          response: `📰 **ĐÃ ĐĂNG BÀI VIẾT / TIN TỨC THÀNH CÔNG!**\n\n- 📑 **Tiêu đề:** **${newNews.title}**\n- 📝 **Mô tả:** ${newNews.description}\n- 👁️ **Lượt xem:** 0\n- 🕒 **Ngày đăng:** ${new Date().toLocaleDateString('vi-VN')}\n\n*Xem và quản lý bài viết tại [Tin tức & Bài viết](/admin/newslist).*`,
+        };
+      }
+
+      // 13T. Tạo Tài Khoản Nhân Viên Mới từ form
+      if (_formAction === 'create_user') {
+        if (!fields.name || !fields.email) {
+          return { handled: true, action: 'form_error', response: '❌ Vui lòng nhập đầy đủ **Họ tên** và **Email** nhân viên.' };
+        }
+        const existingUser = await User.findOne({ email: fields.email.toLowerCase().trim() });
+        if (existingUser) {
+          return { handled: true, action: 'form_error', response: `❌ Email **${fields.email}** đã tồn tại trong hệ thống. Vui lòng dùng email khác.` };
+        }
+        const role = fields.role || 'user';
+        const rawPassword = fields.password || '123456';
+        const newUser = await User.create({
+          name: fields.name.trim(),
+          email: fields.email.toLowerCase().trim(),
+          password: rawPassword,
+          role,
+          phone: fields.phone || '',
+          isAdmin: role === 'director',
+        });
+        const roleLabels = {
+          director: '👑 Giám Đốc (Toàn quyền)',
+          accountant: '💰 Kế Toán (Tài chính & Thu chi)',
+          production: '🏭 Quản Đốc / Thợ In (Sản xuất & Kho)',
+          user: '👤 Nhân Viên Thông Thường',
+        };
+        return {
+          handled: true,
+          action: 'create_user',
+          data: { _id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role },
+          response: `👤 **ĐÃ TẠO TÀI KHOẢN NHÂN VIÊN MỚI THÀNH CÔNG!**\n\n- 👤 **Họ tên:** **${newUser.name}**\n- 📧 **Email đăng nhập:** \`${newUser.email}\`\n- 🔑 **Mật khẩu khởi tạo:** \`${rawPassword}\`\n- 🛡️ **Vai trò:** **${roleLabels[newUser.role] || newUser.role}**\n- 📞 **SĐT:** ${newUser.phone || 'Chưa cập nhật'}\n\n*Quản lý phân quyền tại [Tài khoản & Phân quyền](/admin/users).*`,
+        };
+      }
+
       return { handled: true, action: 'form_error', response: '❌ Không nhận diện được loại form. Vui lòng thử lại.' };
     } catch (parseErr) {
       console.error('Form parse error:', parseErr);
@@ -2372,6 +2493,303 @@ const handleDirectActions = async (message, user) => {
       handled: true,
       action: 'report_qc_today',
       data: qcs,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 30. Tác vụ: THÊM SẢN PHẨM MỚI LÊN WEBSITE (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm sản phẩm') || lower.startsWith('tạo sản phẩm') || lower.startsWith('đăng sản phẩm') || lower.startsWith('thêm sp') || lower.startsWith('tạo sp') || lower.startsWith('đăng sp')) {
+    const rawProd = message.replace(/^(thêm sản phẩm|tạo sản phẩm|đăng sản phẩm|thêm sp|tạo sp|đăng sp)[:\s]*/i, '').trim();
+    const isGarment = lower.includes('may mặc') || lower.includes('lụa') || lower.includes('áo') || lower.includes('vải');
+    const group = isGarment ? 'garment' : 'offset';
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'name', label: '🏷️ Tên sản phẩm Website', type: 'text', required: true, value: rawProd || '', placeholder: 'VD: Hộp Cứng Yến Sào Cao Cấp' },
+        { key: 'group', label: '🖨️ Nhóm kỹ thuật', type: 'select', required: true, value: group, options: [
+          { value: 'offset', label: '🖨️ In Offset (Hộp, Túi, Catalogue)' },
+          { value: 'garment', label: '🎨 In May Mặc (Áo thun, Vải lụa)' },
+        ]},
+        { key: 'category', label: '📑 Phân loại danh mục', type: 'text', required: true, placeholder: 'VD: Bao bì giấy, Hộp quà, Tem nhãn...' },
+        { key: 'price', label: '💰 Mức giá tham khảo', type: 'text', required: false, placeholder: 'VD: Từ 5.000đ/hộp hoặc Liên hệ' },
+        { key: 'description', label: '📝 Mô tả quy cách sản phẩm', type: 'text', required: false, placeholder: 'VD: In 4 màu CMYK, cán màng mờ, ép kim logo...' },
+      ],
+      formAction: 'create_product',
+      response: '📦 **ĐĂNG SẢN PHẨM MỚI LÊN WEBSITE** — Vui lòng hoàn tất thông tin bên dưới:',
+    };
+  }
+
+  // ================================================================
+  // 31. Tác vụ: TRA CỨU SẢN PHẨM WEBSITE (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('sản phẩm') || lower.includes('danh mục web') || lower.includes('sp web')) && (lower.includes('tìm') || lower.includes('xem') || lower.includes('tra cứu') || lower.includes('danh sách') || lower.includes('có những') || lower.startsWith('sản phẩm') || lower.startsWith('danh sách sản phẩm'))) {
+    const queryTerm = lower.replace(/(tìm|xem|tra cứu|danh sách|có những|sản phẩm|sp|web|website|trên web|ạ|nhé)/gi, '').trim();
+    let filter = {};
+    if (queryTerm.length >= 2) {
+      filter = { $or: [{ name: { $regex: queryTerm, $options: 'i' } }, { category: { $regex: queryTerm, $options: 'i' } }] };
+    }
+    const products = await Product.find(filter).sort({ createdAt: -1 }).limit(8).lean().catch(() => []);
+    if (products.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_product',
+        response: `📦 Không tìm thấy sản phẩm nào trên website phù hợp với từ khóa **"${queryTerm}"**.\n\n*Xem tất cả tại [Sản phẩm Website](/admin/productlist).*`,
+      };
+    }
+
+    let reply = `📦 **DANH SÁCH SẢN PHẨM TRÊN WEBSITE (${products.length} SP):**\n\n`;
+    products.forEach((p, idx) => {
+      const grpIcon = p.group === 'garment' ? '🎨 In Lụa/Vải' : '🖨️ In Offset';
+      reply += `${idx + 1}. **${p.name}**\n`;
+      reply += `   - Nhóm: ${grpIcon} | Danh mục: \`${p.category}\`\n`;
+      if (p.description) reply += `   - Quy cách: *${p.description.substring(0, 80)}...*\n`;
+    });
+    reply += `\n*Quản lý hình ảnh và bảng giá chi tiết tại [Sản phẩm Website](/admin/productlist).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_product',
+      data: products,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 32. Tác vụ: THÊM MÁY MÓC / THIẾT BỊ MỚI (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('thêm máy') || lower.startsWith('tạo máy') || lower.startsWith('thêm thiết bị') || lower.startsWith('tạo thiết bị') || lower.startsWith('thêm dây chuyền') || lower.startsWith('nhập máy')) {
+    const rawMach = message.replace(/^(thêm máy|tạo máy|thêm thiết bị|tạo thiết bị|thêm dây chuyền|nhập máy)[:\s]*/i, '').trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'name', label: '⚙️ Tên máy móc / Thiết bị', type: 'text', required: true, value: rawMach || '', placeholder: 'VD: Máy in Offset Komori Lithrone 4 màu' },
+        { key: 'category', label: '📂 Phân loại thiết bị', type: 'select', required: true, options: [
+          { value: 'Máy In Offset', label: '🖨️ Máy In Offset' },
+          { value: 'Máy In Lụa', label: '🎨 Máy In Lụa / May Mặc' },
+          { value: 'Máy Bế / Cắt', label: '✂️ Máy Bế & Cắt Giấy' },
+          { value: 'Máy Cán Màng / UV', label: '✨ Máy Cán Màng & Phủ UV' },
+          { value: 'Máy Dán Hộp Tự Động', label: '📦 Máy Dán Hộp Tự Động' },
+          { value: 'Thiết Bị Khác', label: '🔧 Thiết Bị Phụ Trợ Khác' },
+        ]},
+        { key: 'description', label: '📝 Năng lực & Thông số kỹ thuật', type: 'text', required: false, placeholder: 'VD: Khổ in max 72x102cm, tốc độ 15.000 tờ/giờ...' },
+      ],
+      formAction: 'create_machine',
+      response: '🖨️ **THÊM MÁY MÓC / THIẾT BỊ VÀO HỒ SƠ XƯỞNG** — Vui lòng hoàn tất thông tin:',
+    };
+  }
+
+  // ================================================================
+  // 33. Tác vụ: TRA CỨU NĂNG LỰC MÁY MÓC THIẾT BỊ (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('máy móc') || lower.includes('thiết bị') || lower.includes('máy in') || lower.includes('máy bế') || lower.includes('dây chuyền')) && (lower.includes('danh sách') || lower.includes('có những') || lower.includes('xem') || lower.includes('kiểm tra') || lower.includes('năng lực') || lower.startsWith('máy móc') || lower.startsWith('danh sách máy'))) {
+    const machines = await Machine.find({}).sort({ category: 1, createdAt: -1 }).lean().catch(() => []);
+    if (machines.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_machine',
+        response: `🖨️ Chưa có thông tin máy móc thiết bị nào trong hồ sơ xưởng.\n\n*Thêm mới tại [Năng lực Máy móc](/admin/machinelist).*`,
+      };
+    }
+
+    let reply = `🖨️ **HỒ SƠ NĂNG LỰC THIẾT BỊ & MÁY MÓC XƯỞNG IN (${machines.length} máy):**\n\n`;
+    machines.forEach((m, idx) => {
+      reply += `${idx + 1}. **${m.name}**\n`;
+      reply += `   - Phân loại: \`${m.category}\`\n`;
+      if (m.description) reply += `   - Thông số: *${m.description}*\n`;
+    });
+    reply += `\n*Xem hình ảnh & video vận hành thực tế tại [Năng lực Máy móc](/admin/machinelist).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_machine',
+      data: machines,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 34. Tác vụ: ĐĂNG TIN TỨC / BÀI VIẾT MỚI (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('đăng bài') || lower.startsWith('viết bài') || lower.startsWith('tạo tin tức') || lower.startsWith('thêm tin tức') || lower.startsWith('đăng tin') || lower.startsWith('thêm bài viết') || lower.startsWith('tạo bài viết')) {
+    const rawTitle = message.replace(/^(đăng bài|viết bài|tạo tin tức|thêm tin tức|đăng tin|thêm bài viết|tạo bài viết)[:\s]*/i, '').trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'title', label: '📑 Tiêu đề bài viết', type: 'text', required: true, value: rawTitle || '', placeholder: 'VD: Thông báo Lịch nghỉ lễ Quốc Khánh 2/9' },
+        { key: 'description', label: '📝 Mô tả ngắn tóm tắt', type: 'text', required: true, placeholder: 'VD: Thông báo thời gian nghỉ và tiến độ giao hàng...' },
+        { key: 'content', label: '📄 Nội dung chi tiết', type: 'text', required: false, placeholder: 'Nội dung chi tiết bài viết (hỗ trợ văn bản thuần)...' },
+      ],
+      formAction: 'create_news',
+      response: '📰 **ĐĂNG TIN TỨC / BÀI VIẾT MỚI LÊN WEBSITE** — Vui lòng hoàn tất thông tin:',
+    };
+  }
+
+  // ================================================================
+  // 35. Tác vụ: TRA CỨU TIN TỨC & BÀI VIẾT WEBSITE (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('tin tức') || lower.includes('bài viết') || lower.includes('tin mới')) && (lower.includes('xem') || lower.includes('danh sách') || lower.includes('nhiều lượt xem') || lower.includes('mới nhất') || lower.startsWith('tin tức') || lower.startsWith('bài viết') || lower.startsWith('danh sách tin'))) {
+    const newsList = await News.find({}).sort({ createdAt: -1 }).limit(6).lean().catch(() => []);
+    if (newsList.length === 0) {
+      return {
+        handled: true,
+        action: 'lookup_news',
+        response: `📰 Hiện chưa có bài viết nào trên website.\n\n*Đăng bài mới tại [Tin tức & Bài viết](/admin/newslist).*`,
+      };
+    }
+
+    let reply = `📰 **DANH SÁCH BÀI VIẾT & TIN TỨC GẦN ĐÂY:**\n\n`;
+    newsList.forEach((n, idx) => {
+      const dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString('vi-VN') : '—';
+      reply += `${idx + 1}. **${n.title}**\n`;
+      reply += `   - 👁️ Lượt xem: **${n.views || 0}** | 📅 Ngày đăng: ${dateStr}\n`;
+      if (n.description) reply += `   - Tóm tắt: *${n.description.substring(0, 70)}...*\n`;
+    });
+    reply += `\n*Xem và chỉnh sửa bài viết tại [Tin tức & Bài viết](/admin/newslist).*`;
+
+    return {
+      handled: true,
+      action: 'lookup_news',
+      data: newsList,
+      response: reply,
+    };
+  }
+
+  // ================================================================
+  // 36. Tác vụ: TẠO TÀI KHOẢN NHÂN VIÊN MỚI (INTERACTIVE FORM)
+  // ================================================================
+  if (lower.startsWith('tạo tài khoản') || lower.startsWith('tạo user') || lower.startsWith('thêm nhân viên') || lower.startsWith('thêm user') || lower.startsWith('tạo nhân viên') || lower.startsWith('cấp tài khoản')) {
+    const rawUser = message.replace(/^(tạo tài khoản|tạo user|thêm nhân viên|thêm user|tạo nhân viên|cấp tài khoản)[:\s]*/i, '').trim();
+
+    // Bóc tách email nếu có trong câu
+    const emailMatch = rawUser.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    const email = emailMatch ? emailMatch[1] : '';
+
+    // Bóc tách vai trò nếu có
+    let defaultRole = 'user';
+    if (lower.includes('kế toán') || lower.includes('thu chi')) defaultRole = 'accountant';
+    else if (lower.includes('sản xuất') || lower.includes('quản đốc') || lower.includes('thợ in')) defaultRole = 'production';
+    else if (lower.includes('giám đốc') || lower.includes('admin')) defaultRole = 'director';
+
+    const name = rawUser.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '').replace(/(kế toán|sản xuất|quản đốc|thợ in|giám đốc|admin|cho|bạn|anh|chị)/gi, '').trim();
+
+    return {
+      handled: true,
+      action: 'form_collect',
+      formFields: [
+        { key: 'name', label: '👤 Họ và tên nhân viên', type: 'text', required: true, value: name || '', placeholder: 'VD: Nguyễn Văn Cường' },
+        { key: 'email', label: '📧 Email đăng nhập', type: 'text', required: true, value: email || '', placeholder: 'VD: cuong.print@quangphat.vn' },
+        { key: 'password', label: '🔑 Mật khẩu khởi tạo', type: 'text', required: true, value: '123456', placeholder: 'Mặc định: 123456' },
+        { key: 'role', label: '🛡️ Vai trò & Phân quyền', type: 'select', required: true, value: defaultRole, options: [
+          { value: 'user', label: '👤 Nhân Viên Thông Thường' },
+          { value: 'accountant', label: '💰 Kế Toán (Tài chính & Thu chi)' },
+          { value: 'production', label: '🏭 Quản Đốc / Thợ In (Sản xuất & Kho)' },
+          { value: 'director', label: '👑 Giám Đốc (Toàn quyền Admin)' },
+        ]},
+        { key: 'phone', label: '📞 Số điện thoại', type: 'text', required: false, placeholder: 'VD: 0912345678' },
+      ],
+      formAction: 'create_user',
+      response: '👤 **TẠO TÀI KHOẢN TRUY CẬP HỆ THỐNG CHO NHÂN VIÊN** — Vui lòng hoàn tất:',
+    };
+  }
+
+  // ================================================================
+  // 37. Tác vụ: PHÂN QUYỀN / ĐỔI VAI TRÒ NHÂN VIÊN (NLP DIRECT)
+  // ================================================================
+  if ((lower.includes('phân quyền') || lower.includes('đổi quyền') || lower.includes('cấp quyền') || lower.includes('đổi vai trò')) && (lower.includes('cho') || lower.includes('user') || lower.includes('nhân viên') || lower.includes('tài khoản'))) {
+    let targetRole = '';
+    let roleLabel = '';
+    if (lower.includes('kế toán') || lower.includes('tài chính')) {
+      targetRole = 'accountant';
+      roleLabel = '💰 Kế Toán';
+    } else if (lower.includes('sản xuất') || lower.includes('quản đốc') || lower.includes('thợ in')) {
+      targetRole = 'production';
+      roleLabel = '🏭 Quản Đốc / Thợ In';
+    } else if (lower.includes('giám đốc') || lower.includes('admin') || lower.includes('toàn quyền')) {
+      targetRole = 'director';
+      roleLabel = '👑 Giám Đốc';
+    } else if (lower.includes('nhân viên') || lower.includes('thông thường') || lower.includes('user')) {
+      targetRole = 'user';
+      roleLabel = '👤 Nhân Viên Thông Thường';
+    }
+
+    if (targetRole) {
+      const emailMatch = message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+      let query = {};
+      if (emailMatch) {
+        query = { email: emailMatch[1].toLowerCase() };
+      } else {
+        const nameQuery = message
+          .replace(/(phân quyền|đổi quyền|cấp quyền|đổi vai trò|thành|sang|cho|nhân viên|user|tài khoản|bạn|anh|chị|kế toán|sản xuất|quản đốc|thợ in|giám đốc|admin|nhé|nha|ạ)/gi, '')
+          .trim();
+        if (nameQuery.length >= 2) {
+          query = { name: { $regex: nameQuery, $options: 'i' } };
+        }
+      }
+
+      if (Object.keys(query).length > 0) {
+        const targetUser = await User.findOne(query);
+        if (targetUser) {
+          targetUser.role = targetRole;
+          targetUser.isAdmin = targetRole === 'director';
+          await targetUser.save();
+
+          return {
+            handled: true,
+            action: 'update_user_role',
+            data: { _id: targetUser._id, name: targetUser.name, role: targetUser.role },
+            response: `✅ **ĐÃ CẬP NHẬT PHÂN QUYỀN THÀNH CÔNG!**\n\n- 👤 **Nhân viên:** **${targetUser.name}**\n- 📧 **Email:** \`${targetUser.email}\`\n- 🛡️ **Vai trò mới:** **${roleLabel}**\n- 👑 **Quyền Admin:** ${targetUser.isAdmin ? 'Có' : 'Không'}\n\n*Phân quyền đã có hiệu lực ngay lập tức.*`,
+          };
+        } else {
+          return {
+            handled: true,
+            action: 'user_not_found',
+            response: `⚠️ Không tìm thấy nhân viên phù hợp trong hệ thống.\n\n*Xem danh sách tại [Tài khoản & Phân quyền](/admin/users).*`,
+          };
+        }
+      }
+    }
+  }
+
+  // ================================================================
+  // 38. Tác vụ: TRA CỨU DANH SÁCH NHÂN SỰ & QUYỀN HẠN (NLP DIRECT)
+  // ================================================================
+  if (lower.includes('danh sách nhân viên') || lower.includes('danh sách user') || lower.includes('danh sách tài khoản') || lower.includes('nhân sự công ty') || lower.includes('có bao nhiêu nhân viên') || lower.startsWith('nhân sự') || lower.startsWith('tài khoản nhân viên')) {
+    const users = await User.find({}, '-password').sort({ role: 1, createdAt: 1 }).lean().catch(() => []);
+    if (users.length === 0) {
+      return {
+        handled: true,
+        action: 'list_users',
+        response: `👥 Chưa có thông tin nhân sự nào trong hệ thống.`,
+      };
+    }
+
+    const roleLabels = {
+      director: '👑 Giám Đốc',
+      accountant: '💰 Kế Toán',
+      production: '🏭 Quản Đốc / Thợ In',
+      user: '👤 Nhân Viên',
+    };
+
+    let reply = `👥 **DANH SÁCH TÀI KHOẢN NHÂN SỰ CÔNG TY (${users.length} người):**\n\n`;
+    users.forEach((u, idx) => {
+      const rLabel = roleLabels[u.role] || u.role || 'Nhân viên';
+      reply += `${idx + 1}. **${u.name}** (${rLabel})\n`;
+      reply += `   - 📧 Email: \`${u.email}\` | 📞 SĐT: ${u.phone || '—'}\n`;
+    });
+    reply += `\n*Xem và phân quyền chi tiết tại [Tài khoản & Phân quyền](/admin/users).*`;
+
+    return {
+      handled: true,
+      action: 'list_users',
+      data: users,
       response: reply,
     };
   }
